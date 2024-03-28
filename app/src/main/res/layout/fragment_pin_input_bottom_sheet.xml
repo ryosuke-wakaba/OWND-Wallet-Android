@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- タイトル -->
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/title_add_certification"
+        android:textAppearance="@style/title" />
+
+    <!-- 仕切り線 -->
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/title"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@android:color/darker_gray" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="16dp"
+        android:paddingTop="16dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="16dp">
+
+        <!-- コンテンツテキスト1 -->
+        <TextView
+            android:id="@+id/text1"
+            android:layout_width="343dp"
+            android:layout_height="36dp"
+            android:gravity="top"
+            android:lineSpacingExtra="1sp"
+            android:text="@string/text_input_pin_code"
+            android:textAppearance="@style/text_label_l" />
+
+        <!-- コンテンツテキスト2 -->
+        <TextView
+            android:id="@+id/text2"
+            android:layout_width="343dp"
+            android:layout_height="54dp"
+            android:layout_below="@id/text1"
+            android:layout_marginTop="16dp"
+            android:gravity="top"
+            android:lineSpacingExtra="4sp"
+            android:text="@string/text_request_input_pin_code"
+            android:textAppearance="@style/text_label_m" />
+
+        <!-- 入力エリアラベル -->
+        <TextView
+            android:id="@+id/label"
+            android:layout_width="73dp"
+            android:layout_height="21dp"
+            android:layout_below="@id/text2"
+            android:layout_marginTop="16dp"
+            android:gravity="top"
+            android:lineSpacingExtra="1sp"
+            android:text="@string/text_pin_code"
+            android:textAppearance="@style/label3" />
+
+        <!-- 入力エリア -->
+        <EditText
+            android:id="@+id/editTextPinCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/label"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/pin_input"
+            android:inputType="numberPassword"
+            android:paddingLeft="16dp" />
+
+        <!-- ボタン -->
+        <ImageButton
+            android:id="@+id/buttonAuthenticate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/editTextPinCode"
+            android:layout_marginTop="16dp"
+            android:contentDescription="@string/button_auth_description" />
+
+    </RelativeLayout>
+</LinearLayout>

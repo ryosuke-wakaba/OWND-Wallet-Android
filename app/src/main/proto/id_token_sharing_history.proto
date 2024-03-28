@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.ownd_project.tw2023_wallet_android.datastore";
+option java_multiple_files = true;
+
+message IdTokenSharingHistory {
+  string rp = 1;
+  int32 accountIndex = 2;
+  google.protobuf.Timestamp createdAt = 3;
+}
+
+message IdTokenSharingHistories {
+  repeated IdTokenSharingHistory items = 1;
+}

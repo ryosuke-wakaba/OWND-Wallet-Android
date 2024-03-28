@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="?attr/actionBarSize"
+    tools:context=".ui.issuer_detail.IssuerDetailFragment">
+
+    <RelativeLayout
+        android:id="@+id/logo_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/ivIssuerLogo"
+            android:layout_width="47dp"
+            android:layout_height="47dp"
+            android:clipToOutline="true"
+            android:contentDescription="@string/logo_issuer_description"
+            android:visibility="gone" />
+
+        <View
+            android:id="@+id/logoPlaceholder"
+            android:layout_width="47dp"
+            android:layout_height="47dp"
+            android:layout_alignWithParentIfMissing="true"
+            android:layout_toEndOf="@id/ivIssuerLogo" />
+
+        <TextView
+            android:id="@+id/tvIssuerName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/logoPlaceholder"
+            android:layout_toEndOf="@id/logoPlaceholder"
+            android:textAppearance="@style/text_label_l" />
+
+        <ImageView
+            android:id="@+id/ivVerifierMark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvIssuerName"
+            android:layout_toEndOf="@id/logoPlaceholder"
+            android:src="@drawable/verifier_mark"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvVerifierText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvIssuerName"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@id/ivVerifierMark"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/issuerDetailsLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/logo_name">
+
+        <!-- 所在地のセット -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <TextView
+                android:id="@+id/subTextLocation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/text_location"
+                android:textAppearance="@style/text_sub_text"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/labelLocation"
+                style="@style/label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/subTextLocation"
+                android:textAppearance="@style/text_label_m"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <!-- 連絡先のセット -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <TextView
+                android:id="@+id/subTextContact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/text_contact_address"
+                android:textAppearance="@style/text_sub_text"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/labelContact"
+                style="@style/label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/subTextContact"
+                android:textAppearance="@style/text_label_m"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <!-- 国名のセット -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <TextView
+                android:id="@+id/subTextCountry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/text_country_name"
+                android:textAppearance="@style/text_sub_text"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/labelCountry"
+                style="@style/label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/subTextCountry"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <!-- ドメインのセット -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/sub_text_domain"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/text_domain"
+                android:textAppearance="@style/text_sub_text" />
+
+            <TextView
+                android:id="@+id/label_domain"
+                style="@style/label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/sub_text_domain" />
+        </RelativeLayout>
+
+        <!-- 利用規約 -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/sub_text_tos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/text_terms_of_service"
+                android:textAppearance="@style/text_sub_text"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/label_tos"
+                style="@style/label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/sub_text_tos"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <!-- プライバシーポリシー -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/sub_text_policy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/text_privacy_policy"
+                android:textAppearance="@style/text_sub_text"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/label_policy"
+                style="@style/label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/sub_text_policy"
+                android:visibility="gone" />
+        </RelativeLayout>
+    </LinearLayout>
+
+
+    <FrameLayout
+        android:id="@+id/fragment_issuer_detail"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/logo_name" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

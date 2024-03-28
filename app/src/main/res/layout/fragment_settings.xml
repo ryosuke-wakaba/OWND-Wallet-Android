@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    tools:context=".ui.settings.SettingsFragment">
+
+    <LinearLayout
+        android:id="@+id/account_info_linear_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="32dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <!-- アカウント情報 TextView -->
+            <TextView
+                android:id="@+id/text_account_info"
+                style="@style/margin12dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:lineSpacingExtra="4sp"
+                android:text="@string/text_account_info"
+                android:textAppearance="@style/text_text"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/link_text_backup"
+                style="@style/margin12dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:drawablePadding="8dp"
+                android:gravity="start|center_vertical"
+                android:lineSpacingExtra="4sp"
+                android:text="@string/link_text_backup"
+                android:textAppearance="@style/text_label_m"
+                app:drawableEndCompat="@drawable/ic_chevron_right"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/text_account_info" />
+
+            <!--Todo 機能を実装したら公開する-->
+<!--            <TextView-->
+<!--                android:id="@+id/link_text_delete"-->
+<!--                style="@style/margin12dp"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:drawablePadding="8dp"-->
+<!--                android:gravity="start|center_vertical"-->
+<!--                android:lineSpacingExtra="4sp"-->
+<!--                android:text="@string/link_text_delete"-->
+<!--                android:textAppearance="@style/text_label_m"-->
+<!--                app:drawableEndCompat="@drawable/ic_chevron_right"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toBottomOf="@id/link_text_backup" />-->
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+
+<!--    <LinearLayout-->
+<!--        android:id="@+id/related_apps_linear_layout"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="64dp"-->
+<!--        android:layout_marginBottom="32dp"-->
+<!--        android:orientation="vertical"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/account_info_linear_layout">-->
+
+<!--        <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content">-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/text_related_apps"-->
+<!--                style="@style/margin12dp"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:lineSpacingExtra="4sp"-->
+<!--                android:text="@string/text_related_apps"-->
+<!--                android:textAppearance="@style/text_text"-->
+<!--                android:translationY="-2.02sp"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toTopOf="parent" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/link_text_owned_messenger"-->
+<!--                style="@style/margin12dp"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:drawablePadding="8dp"-->
+<!--                android:gravity="start|center_vertical"-->
+<!--                android:lineSpacingExtra="4sp"-->
+<!--                android:text="@string/link_text_owned_messenger"-->
+<!--                android:textAppearance="@style/text_label_m"-->
+<!--                app:drawableEndCompat="@drawable/ic_chevron_right"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toBottomOf="@id/text_related_apps" />-->
+<!--        </androidx.constraintlayout.widget.ConstraintLayout>-->
+<!--    </LinearLayout>-->
+
+    <LinearLayout
+        android:id="@+id/about_linear_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="32dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/account_info_linear_layout">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/text_about"
+                style="@style/margin12dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="4sp"
+                android:text="@string/text_about"
+                android:textAppearance="@style/text_text"
+                android:translationY="-2.02sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/text_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
+                android:lineSpacingExtra="4sp"
+                android:text="@string/text_version"
+                android:textAppearance="@style/text_label_m"
+                android:translationY="-2.02sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/text_about" />
+
+            <TextView
+                android:id="@+id/text_version_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="12dp"
+                android:lineSpacingExtra="4sp"
+                android:textAppearance="@style/text_sub_text"
+                android:translationY="-2.02sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/text_version" />
+
+            <TextView
+                android:id="@+id/link_text_terms_of_use"
+                style="@style/margin12dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:drawablePadding="8dp"
+                android:gravity="start|center_vertical"
+                android:lineSpacingExtra="4sp"
+                android:text="@string/link_text_terms_of_use"
+                android:textAppearance="@style/text_label_m"
+                app:drawableEndCompat="@drawable/ic_chevron_right"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/text_version_name" />
+
+            <TextView
+                android:id="@+id/link_text_privacy_policy"
+                style="@style/margin12dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:drawablePadding="8dp"
+                android:gravity="start|center_vertical"
+                android:lineSpacingExtra="4sp"
+                android:text="@string/link_text_privacy_policy"
+                android:textAppearance="@style/text_label_m"
+                app:drawableEndCompat="@drawable/ic_chevron_right"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/link_text_terms_of_use" />
+
+            <!--            <TextView-->
+            <!--                android:id="@+id/link_text_support"-->
+            <!--                style="@style/margin12dp"-->
+            <!--                android:layout_width="0dp"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:drawablePadding="8dp"-->
+            <!--                android:gravity="start|center_vertical"-->
+            <!--                android:lineSpacingExtra="4sp"-->
+            <!--                android:text="@string/link_text_inquiry"-->
+            <!--                android:textAppearance="@style/text_label_m"-->
+            <!--                app:drawableEndCompat="@drawable/ic_chevron_right"-->
+            <!--                app:layout_constraintEnd_toEndOf="parent"-->
+            <!--                app:layout_constraintStart_toStartOf="parent"-->
+            <!--                app:layout_constraintTop_toBottomOf="@id/link_text_privacy_policy" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/link_text_license"-->
+<!--                style="@style/margin12dp"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:drawablePadding="8dp"-->
+<!--                android:gravity="start|center_vertical"-->
+<!--                android:lineSpacingExtra="4sp"-->
+<!--                android:text="@string/link_text_license"-->
+<!--                android:textAppearance="@style/text_label_m"-->
+<!--                app:drawableEndCompat="@drawable/ic_chevron_right"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toBottomOf="@id/link_text_privacy_policy" />-->
+            <!--                app:layout_constraintTop_toBottomOf="@id/link_text_support" />-->
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primitive_forest_50">#E6F5EC</color>
+    <color name="primitive_wood_50">#F3EEE5</color>
+    <color name="primitive_sun_50">#FFE7E6</color>
+    <color name="primitive_sun_900">#D50000</color>
+    <color name="sumi_900">#1A1A1C</color>
+    <color name="sea_300">#7096F8</color>
+    <color name="darken_sea_300_10p">#4979F5</color>
+    <!-- res/values/colors.xml -->
+    <color name="textColorPrimary">#FFFFFFFF</color>
+    <color name="textColorSecondary">#626264</color>
+    <color name="backgroundColorPrimary">@color/sumi_900</color>
+    <color name="filledButtonTextColor">@color/white</color>
+    <color name="filledButtonBackgroundColor">@color/teal_700</color>
+    <color name="outlinedButtonTextColor">@color/white</color>
+    <color name="outlinedButtonBorderColor">@color/white</color>
+    <color name="infoBackground">#1A1A1C</color>
+    <color name="warnBackground">#1A1A1C</color>
+    <color name="errorBackground">@color/primitive_sun_900</color>
+    <color name="status_success">#259D63</color>
+    <color name="status_warning">#C16800</color>
+    <color name="status_error">#EC0000</color>
+    <color name="filledBackground">#1A1A1C</color>
+
+</resources>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.confirmation.ConfirmationFragment">
+
+    <!-- カスタムヘッダー -->
+    <LinearLayout
+        android:id="@+id/header_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- キャンセルテキストビュー -->
+        <TextView
+            android:id="@+id/tv_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:lineSpacingExtra="2sp"
+            android:minHeight="48dp"
+            android:paddingStart="16dp"
+            android:paddingTop="32dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="16dp"
+            android:text="@string/text_cancel"
+            android:textAppearance="@style/left_link_title" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_layout">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="17dp"
+            android:paddingEnd="17dp">
+
+            <!-- TextViewに27dpの余白を追加 -->
+            <TextView
+                android:id="@+id/text_confirmation"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="27dp"
+                android:textAppearance="@style/text_title"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/image_confirmation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="27dp"
+                android:contentDescription="@string/description_for_img_add_certificate"
+                android:src="@drawable/issue_confirmation"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/text_confirmation" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/claim_recycler_view"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="27dp"
+                android:paddingBottom="?attr/actionBarSize"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/image_confirmation" />
+
+            <TextView
+                android:id="@+id/tv_issuer_info_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/title_issuer_detail"
+                android:textAppearance="@style/text_text"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/claim_recycler_view" />
+
+            <RelativeLayout
+                android:id="@+id/issuer_logo_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_issuer_info_label">
+                <!-- RelativeLayoutの中身 -->
+
+
+                <!-- ロゴのプレースホルダーを常に表示 -->
+                <View
+                    android:id="@+id/logo_placeholder"
+                    android:layout_width="47dp"
+                    android:layout_height="47dp"
+                    android:layout_alignParentStart="true" />
+
+                <!-- ロゴがある場合はプレースホルダーの上に表示 -->
+                <ImageView
+                    android:id="@+id/iv_issuer_logo"
+                    android:layout_width="47dp"
+                    android:layout_height="47dp"
+                    android:layout_alignStart="@id/logo_placeholder"
+                    android:layout_alignTop="@id/logo_placeholder"
+                    android:clipToOutline="true"
+                    android:contentDescription="@string/logo_issuer_description"
+                    android:visibility="gone" />
+
+                <!-- ロゴまたはプレースホルダーの右側に発行機関名を配置 -->
+                <TextView
+                    android:id="@+id/tv_issuer_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@id/logo_placeholder"
+                    android:layout_toEndOf="@id/logo_placeholder"
+                    android:textAppearance="@style/label" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/issuer_details_layout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/issuer_logo_name">
+
+                <!-- ドメインのセット -->
+                <TextView
+                    android:id="@+id/sub_text_domain"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/text_domain"
+                    android:textAppearance="@style/text_sub_text" />
+
+                <TextView
+                    android:id="@+id/issuer_domain"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="20dp"
+                    android:textAppearance="@style/text_label_m" />
+
+            </LinearLayout>
+
+            <View
+                android:id="@+id/upper_space_for_button"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                app:layout_constraintBottom_toTopOf="@id/button_issue"
+                app:layout_constraintTop_toBottomOf="@id/issuer_details_layout" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_issue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:backgroundTint="@color/filledButtonBackgroundColor"
+                android:text="@string/issue"
+                android:textAllCaps="false"
+                android:textColor="@color/filledButtonTextColor"
+                app:cornerRadius="8dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/upper_space_for_button" />
+                />
+
+            <View
+                android:id="@+id/bottom_space"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/button_issue" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white"
+    android:padding="16dp">
+
+    <!-- キャプション1 -->
+    <TextView
+        android:id="@+id/textCaption1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="160dp"
+        android:text="@string/walkthrough_4_title"
+        android:textAppearance="@style/walkthrough_title"
+        android:textStyle="bold" />
+
+    <!-- キャプション2 -->
+    <TextView
+        android:id="@+id/textCaption2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textCaption1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="64dp"
+        android:paddingHorizontal="32dp"
+        android:text="@string/walkthrough_4_sub_title"
+        android:textAppearance="@style/walkthrough_sub_title" />
+
+    <ImageView
+        android:id="@+id/imageStep4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textCaption2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/walkthrough_steps4" />
+
+    <!-- 前のステップに戻るアロー -->
+    <ImageView
+        android:id="@+id/imageArrowBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/imageStep4"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="160dp"
+        android:src="@drawable/arrow_left" />
+
+    <ImageView
+        android:id="@+id/image_walkthrough_image4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/imageArrowBack"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/walkthrough_image4" />
+
+    <LinearLayout
+        android:id="@+id/link_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/image_walkthrough_image4"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+        <!-- リンクテキスト1 -->
+        <TextView
+            android:id="@+id/link_privacy_policy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/walkthrough_link"/>
+
+        <!-- リンクテキスト2 -->
+        <TextView
+            android:id="@+id/link_term_of_use"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textAppearance="@style/walkthrough_link"/>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/link_sub_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="64dp"
+        android:layout_below="@id/link_layout"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp"
+        android:textAppearance="@style/walkthrough_sub_link"
+        android:text="@string/walkthrough4_link_sub_text" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnStart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/link_sub_text"
+        android:layout_marginTop="16dp"
+        android:padding="16dp"
+        android:backgroundTint="@color/black"
+        android:text="@string/start_app_newly"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        app:cornerRadius="8dp" />
+
+    <!-- バックアップから始めるリンク -->
+    <TextView
+        android:id="@+id/restore_from_backup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/btnStart"
+        android:textAppearance="@style/walkthrough_link"/>
+
+</RelativeLayout>
+

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ui.backup.BackupFragment">
+
+    <TextView
+        android:id="@+id/description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/create_backup_file_description"
+        android:layout_marginTop="64dp"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/backup_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/filledButtonBackgroundColor"
+        android:contentDescription="@string/backup_button_description"
+        android:padding="16dp"
+        android:text="@string/create_backup_file"
+        android:textColor="@color/filledButtonTextColor"
+        app:cornerRadius="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/description"
+        app:layout_constraintBottom_toTopOf="@+id/last_backup_date_wrapper"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/last_backup_date_wrapper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/backup_button"
+        android:padding="8dp"
+        android:gravity="center"
+        >
+        <TextView
+            android:id="@+id/last_backup_date_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/last_backup_date"
+            />
+        <TextView
+            android:id="@+id/last_backup_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

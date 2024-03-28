@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_certificate"
+        android:icon="@drawable/ic_certificate"
+        android:title="@string/title_certificate" />
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_segment"-->
+<!--        android:icon="@drawable/ic_segment"-->
+<!--        android:title="@string/title_segment" />-->
+
+    <item
+        android:id="@+id/navigation_reader"
+        android:icon="@drawable/ic_reader"
+        android:title="@string/title_reader" />
+
+    <item
+        android:id="@+id/navigation_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/title_settings" />
+
+</menu>
