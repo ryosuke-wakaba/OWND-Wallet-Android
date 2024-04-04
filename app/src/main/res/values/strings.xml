@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">OWND Wallet</string>
     <string name="title_certificate">証明書</string>
-    <string name="title_segment">提供先</string>
+    <string name="title_recipient">提供先</string>
     <string name="title_reader">読み取り</string>
     <string name="title_settings">設定</string>
     <string name="title_confirmation">発行</string>

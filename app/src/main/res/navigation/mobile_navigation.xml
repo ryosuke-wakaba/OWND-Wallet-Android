@@ -19,10 +19,10 @@
     </fragment>
 
     <fragment
-        android:id="@+id/navigation_segment"
-        android:name="com.ownd_project.tw2023_wallet_android.ui.segment.SegmentFragment"
-        android:label="@string/title_segment"
-        tools:layout="@layout/fragment_segment" />
+        android:id="@+id/navigation_recipient"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.recipient.RecipientFragment"
+        android:label="@string/title_recipient"
+        tools:layout="@layout/fragment_recipient" />
 
     <fragment
         android:id="@+id/navigation_reader"
