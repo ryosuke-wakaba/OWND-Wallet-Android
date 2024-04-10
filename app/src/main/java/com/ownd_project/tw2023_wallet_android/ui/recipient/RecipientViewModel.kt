@@ -49,15 +49,13 @@ class RecipientViewModel(private val credentialSharingHistoryStore: CredentialSh
     private val _text = MutableLiveData<String>().apply {
         value = "提供履歴はありません"
     }
-    val text: LiveData<String> = _text
-
-    // 履歴データの一覧を保持するLiveData
     private val _sharingHistories = MutableLiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories?>()
-    val sharingHistories: LiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories?> = _sharingHistories
-
     private val _targetHistory = MutableLiveData<CredentialSharingHistory?>().apply {
         value = null
     }
+
+    val text: LiveData<String> = _text
+    val sharingHistories: LiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories?> = _sharingHistories
     val targetHistory: LiveData<CredentialSharingHistory?> = _targetHistory
 
     private fun setHistoryData(schema: com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories) {
