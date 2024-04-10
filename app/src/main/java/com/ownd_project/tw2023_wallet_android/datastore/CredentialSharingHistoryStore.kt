@@ -9,6 +9,7 @@ import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.io.InputStream
 import java.io.OutputStream
@@ -40,6 +41,9 @@ open class CredentialSharingHistoryStore(
         produceFile = { context.dataDir.resolve(storeFile) },
         scope = scope
     )
+
+    val credentialSharingHistoriesFlow: Flow<CredentialSharingHistories> =
+        historyDataStore.data
 
     suspend fun save(history: com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory) {
         historyDataStore.updateData { currentList ->
