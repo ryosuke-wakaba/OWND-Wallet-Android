@@ -37,24 +37,17 @@ class RecipientDetailFragment : Fragment() {
             activity as? AppCompatActivity, getString(R.string.title_recipient)
         )
 
-        val recipientViewModel = ViewModelProvider(requireActivity())[RecipientViewModel::class.java]
-
-
         _binding = FragmentRecipientDetailBinding.inflate(inflater, container, false)
 
+        val recipientViewModel = ViewModelProvider(requireActivity())[RecipientViewModel::class.java]
         recipientViewModel.sharingHistories.observe(viewLifecycleOwner) { histories ->
             if (histories != null) {
-                // tmp をfilterして、historiesByRpとして変数定義する。
-                // filterの条件は、引数で受け取ったrpと、tmpのrpが一致するもののみとする。
                 val historiesByRp = histories.itemsList.filter { it.rp == args.rp }
-
                 if (historiesByRp.isNullOrEmpty()) {
                     Log.d(tag, "sharing histories that match the rp is empty")
                 }else{
                     binding.histories.visibility = View.VISIBLE
-                    // `fragment_recipient_detail`のRecyclerViewを取得して、`historiesByRp`を表示する
-                    // RecyclerViewのAdapterは、`RecipientDetailAdapter`を使用する
-                    // Adapterのコンストラクタには、`historiesByRp`を渡す
+
                     val adapter = RecipientDetailAdapter(requireContext(), recipientViewModel, historiesByRp)
                     binding.histories.layoutManager = LinearLayoutManager(context)
                     binding.histories.adapter = adapter
