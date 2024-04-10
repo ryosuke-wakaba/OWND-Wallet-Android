@@ -97,5 +97,11 @@
     <string name="restored_data">データを復元しました</string>
     <string name="select_invalid_backup_file">選択したファイルはバックアップファイルではありません</string>
     <string name="saved_backup_file">バックアップが完了しました</string>
+    <string name="last_provided_date_header">最終情報提供日 ：</string>
+    <string name="organization_info_header">組織情報</string>
+    <string name="shared_info_history_header">情報提供履歴</string>
+    <string name="number_of_claims">全%s項目</string>
+    <string name="claim_recipient">%s に提示した情報</string>
+    <string name="timing_of_claim_sharing">%sの情報提供</string>
 
 </resources>
