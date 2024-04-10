@@ -323,7 +323,10 @@ class IdTokenSharringViewModel : ViewModel() {
                             )
                             .setCredentialID(it.id)
                         it.sharedClaims.forEach { claim ->
-                            builder.addClaims(claim.name)
+                            val tmp = com.ownd_project.tw2023_wallet_android.datastore.Claim.newBuilder()
+                                .setName(claim.name)
+                                .setValue("") // todo: The definition of DisclosedClaim needs to be revised.
+                            builder.addClaims(tmp)
                         }
                         val history = builder.build()
                         store.save(history)

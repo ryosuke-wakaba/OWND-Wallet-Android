@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentSharedClaimDetailBinding
+import com.ownd_project.tw2023_wallet_android.datastore.Claim
 import com.ownd_project.tw2023_wallet_android.utils.DisplayUtil
 
 class SharedClaimDetailFragment : Fragment() {
@@ -66,7 +67,7 @@ class SharedClaimDetailFragment : Fragment() {
 
 
 class ClaimAdapter(
-    private val claims: List<String>) :
+    private val claims: List<Claim>) :
     RecyclerView.Adapter<ClaimAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -82,7 +83,7 @@ class ClaimAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val claim = claims[position]
-        holder.claimTitle.text = claim
+        holder.claimTitle.text = claim.name
     }
 
     private fun Bundle.putCredentialSharingHistory(

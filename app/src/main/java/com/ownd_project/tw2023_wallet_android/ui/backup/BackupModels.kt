@@ -11,10 +11,19 @@ data class CredentialSharingHistory(
     val accountIndex: Int,
     val createdAt: String,
     val credentialID: String,
-    var claims: List<String>,
+    var claims: List<Claim>,
     var rpName: String,
+
+    var location: String,
+    var contactUrl: String,
     var privacyPolicyUrl: String,
     var logoUrl: String
+)
+
+data class Claim(
+    val name: String,
+    val value: String,
+    val purpose: String
 )
 
 data class BackupData(

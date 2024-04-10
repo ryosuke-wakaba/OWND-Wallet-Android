@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.protobuf.Timestamp
+import com.ownd_project.tw2023_wallet_android.datastore.Claim
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistoryStore
@@ -21,8 +22,9 @@ fun timestampToString(timestamp: Timestamp): String {
 }
 
 
-fun concatenateAndTruncate(list: List<String>, limit: Int): String {
-    val concatenated = list.joinToString(" | ")
+fun concatenateAndTruncate(list: List<Claim>, limit: Int): String {
+    val claimNames = list.map { it.name }
+    val concatenated = claimNames.joinToString(" | ")
     return if (concatenated.length > limit) {
         concatenated.substring(0, limit) + "..."
     } else {

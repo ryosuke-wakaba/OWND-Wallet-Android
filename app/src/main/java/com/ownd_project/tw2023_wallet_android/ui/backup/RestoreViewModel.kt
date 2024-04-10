@@ -95,7 +95,12 @@ class RestoreViewModel : ViewModel() {
                         .setCreatedAt(it.createdAt.toDateFromISO8601().toGoogleTimestamp())
                         .setCredentialID(it.credentialID)
                     it.claims.forEach { claim ->
-                        builder.addClaims(claim)
+                        val tmp = com.ownd_project.tw2023_wallet_android.datastore.Claim.newBuilder()
+                            .setName(claim.name)
+                            .setValue(claim.value)
+                            .setPurpose(claim.purpose)
+                            .build()
+                        builder.addClaims(tmp)
                     }
                     val history = builder.build()
                     store2.save(history)
