@@ -99,7 +99,12 @@ class CredentialHistoryAdapter(private val histories: List<com.ownd_project.tw20
         holder.lastProvidedDateView.text = timestampToString(history.createdAt)
 
         holder.itemView.setOnClickListener {
-            val action = RecipientFragmentDirections.actionToRecipientDetail(history.rp)
+            val action = RecipientFragmentDirections.actionToRecipientDetail(
+                history.rp,
+                history.rpLocation,
+                history.rpContactUrl,
+                history.rpPrivacyPolicyUrl,
+                history.rpLogoUrl)
             it.findNavController().navigate(action)
         }
     }

@@ -26,6 +26,18 @@
         <argument
             android:name="rp"
             app:argType="string" />
+        <argument
+            android:name="rpLocation"
+            app:argType="string" />
+        <argument
+            android:name="rpContactUrl"
+            app:argType="string" />
+        <argument
+            android:name="rpPrivacyPolicyUrl"
+            app:argType="string" />
+        <argument
+            android:name="rpLogoUrl"
+            app:argType="string" />
         <action
             android:id="@+id/action_to_shared_claim_detail"
             app:destination="@id/sharedClaimDetailFragment">
@@ -43,6 +55,18 @@
             >
             <argument
                 android:name="rp"
+                app:argType="string" />
+            <argument
+                android:name="rpLocation"
+                app:argType="string" />
+            <argument
+                android:name="rpContactUrl"
+                app:argType="string" />
+            <argument
+                android:name="rpPrivacyPolicyUrl"
+                app:argType="string" />
+            <argument
+                android:name="rpLogoUrl"
                 app:argType="string" />
         </action>
     </fragment>
