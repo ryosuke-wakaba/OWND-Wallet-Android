@@ -287,7 +287,7 @@ class IdTokenSharringViewModel : ViewModel() {
     }
 
     fun shareCredential(fragment: Fragment, credentials: List<SubmissionCredential>) {
-        Log.d(TAG, "shareIdToken")
+        Log.d(TAG, "shareVPToken")
         viewModelScope.launch(Dispatchers.IO) {
             val result = openIdProvider.respondVPResponse(credentials)
             result.fold(
@@ -306,7 +306,7 @@ class IdTokenSharringViewModel : ViewModel() {
                 },
                 ifRight = { value ->
                     // postに成功したら提供履歴を記録
-                    Log.d(TAG, "store login history")
+                    Log.d(TAG, "store presentation history")
                     val store = CredentialSharingHistoryStore.getInstance(fragment.requireContext())
                     val currentInstant = Instant.now()
                     val postResult = value.first
