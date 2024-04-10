@@ -19,10 +19,40 @@
     </fragment>
 
     <fragment
+        android:id="@+id/recipientDetailFragment"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.recipient.RecipientDetailFragment"
+        android:label="fragment_recipient_detail"
+        tools:layout="@layout/fragment_recipient_detail">
+        <argument
+            android:name="rp"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_to_shared_claim_detail"
+            app:destination="@id/sharedClaimDetailFragment">
+        </action>
+    </fragment>
+
+    <fragment
         android:id="@+id/navigation_recipient"
         android:name="com.ownd_project.tw2023_wallet_android.ui.recipient.RecipientFragment"
         android:label="@string/title_recipient"
-        tools:layout="@layout/fragment_recipient" />
+        tools:layout="@layout/fragment_recipient">
+        <action
+            android:id="@+id/action_to_recipient_detail"
+            app:destination="@id/recipientDetailFragment"
+            >
+            <argument
+                android:name="rp"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/sharedClaimDetailFragment"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.recipient.SharedClaimDetailFragment"
+        android:label="fragment_shared_claim_detail"
+        tools:layout="@layout/fragment_shared_claim_detail">
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_reader"
