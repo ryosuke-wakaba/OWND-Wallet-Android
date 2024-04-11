@@ -84,6 +84,10 @@ class ClaimAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val claim = claims[position]
         holder.claimTitle.text = claim.name
+        if (claim.purpose != "") {
+            holder.claimPurpose.visibility = View.VISIBLE
+            holder.claimPurpose.text = claim.purpose
+        }
     }
 
     private fun Bundle.putCredentialSharingHistory(
