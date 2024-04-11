@@ -71,7 +71,6 @@ class RecipientViewModel(private val credentialSharingHistoryStore: CredentialSh
     init {
         viewModelScope.launch {
             credentialSharingHistoryStore.credentialSharingHistoriesFlow.collect() { schema ->
-                // setHistoryData(testData())
                 setHistoryData(schema)
             }
         }
