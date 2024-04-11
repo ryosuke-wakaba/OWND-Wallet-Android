@@ -7,65 +7,96 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/organization_info_header"
+        android:id="@+id/rp_info_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="bold"
         android:text="@string/organization_info_header"
         android:textSize="18sp" />
 
-    <TextView
-        android:id="@+id/rp_text_view"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:textStyle="bold"
-        android:textSize="24sp" />
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical"
+        >
+        <ImageView
+            android:id="@+id/rp_logo_image"
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:layout_marginRight="10dp"
+            android:adjustViewBounds="true"
+            android:visibility="gone"
+            />
+        <TextView
+            android:id="@+id/rp_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/organization_location_header"
+        android:id="@+id/rp_location_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="13dp"
         android:text="@string/text_location"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:visibility="gone"
+        />
 
     <TextView
-        android:id="@+id/organization_location"
+        android:id="@+id/rp_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="N/A"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:visibility="gone"
+        />
 
     <TextView
-        android:id="@+id/organization_contact_header"
+        android:id="@+id/rp_contact_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/text_contact_address"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:visibility="gone"
+        />
 
     <TextView
-        android:id="@+id/organization_contact"
+        android:id="@+id/rp_contact"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:autoLink="web"
         android:text="N/A"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:visibility="gone"
+        />
 
     <TextView
-        android:id="@+id/organization_privacy_policy_header"
+        android:id="@+id/rp_privacy_policy_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/text_privacy_policy"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:visibility="gone"
+        />
 
     <TextView
-        android:id="@+id/organization_privacy_policy"
+        android:id="@+id/rp_privacy_policy"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:autoLink="web"
         android:text="N/A"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:visibility="gone"
+        />
 
     <TextView
         android:id="@+id/shared_info_history_header"
@@ -76,7 +107,6 @@
         android:layout_marginTop="30dp"
         android:textSize="18sp" />
 
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/histories"
         android:layout_width="match_parent"
@@ -84,6 +114,5 @@
         android:clipToPadding="false"
         android:paddingTop="8dp"
         android:paddingBottom="8dp" />
-
 
 </LinearLayout>

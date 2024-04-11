@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -15,6 +16,7 @@ import androidx.navigation.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentRecipientDetailBinding
 import com.ownd_project.tw2023_wallet_android.utils.DisplayUtil
@@ -69,11 +71,37 @@ class RecipientDetailFragment : Fragment() {
         val menuProvider = RecipientDetailFragmentMenuProvider(this, activity.menuInflater)
         activity.addMenuProvider(menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        // 取得した引数を使用してUIを更新
-        val rp = args.rp
-
         val rpTextView = view.findViewById<TextView>(R.id.rp_text_view)
-        rpTextView.text = rp
+        rpTextView.text = args.rp
+
+        if (args.rpLocation != ""){
+            val rpLocationHeader = view.findViewById<TextView>(R.id.rp_location_header)
+            val rpLocation = view.findViewById<TextView>(R.id.rp_location)
+            rpLocation.visibility = View.VISIBLE
+            rpLocationHeader.visibility = View.VISIBLE
+            rpLocation.text = args.rpLocation
+        }
+        if (args.rpContactUrl != ""){
+            val rpContactHeader = view.findViewById<TextView>(R.id.rp_contact_header)
+            val rpContact = view.findViewById<TextView>(R.id.rp_contact)
+            rpContact.visibility = View.VISIBLE
+            rpContactHeader.visibility = View.VISIBLE
+            rpContact.text = args.rpContactUrl
+        }
+        if (args.rpPrivacyPolicyUrl != ""){
+            val rpPrivacyPolicyHeader = view.findViewById<TextView>(R.id.rp_privacy_policy_header)
+            val rpPrivacyPolicy = view.findViewById<TextView>(R.id.rp_privacy_policy)
+            rpPrivacyPolicy.visibility = View.VISIBLE
+            rpPrivacyPolicyHeader.visibility = View.VISIBLE
+            rpPrivacyPolicy.text = args.rpPrivacyPolicyUrl
+        }
+        if (args.rpLogoUrl != ""){
+            val rpLogoImageView = view.findViewById<ImageView>(R.id.rp_logo_image)
+            rpLogoImageView.visibility = View.VISIBLE
+            Glide.with(this)
+                .load(args.rpLogoUrl)
+                .into(rpLogoImageView)
+        }
     }
 }
 
