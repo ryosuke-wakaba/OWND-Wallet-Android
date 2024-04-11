@@ -72,7 +72,7 @@ class ClaimAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val claimTitle: TextView = view.findViewById(R.id.claim_title)
-        val claimDescription: TextView = view.findViewById(R.id.claim_description)
+        val claimPurpose: TextView = view.findViewById(R.id.claim_purpose)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
