@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -13,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentRecipientBinding
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistoryStore
@@ -61,7 +63,8 @@ class RecipientFragment : Fragment() {
                     binding.textDefault.visibility = View.GONE
                     binding.recipientList.visibility = View.VISIBLE
 
-                    val adapter = CredentialHistoryAdapter(itemList)
+                    val hasAnyLogo = itemList.any{ it.rpLogoUrl != ""}
+                    val adapter = CredentialHistoryAdapter(itemList, hasAnyLogo)
                     binding.recipientList.layoutManager = LinearLayoutManager(context)
                     binding.recipientList.adapter = adapter
                 }
@@ -80,11 +83,14 @@ class RecipientFragment : Fragment() {
 
 
 
-class CredentialHistoryAdapter(private val histories: List<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory>) :
+class CredentialHistoryAdapter(
+    private val histories: List<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory>,
+    private val hasAnyLogo: Boolean) :
     RecyclerView.Adapter<CredentialHistoryAdapter.ViewHolder>() {
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val rpNameTextView: TextView = view.findViewById(R.id.rp_name)
         val lastProvidedDateView: TextView = view.findViewById(R.id.last_provided_date)
+        val imageView = view.findViewById<ImageView>(R.id.image_view)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -97,6 +103,17 @@ class CredentialHistoryAdapter(private val histories: List<com.ownd_project.tw20
         val history = histories[position]
         holder.rpNameTextView.text = history.rp
         holder.lastProvidedDateView.text = timestampToString(history.createdAt)
+
+        if (hasAnyLogo){
+            holder.imageView.visibility = View.INVISIBLE
+        }
+
+        if (history.rpLogoUrl != "") {
+            holder.imageView.visibility = View.VISIBLE
+            Glide.with(holder.itemView)
+                .load(history.rpLogoUrl)
+                .into(holder.imageView)
+        }
 
         holder.itemView.setOnClickListener {
             val action = RecipientFragmentDirections.actionToRecipientDetail(
