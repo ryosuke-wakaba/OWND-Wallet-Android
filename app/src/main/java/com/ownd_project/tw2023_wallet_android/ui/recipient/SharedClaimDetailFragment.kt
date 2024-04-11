@@ -50,7 +50,7 @@ class SharedClaimDetailFragment : Fragment() {
                 )
 
                 val rpTextView = view.findViewById<TextView>(R.id.claim_recipient)
-                rpTextView.text = getString(R.string.claim_recipient, history.rp)
+                rpTextView.text = getString(R.string.claim_recipient, history.rpName)
 
                 val adapter = ClaimAdapter(history.claimsList)
                 binding.sharedClaims.layoutManager = LinearLayoutManager(context)

@@ -72,7 +72,7 @@ class RecipientDetailFragment : Fragment() {
         activity.addMenuProvider(menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
         val rpTextView = view.findViewById<TextView>(R.id.rp_text_view)
-        rpTextView.text = args.rp
+        rpTextView.text = args.rpName
 
         if (args.rpLocation != ""){
             val rpLocationHeader = view.findViewById<TextView>(R.id.rp_location_header)

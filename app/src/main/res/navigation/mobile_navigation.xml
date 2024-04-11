@@ -27,6 +27,9 @@
             android:name="rp"
             app:argType="string" />
         <argument
+            android:name="rpName"
+            app:argType="string" />
+        <argument
             android:name="rpLocation"
             app:argType="string" />
         <argument
@@ -55,7 +58,10 @@
             >
             <argument
                 android:name="rp"
-                app:argType="string" />
+                app:argType="string" />            <argument
+            android:name="rpName"
+            app:argType="string" />
+
             <argument
                 android:name="rpLocation"
                 app:argType="string" />

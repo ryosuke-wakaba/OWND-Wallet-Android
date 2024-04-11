@@ -101,7 +101,7 @@ class CredentialHistoryAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val history = histories[position]
-        holder.rpNameTextView.text = history.rp
+        holder.rpNameTextView.text = history.rpName
         holder.lastProvidedDateView.text = timestampToString(history.createdAt)
 
         if (hasAnyLogo){
@@ -118,6 +118,7 @@ class CredentialHistoryAdapter(
         holder.itemView.setOnClickListener {
             val action = RecipientFragmentDirections.actionToRecipientDetail(
                 history.rp,
+                history.rpName,
                 history.rpLocation,
                 history.rpContactUrl,
                 history.rpPrivacyPolicyUrl,
