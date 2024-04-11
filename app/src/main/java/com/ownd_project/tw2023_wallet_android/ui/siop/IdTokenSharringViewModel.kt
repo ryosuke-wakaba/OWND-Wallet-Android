@@ -312,8 +312,10 @@ class IdTokenSharringViewModel : ViewModel() {
                     val postResult = value.first
                     val sharedContent = value.second
                     sharedContent.forEach { it ->
+                        val openIdProviderSiopRequest = openIdProvider.getSiopRequest()
+                        val registrationPayload = openIdProviderSiopRequest.registrationMetadata
                         val builder = com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory.newBuilder()
-                            .setRp(openIdProvider.getSiopRequest().authorizationRequestPayload.clientId)
+                            .setRp(openIdProviderSiopRequest.authorizationRequestPayload.clientId)
                             .setAccountIndex(index)
                             .setCreatedAt(
                                 Timestamp.newBuilder()
@@ -321,11 +323,15 @@ class IdTokenSharringViewModel : ViewModel() {
                                     .setNanos(currentInstant.nano)
                                     .build()
                             )
+                            .setRpName(registrationPayload.clientName)
+                            .setRpPrivacyPolicyUrl(registrationPayload.policyUri)
+                            .setRpLogoUrl(registrationPayload.logoUri)
                             .setCredentialID(it.id)
                         it.sharedClaims.forEach { claim ->
                             val tmp = com.ownd_project.tw2023_wallet_android.datastore.Claim.newBuilder()
                                 .setName(claim.name)
-                                .setValue("") // todo: The definition of DisclosedClaim needs to be revised.
+                                .setPurpose("") // todo: The definition of DisclosedClaim needs to be revised to set this value.
+                                .setValue("") // todo: The definition of DisclosedClaim needs to be revised to set this value.
                             builder.addClaims(tmp)
                         }
                         val history = builder.build()
