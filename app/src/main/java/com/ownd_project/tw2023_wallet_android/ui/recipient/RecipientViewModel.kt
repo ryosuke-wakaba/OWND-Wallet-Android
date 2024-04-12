@@ -17,7 +17,7 @@ import java.util.Locale
 fun timestampToString(timestamp: Timestamp): String {
     val milliseconds = timestamp.seconds * 1000 + timestamp.nanos / 1_000_000
     val date = java.util.Date(milliseconds)
-    val format = SimpleDateFormat("yyyy-MM-dd hh:mm", Locale.getDefault())
+    val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
     return format.format(date)
 }
 
