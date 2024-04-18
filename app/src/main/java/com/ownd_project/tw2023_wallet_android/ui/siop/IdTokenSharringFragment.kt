@@ -321,9 +321,6 @@ class IdTokenSharringFragment : Fragment(R.layout.fragment_id_token_sharring) {
             val cookies = postResult.cookies
             val action = IdTokenSharringFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
             findNavController().navigate(action)
-        } else {
-            // parentFragmentManager.beginTransaction().remove(this).commit()
-            requireActivity().finish()
         }
     }
 }
