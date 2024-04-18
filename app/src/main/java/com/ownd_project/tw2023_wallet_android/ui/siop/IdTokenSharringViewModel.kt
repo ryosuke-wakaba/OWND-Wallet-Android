@@ -287,7 +287,7 @@ class IdTokenSharringViewModel : ViewModel() {
     }
 
     fun shareCredential(fragment: Fragment, credentials: List<SubmissionCredential>) {
-        Log.d(TAG, "shareIdToken")
+        Log.d(TAG, "shareVPToken")
         viewModelScope.launch(Dispatchers.IO) {
             val result = openIdProvider.respondVPResponse(credentials)
             result.fold(
@@ -306,14 +306,16 @@ class IdTokenSharringViewModel : ViewModel() {
                 },
                 ifRight = { value ->
                     // postに成功したら提供履歴を記録
-                    Log.d(TAG, "store login history")
+                    Log.d(TAG, "store presentation history")
                     val store = CredentialSharingHistoryStore.getInstance(fragment.requireContext())
                     val currentInstant = Instant.now()
                     val postResult = value.first
                     val sharedContent = value.second
                     sharedContent.forEach { it ->
+                        val openIdProviderSiopRequest = openIdProvider.getSiopRequest()
+                        val registrationPayload = openIdProviderSiopRequest.registrationMetadata
                         val builder = com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory.newBuilder()
-                            .setRp(openIdProvider.getSiopRequest().authorizationRequestPayload.clientId)
+                            .setRp(openIdProviderSiopRequest.authorizationRequestPayload.clientId)
                             .setAccountIndex(index)
                             .setCreatedAt(
                                 Timestamp.newBuilder()
@@ -321,9 +323,16 @@ class IdTokenSharringViewModel : ViewModel() {
                                     .setNanos(currentInstant.nano)
                                     .build()
                             )
+                            .setRpName(registrationPayload.clientName)
+                            .setRpPrivacyPolicyUrl(registrationPayload.policyUri)
+                            .setRpLogoUrl(registrationPayload.logoUri)
                             .setCredentialID(it.id)
                         it.sharedClaims.forEach { claim ->
-                            builder.addClaims(claim.name)
+                            val tmp = com.ownd_project.tw2023_wallet_android.datastore.Claim.newBuilder()
+                                .setName(claim.name)
+                                .setPurpose("") // todo: The definition of DisclosedClaim needs to be revised to set this value.
+                                .setValue("") // todo: The definition of DisclosedClaim needs to be revised to set this value.
+                            builder.addClaims(tmp)
                         }
                         val history = builder.build()
                         store.save(history)

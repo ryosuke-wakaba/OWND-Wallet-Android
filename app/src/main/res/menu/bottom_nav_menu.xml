@@ -6,10 +6,10 @@
         android:icon="@drawable/ic_certificate"
         android:title="@string/title_certificate" />
 
-<!--    <item-->
-<!--        android:id="@+id/navigation_segment"-->
-<!--        android:icon="@drawable/ic_segment"-->
-<!--        android:title="@string/title_segment" />-->
+    <item
+        android:id="@+id/navigation_recipient"
+        android:icon="@drawable/ic_recipient"
+        android:title="@string/title_recipient" />
 
     <item
         android:id="@+id/navigation_reader"

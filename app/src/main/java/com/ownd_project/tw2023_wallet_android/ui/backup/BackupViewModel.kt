@@ -96,13 +96,22 @@ class BackupViewModel : ViewModel() {
                 val store2: CredentialSharingHistoryStore =
                     CredentialSharingHistoryStore.getInstance(context)
                 val credentialSharingHistories = store2.getAll().map { it ->
+                    val claims = it.claimsList.map{ claim ->
+                        Claim(
+                            name = claim.name,
+                            value = claim.value,
+                            purpose = claim.purpose
+                        )
+                    }
                     CredentialSharingHistory(
                         rp = it.rp,
                         accountIndex = it.accountIndex,
                         createdAt = it.createdAt.toDate().toISO8601String(),
                         credentialID = it.credentialID,
-                        claims = it.claimsList,
+                        claims = claims,
                         rpName = "", // todo: impl
+                        location = "", // todo: impl
+                        contactUrl = "", // todo: impl
                         privacyPolicyUrl = "", // todo: impl
                         logoUrl = "" // todo: impl
                     )

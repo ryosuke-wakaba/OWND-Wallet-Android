@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.authlete.sd.Disclosure
 import com.authlete.sd.SDObjectBuilder
 import com.google.protobuf.Timestamp
+import com.ownd_project.tw2023_wallet_android.datastore.Claim
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistoryStore
 import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
@@ -518,6 +519,17 @@ object DummyData {
 
 
     suspend fun generateHistoryData(historyStore: CredentialSharingHistoryStore): com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory? {
+        val claim1 = Claim.newBuilder()
+            .setName("name")
+            .setValue("john smith")
+            .setPurpose("purpose of sharing name")
+            .build()
+        val claim2 = Claim.newBuilder()
+            .setName("location")
+            .setValue("tokyo")
+            .setPurpose("purpose of sharing address")
+            .build()
+
         val history =
             com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory.newBuilder()
                 .setRp("someRp")
@@ -527,7 +539,7 @@ object DummyData {
                         .setNanos(Instant.now().nano).build()
                 )
                 .setCredentialID("testCredentialID")
-                .addAllClaims(listOf("name", "location", "organizer")).build()
+                .addAllClaims(listOf(claim1, claim2)).build()
         historyStore.save(history)
         return history
     }

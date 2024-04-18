@@ -6,6 +6,10 @@ import com.authlete.sd.Disclosure
 import com.authlete.sd.SDObjectBuilder
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.google.protobuf.Timestamp
+import com.ownd_project.tw2023_wallet_android.datastore.Claim
+import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories
+import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory
 import com.ownd_project.tw2023_wallet_android.utils.generateEcKeyPair
 import com.ownd_project.tw2023_wallet_android.utils.generateRsaKeyPair
 import com.ownd_project.tw2023_wallet_android.utils.publicKeyToJwk
@@ -137,4 +141,114 @@ object TestDataUtil {
                 .setCredentialIssuerMetadata(sdJwtMetadataStr)
                 .build()
         }
+
+    fun generateHistories(): CredentialSharingHistories {
+
+        val builder1 = CredentialSharingHistory.newBuilder()
+            .setRp("Sample RP1-ID")
+            .setRpName("RP1 Name")
+            .setAccountIndex(1)
+            .setCreatedAt(
+                Timestamp.newBuilder()
+                    .setSeconds((System.currentTimeMillis() - 100000000) / 1000)
+                    .setNanos(0)
+                    .build()
+            )
+            .setRpLocation("Sinjuku-ku, Tokyo JP")
+            .setRpLogoUrl("https://www.ownd-project.com/img/logo_only.png")
+            .setCredentialID("CredentialID")
+
+        listOf("氏名", "年齢", "住所").forEach { claim ->
+            builder1.addClaims(
+                Claim.newBuilder()
+                    .setName(claim)
+                    .setValue("value")
+                    .build()
+            )
+        }
+
+        val history1 = builder1.build()
+
+        val builder2 = CredentialSharingHistory.newBuilder()
+            .setRp("Sample RP2-ID")
+            .setRpName("RP2 Name")
+            .setAccountIndex(1)
+            .setCreatedAt(
+                Timestamp.newBuilder()
+                    .setSeconds(System.currentTimeMillis() / 1000)
+                    .setNanos(0)
+                    .build()
+            )
+            .setCredentialID("CredentialID")
+
+        listOf("前年年収").forEach { claim ->
+            builder2.addClaims(
+                Claim.newBuilder()
+                    .setName(claim)
+                    .setValue("value")
+                    .setPurpose("住宅ローン審査の為に提供しました")
+                    .build()
+            )
+        }
+
+        val history2 = builder2.build()
+
+
+        val builder3 = CredentialSharingHistory.newBuilder()
+            .setRp("Sample RP1-ID")
+            .setRpName("RP1 Name")
+            .setAccountIndex(1)
+            .setCreatedAt(
+                Timestamp.newBuilder()
+                    .setSeconds(System.currentTimeMillis() / 1000)
+                    .setNanos(0)
+                    .build()
+            )
+            .setRpLocation("Sinjuku-ku, Tokyo JP")
+            .setRpLogoUrl("https://www.ownd-project.com/img/logo_only.png")
+            .setCredentialID("CredentialID")
+
+        listOf("claim1", "claim2", "claim3").forEach { claim ->
+            builder3.addClaims(
+                Claim.newBuilder()
+                    .setName(claim)
+                    .setValue("value")
+                    .build()
+            )
+        }
+
+        val history3 = builder3.build()
+
+
+        val builder4 = CredentialSharingHistory.newBuilder()
+            .setRp("Sample RP2-ID")
+            .setRpName("RP2 Name")
+            .setAccountIndex(1)
+            .setCreatedAt(
+                Timestamp.newBuilder()
+                    .setSeconds((System.currentTimeMillis() + 100000000) / 1000)
+                    .setNanos(0)
+                    .build()
+            )
+            .setCredentialID("CredentialID")
+
+        listOf("claim1", "claim2", "claim3").forEach { claim ->
+            builder4.addClaims(
+                Claim.newBuilder()
+                    .setName(claim)
+                    .setValue("value")
+                    .build()
+            )
+        }
+
+        val history4 = builder4.build()
+
+        val historiesList = listOf(history1, history2, history3, history4)
+
+        val histories = CredentialSharingHistories.newBuilder()
+            .addAllItems(historiesList)
+            .build()
+
+        return histories
+    }
 }

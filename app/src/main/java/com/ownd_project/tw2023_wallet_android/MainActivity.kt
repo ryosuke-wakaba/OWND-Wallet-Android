@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
             val appBarConfiguration = AppBarConfiguration(
                 setOf(
                     R.id.navigation_certificate,
-                    R.id.navigation_segment,
+                    R.id.navigation_recipient,
                     R.id.navigation_reader,
                     R.id.navigation_settings
                 )
