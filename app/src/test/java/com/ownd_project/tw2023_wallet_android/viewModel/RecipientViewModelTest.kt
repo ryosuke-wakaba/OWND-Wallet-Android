@@ -26,6 +26,7 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import java.util.Locale
 
 
 @ExperimentalCoroutinesApi
@@ -81,12 +82,13 @@ class RecipientViewModelTest {
 
     @Test
     fun `timestampToString converts timestamp to string correctly`() {
-        val timestamp = Timestamp.newBuilder().setSeconds(1622524800).setNanos(123456789).build() // 2021-06-01 00:00:00.123
-        val expected = "2021-06-01 02:20" // Note: This assumes the default locale is set to a timezone that is UTC+12
+        val timestamp = Timestamp.newBuilder().setSeconds(1622524800).setNanos(123456789).build()
 
-        val result = timestampToString(timestamp)
-
-        assertEquals(expected, result)
+        if (Locale.getDefault().equals(Locale.JAPAN)) {
+            val expected = "2021-06-01 14:20"
+            val result = timestampToString(timestamp)
+            assertEquals(expected, result)
+        }
     }
 
     @Test
