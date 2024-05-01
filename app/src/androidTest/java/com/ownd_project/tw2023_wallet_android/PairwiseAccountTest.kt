@@ -46,8 +46,8 @@ class PairwiseAccountTest {
         val result = pairwiseAccount.newAccount(rp)
         Assert.assertTrue(result.isRight())
         val account = (result as Either.Right).value
-        Assert.assertEquals(1, account.index)
-        Assert.assertEquals(1, pairwiseAccount.getAccount(rp)?.index)
+        Assert.assertEquals(0, account.index)
+        Assert.assertEquals(0, pairwiseAccount.getAccount(rp)?.index)
     }
 
     @Test
@@ -59,8 +59,8 @@ class PairwiseAccountTest {
         val result = pairwiseAccount.newAccount(rp2)
         Assert.assertTrue(result.isRight())
         val account = (result as Either.Right).value
-        Assert.assertEquals(2, account.index)
-        Assert.assertEquals(2, pairwiseAccount.getAccount(rp2)?.index)
+        Assert.assertEquals(1, account.index)
+        Assert.assertEquals(1, pairwiseAccount.getAccount(rp2)?.index)
     }
 
     @Test
