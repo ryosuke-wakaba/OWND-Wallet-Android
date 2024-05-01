@@ -7,7 +7,7 @@ on:
       - reopened
       - opened
 jobs:
-  for-common:
+  test-job:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -28,5 +28,10 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: test
         run: ./gradlew test
-      - name: connectedAndroidTest
-        run: ./gradlew connectedAndroidTest
+      - name: Run connected tests
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          script: ./gradlew connectedAndroidTest
