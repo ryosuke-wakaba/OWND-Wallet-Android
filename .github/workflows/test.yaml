@@ -1,0 +1,32 @@
+name: test
+run-name: Initiated by ${{ github.actor }} for commit ${{ github.sha }}
+on:
+  pull_request:
+    types:
+      - synchronize
+      - reopened
+      - opened
+jobs:
+  for-common:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [18.16.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: test
+        run: ./gradlew test
+      - name: connectedAndroidTest
+        run: ./gradlew connectedAndroidTest
