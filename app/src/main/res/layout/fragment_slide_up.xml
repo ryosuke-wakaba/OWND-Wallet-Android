@@ -31,6 +31,12 @@
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!--
+    Experimental and temporary feature to issue a VC with some of the information on the
+    Japanese My Number Card using xID's service.
+    -->
+
+    <!--
     <LinearLayout
         android:id="@+id/addcert_myna"
         android:layout_width="match_parent"
@@ -57,6 +63,7 @@
             android:textStyle="bold"
         android:textAppearance="@style/text_label_m" />
     </LinearLayout>
+    -->
 
     <LinearLayout
         android:id="@+id/addcert_other"

@@ -2,7 +2,6 @@ package com.ownd_project.tw2023_wallet_android.ui.certificate
 
 import android.app.Dialog
 import android.content.res.Resources
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,11 +12,9 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.ownd_project.tw2023_wallet_android.MainActivity
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.utils.QRCodeScannerUtil
 import com.ownd_project.tw2023_wallet_android.vci.CredentialOffer
@@ -102,22 +99,25 @@ class AdditionalCertificateSelectionFragment : BottomSheetDialogFragment() {
         // 例: return inflater.inflate(R.layout.fragment_my_bottom_sheet, container, false)
         val view = inflater.inflate(R.layout.fragment_slide_up, container, false)
 
+
+        // Experimental and temporary feature to issue a VC with some of the information on the
+        // Japanese My Number Card using xID's service.
+
         // urlはbuild.gradleの環境変数から取得
-        val url = getString(R.string.MYNA_TARGET_URL)
+        // val url = getString(R.string.MYNA_TARGET_URL)
+        // val myna = view.findViewById<LinearLayout>(R.id.addcert_myna)
+        // myna.setOnClickListener {
+        //     val builder = CustomTabsIntent.Builder()
+        //     val customTabsIntent = builder.build()
 
-        val myna = view.findViewById<LinearLayout>(R.id.addcert_myna)
-        myna.setOnClickListener {
-            val builder = CustomTabsIntent.Builder()
-            val customTabsIntent = builder.build()
+        //     // Custom Tabs(アプリ内ブラウザ)のキャンセル時にロックさせないため(暫定)
+        //     // MainActivityのisLockingをfalseにセット
+        //     (activity as? MainActivity)?.setIsLocking(true)
 
-            // Custom Tabs(アプリ内ブラウザ)のキャンセル時にロックさせないため(暫定)
-            // MainActivityのisLockingをfalseにセット
-            (activity as? MainActivity)?.setIsLocking(true)
+        //     customTabsIntent.launchUrl(requireContext(), Uri.parse(url))
+        // }
 
-            customTabsIntent.launchUrl(requireContext(), Uri.parse(url))
-        }
 
-        // 社員証要求ボタンの動作
         val other = view.findViewById<LinearLayout>(R.id.addcert_other)
         other.setOnClickListener {
             if (qrCodeUtil.hasCameraPermission()) {
