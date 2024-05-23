@@ -1,6 +1,6 @@
 package com.ownd_project.tw2023_wallet_android.ui.reader
 
-import com.ownd_project.tw2023_wallet_android.IdTokenSharingActivity
+import com.ownd_project.tw2023_wallet_android.TokenSharingActivity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -72,7 +72,7 @@ class ReaderFragment : Fragment() {
                 } else {
                     println(scanned)
                     if (scanned.startsWith("openid4vp://") || scanned.startsWith("siopv2://")) {
-                        val intent = Intent(context, IdTokenSharingActivity::class.java).apply {
+                        val intent = Intent(context, TokenSharingActivity::class.java).apply {
                             putExtra("siopRequest", scanned)
                             putExtra("index", -1) // 一つ前の画面でアカウントを選択した場合のインデックス
                         }

@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp
 
 import android.content.Context
 import android.util.Log
@@ -286,7 +286,7 @@ class IdTokenSharringViewModel : ViewModel() {
         }
     }
 
-    fun shareCredential(fragment: Fragment, credentials: List<SubmissionCredential>) {
+    fun shareVpToken(fragment: Fragment, credentials: List<SubmissionCredential>) {
         Log.d(TAG, "shareVPToken")
         viewModelScope.launch(Dispatchers.IO) {
             val result = openIdProvider.respondVPResponse(credentials)

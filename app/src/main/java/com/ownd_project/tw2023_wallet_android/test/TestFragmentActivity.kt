@@ -15,7 +15,7 @@ import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
 import com.ownd_project.tw2023_wallet_android.test.DummyData.generateSdJwt
 import com.ownd_project.tw2023_wallet_android.ui.credential_detail.CredentialDetailFragment
 import com.ownd_project.tw2023_wallet_android.ui.shared.Constants
-import com.ownd_project.tw2023_wallet_android.ui.siop.IdTokenSharringFragment
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.TokenSharingFragment
 import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
 import com.ownd_project.tw2023_wallet_android.utils.ZipUtil
 import kotlinx.coroutines.launch
@@ -83,7 +83,7 @@ class TestFragmentActivity : AppCompatActivity() {
         }
         // setContentView(R.layout.activity_test_fragment);
         // val fragment = IdTokenSharringFragment()
-        val fragment = IdTokenSharringFragment().apply {
+        val fragment = TokenSharingFragment().apply {
             arguments = args
         }
         val fragment3 = CredentialDetailFragment().apply {

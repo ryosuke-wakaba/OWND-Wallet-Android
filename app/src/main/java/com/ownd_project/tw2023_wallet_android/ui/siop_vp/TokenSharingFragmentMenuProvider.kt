@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp
 
 import android.view.Menu
 import android.view.MenuInflater
@@ -7,7 +7,7 @@ import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import com.ownd_project.tw2023_wallet_android.R
 
-class IdTokenSharingFragmentMenuProvider(
+class TokenSharingFragmentMenuProvider(
     private val fragment: Fragment,
     private val menuInflater: MenuInflater
 ) : MenuProvider {
