@@ -55,6 +55,12 @@
                 <!--                    android:path="/oauth2redirect"-->
                 <!--                    android:scheme="https" />-->
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="openid4vp" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".SplashActivity"
@@ -82,7 +88,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".IdTokenSharingActivity"
+            android:name=".TokenSharingActivity"
             android:exported="true"
             android:theme="@style/Theme.Tw2023walletandroid">
         </activity>

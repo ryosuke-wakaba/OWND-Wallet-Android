@@ -1,6 +1,7 @@
 package com.ownd_project.tw2023_wallet_android
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
@@ -78,20 +79,33 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
             // URIからパラメータを抽出
             data?.let {
-                // ここでパラメータを処理
-                val parameterValue = it.getQueryParameter("credential_offer") // クエリパラメータの取得
-
-                // credential_offerがある場合発行画面に遷移する
-                if (!parameterValue.isNullOrEmpty()) {
-                    val bundle = Bundle().apply {
-                        putString("parameterValue", parameterValue)
+                Log.d("MainActivity", "uri: $it")
+                when (data.scheme) {
+                    "openid4vp" -> {
+                        val newIntent = Intent(this, TokenSharingActivity::class.java).apply {
+                            putExtra("siopRequest", it.toString())
+                            putExtra("index", -1)
+                        }
+                        startActivity(newIntent)
                     }
-                    navController.navigate(R.id.action_to_confirmation, bundle)
-                }
+                    "openid-credential-offer" -> {
+                        // ここでパラメータを処理
+                        val parameterValue = it.getQueryParameter("credential_offer") // クエリパラメータの取得
 
+                        // credential_offerがある場合発行画面に遷移する
+                        if (!parameterValue.isNullOrEmpty()) {
+                            val bundle = Bundle().apply {
+                                putString("parameterValue", parameterValue)
+                            }
+                            navController.navigate(R.id.action_to_confirmation, bundle)
+                        }
+                    }
+                    else -> {
+                       Log.d("MainActivity", "unknown custom scheme: ${data.scheme}")
+                    }
+                }
             }
         }
 
