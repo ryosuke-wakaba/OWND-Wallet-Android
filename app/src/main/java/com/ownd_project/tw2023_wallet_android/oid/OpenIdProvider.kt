@@ -547,29 +547,6 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
                 .post(formBody)
                 .build()
         }
-        ResponseMode.QUERY, ResponseMode.FRAGMENT -> {
-            val uriBuilder = StringBuilder(destinationUri)
-            formData.forEach { (key, value) ->
-                if (uriBuilder.contains("?")) {
-                    uriBuilder.append("&")
-                } else {
-                    uriBuilder.append("?")
-                }
-                uriBuilder.append(URLEncoder.encode(key, "UTF-8"))
-                    .append("=")
-                    .append(URLEncoder.encode(value, "UTF-8"))
-            }
-            val uriWithParams = uriBuilder.toString()
-            val destinationUriWithParams = if (responseMode == ResponseMode.FRAGMENT) {
-                uriWithParams.replace("?", "#")
-            } else {
-                uriWithParams
-            }
-            request = Request.Builder()
-                .url(destinationUriWithParams)
-                .get()
-                .build()
-        }
         else -> {
             throw IllegalArgumentException("Unsupported response mode: $responseMode")
         }

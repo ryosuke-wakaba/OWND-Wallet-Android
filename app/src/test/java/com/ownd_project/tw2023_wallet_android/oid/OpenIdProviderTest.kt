@@ -114,7 +114,7 @@ class OpenIdProviderTest {
 
 
     @Test
-    fun testSendRequest() = runBlocking {
+    fun testSendRequestWithDirectPost() = runBlocking {
         // MockWebServerに対するレスポンスを設定します。
         wireMockServer.stubFor(
             WireMock.post(WireMock.urlEqualTo("/"))
@@ -136,30 +136,6 @@ class OpenIdProviderTest {
         val recordedRequest = wireMockServer.findAll(WireMock.postRequestedFor(WireMock.urlEqualTo("/"))).first()
         assertEquals("POST", recordedRequest.method.toString())
         assertEquals("key=value", recordedRequest.bodyAsString)
-    }
-
-
-    @Test
-    fun testSendRequestWithQueryResponseMode() = runBlocking {
-        // MockWebServerに対するレスポンスを設定します。
-        wireMockServer.stubFor(
-            WireMock.get(WireMock.urlMatching("/\\?key=value"))
-                .willReturn(
-                    WireMock.aResponse()
-                        .withStatus(200)
-                        .withBody("response body")
-                )
-        )
-
-        // テスト対象のメソッドを呼び出します。
-        val result = sendRequest("$clientHost:${wireMockServer.port()}/", mapOf("key" to "value"), ResponseMode.QUERY)
-
-        // レスポンスが期待通りであることを確認します。
-        assertEquals(200, result.statusCode)
-
-        // リクエストが期待通りであることを確認します。
-        val recordedRequest = wireMockServer.findAll(WireMock.getRequestedFor(WireMock.urlMatching("/\\?key=value"))).first()
-        assertEquals("GET", recordedRequest.method.toString())
     }
 
     @Test
