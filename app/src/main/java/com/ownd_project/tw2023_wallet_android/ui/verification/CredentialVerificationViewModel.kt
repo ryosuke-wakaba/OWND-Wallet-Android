@@ -30,7 +30,7 @@ class CredentialVerificationViewModel : ViewModel() {
     val result: LiveData<Boolean> = _result
 
     fun verifyCredential(format: String, credential: String) {
-        Log.d(com.ownd_project.tw2023_wallet_android.ui.siop.TAG, "verifyCredential seed successfully")
+        Log.d(com.ownd_project.tw2023_wallet_android.ui.siop_vp.TAG, "verifyCredential seed successfully")
         viewModelScope.launch(Dispatchers.IO) {
             val result = JWT.verifyJwtByX5U(credential)
             result.fold(

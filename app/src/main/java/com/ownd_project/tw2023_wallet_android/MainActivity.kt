@@ -1,6 +1,7 @@
 package com.ownd_project.tw2023_wallet_android
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
@@ -78,20 +79,28 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
             // URIからパラメータを抽出
             data?.let {
-                // ここでパラメータを処理
-                val parameterValue = it.getQueryParameter("credential_offer") // クエリパラメータの取得
-
-                // credential_offerがある場合発行画面に遷移する
-                if (!parameterValue.isNullOrEmpty()) {
-                    val bundle = Bundle().apply {
-                        putString("parameterValue", parameterValue)
+                Log.d("MainActivity", "uri: $it")
+                when (data.scheme) {
+                    "openid4vp" -> {
+                        handleVp(it)
                     }
-                    navController.navigate(R.id.action_to_confirmation, bundle)
+                    "openid-credential-offer" -> {
+                        handleOffer(it, navController)
+                    }
+                    "https" -> {
+                        // App link
+                        if (it.getQueryParameter("credential_offer").isNullOrEmpty()){
+                            handleVp(it)
+                        }else{
+                            handleOffer(it, navController)
+                        }
+                    }
+                    else -> {
+                       Log.d("MainActivity", "unknown scheme: ${data.scheme}")
+                    }
                 }
-
             }
         }
 
@@ -101,6 +110,27 @@ class MainActivity : AppCompatActivity() {
         if (biometricStatus == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
             BiometricUtil.createAlertDialog(this, enrollBiometricRequest)
         }
+    }
+
+    private fun handleOffer(uri: Uri, navController: androidx.navigation.NavController){
+        // ここでパラメータを処理
+        val parameterValue = uri.getQueryParameter("credential_offer") // クエリパラメータの取得
+
+        // credential_offerがある場合発行画面に遷移する
+        if (!parameterValue.isNullOrEmpty()) {
+            val bundle = Bundle().apply {
+                putString("parameterValue", parameterValue)
+            }
+            navController.navigate(R.id.action_to_confirmation, bundle)
+        }
+    }
+
+    private fun handleVp(uri: Uri) {
+        val newIntent = Intent(this, TokenSharingActivity::class.java).apply {
+            putExtra("siopRequest", uri.toString())
+            putExtra("index", -1)
+        }
+        startActivity(newIntent)
     }
 
     private var shouldLock = false

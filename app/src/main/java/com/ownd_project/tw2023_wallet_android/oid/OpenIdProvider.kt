@@ -21,6 +21,7 @@ import okhttp3.Request
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import java.math.BigInteger
 import java.net.URI
+import java.net.URLEncoder
 import java.security.KeyPair
 import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
@@ -241,7 +242,11 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
             val redirectUrl = requireNotNull(authRequest.redirectUri)
 
             println("send id token to $redirectUrl")
-            val result = sendRequest(redirectUrl, mapOf("id_token" to idToken))
+
+            // As a temporary value, give DIRECT_POST a fixed value.
+            // It needs to be modified when responding to redirect responses.
+            val result = sendRequest(redirectUrl, mapOf("id_token" to idToken), ResponseMode.DIRECT_POST)
+
             println("Received result: $result")
             return Either.Right(result)
         } catch (e: Exception) {
@@ -259,6 +264,14 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
             )
             val presentationDefinition = this.siopRequest.presentationDefinition
                 ?: throw IllegalArgumentException(SIOPErrors.BAD_PARAMS.message)
+
+            // https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#ResponseModes
+            //   the default Response Mode for the OAuth 2.0 code Response Type is the query encoding
+            //   the default Response Mode for the OAuth 2.0 token Response Type is the fragment encoding
+            // https://openid.net/specs/openid-4-verifiable-presentations-1_0-ID2.html#section-5
+            //   If the parameter is not present, the default value is fragment.
+            val responseMode = authRequest.responseMode ?: ResponseMode.FRAGMENT
+
             // presentationDefinition.inputDescriptors を使って選択項目でフィルター
             val vpTokens = credentials.mapNotNull { it ->
                 when (it.format) {
@@ -309,8 +322,17 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
             }
             val jsonString = objectMapper.writeValueAsString(presentationSubmission)
 
-            // todo fragmentの場合はSame Deviceにリダイレクト
-            val redirectUrl = requireNotNull(authRequest.responseUri)
+            // https://openid.net/specs/openid-4-verifiable-presentations-1_0-ID2.html#name-authorization-request
+            //   response_uri parameter is present, the redirect_uri Authorization Request parameter MUST NOT be present
+            val destinationUri = if (responseMode == ResponseMode.DIRECT_POST) {
+                authRequest.responseUri
+            } else {
+                authRequest.redirectUri
+            }
+            if (destinationUri.isNullOrBlank()) {
+                return Either.Left("Unknown destination for response")
+            }
+
 
             val body = mutableMapOf(
                 "vp_token" to vpTokenValue,
@@ -321,8 +343,8 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
                 body["state"] = state
             }
 
-            println("send vp token to $redirectUrl")
-            val result = sendRequest(redirectUrl, body)
+            println("send vp token to $destinationUri")
+            val result = sendRequest(destinationUri, body, responseMode)
             print("status code: ${result.statusCode}")
             print("location: ${result.location}")
             print("cookies: ${result.cookies}")
@@ -506,7 +528,7 @@ fun mergeOAuth2AndOpenIdInRequestPayload(
     return createRequestObjectPayloadFromMap(mergedMap)
 }
 
-fun sendRequest(redirectUrl: String, formData: Map<String, String>): PostResult {
+fun sendRequest(destinationUri: String, formData: Map<String, String>, responseMode: ResponseMode): PostResult {
     val client = OkHttpClient.Builder()
         .followRedirects(false)
         .build()
@@ -516,11 +538,19 @@ fun sendRequest(redirectUrl: String, formData: Map<String, String>): PostResult 
         formBodyBuilder.add(key, value)
     }
     val formBody = formBodyBuilder.build()
+    val request: Request
 
-    val request = Request.Builder()
-        .url(redirectUrl)
-        .post(formBody)
-        .build()
+    when (responseMode) {
+        ResponseMode.DIRECT_POST -> {
+            request = Request.Builder()
+                .url(destinationUri)
+                .post(formBody)
+                .build()
+        }
+        else -> {
+            throw IllegalArgumentException("Unsupported response mode: $responseMode")
+        }
+    }
 
     client.newCall(request).execute().use { response ->
         val statusCode = response.code()
@@ -534,7 +564,7 @@ fun sendRequest(redirectUrl: String, formData: Map<String, String>): PostResult 
             val uri = URI.create(location)
             if (!uri.isAbsolute) {
                 // 元のURLからホスト情報を抽出して補完
-                val originalUri = URI.create(redirectUrl)
+                val originalUri = URI.create(destinationUri)
                 val portPart = if (originalUri.port != -1) ":${originalUri.port}" else ""
                 location = "${originalUri.scheme}://${originalUri.host}$portPart$location"
             }

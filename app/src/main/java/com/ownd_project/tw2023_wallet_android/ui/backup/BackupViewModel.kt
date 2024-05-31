@@ -16,7 +16,7 @@ import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory
 import com.ownd_project.tw2023_wallet_android.datastore.IdTokenSharingHistoryStore
 import com.ownd_project.tw2023_wallet_android.datastore.PreferencesDataStore
 import com.ownd_project.tw2023_wallet_android.pairwise.HDKeyRing
-import com.ownd_project.tw2023_wallet_android.ui.siop.TAG
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.TAG
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

@@ -132,7 +132,7 @@
     </fragment>
     <fragment
         android:id="@+id/id_token_sharring"
-        android:name="com.ownd_project.tw2023_wallet_android.ui.siop.IdTokenSharringFragment"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.TokenSharingFragment"
         tools:layout="@layout/fragment_id_token_sharring">
         <argument
             android:name="siopRequest"

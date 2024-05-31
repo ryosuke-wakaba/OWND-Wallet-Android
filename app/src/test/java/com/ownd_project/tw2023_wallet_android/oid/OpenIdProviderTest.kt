@@ -1,5 +1,6 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
+import android.util.Log
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.ownd_project.tw2023_wallet_android.encodePublicKeyToJwks
@@ -109,6 +110,32 @@ class OpenIdProviderTest {
     @After
     fun teardown() {
         wireMockServer.stop()
+    }
+
+
+    @Test
+    fun testSendRequestWithDirectPost() = runBlocking {
+        // MockWebServerに対するレスポンスを設定します。
+        wireMockServer.stubFor(
+            WireMock.post(WireMock.urlEqualTo("/"))
+                .withHeader("Content-Type", WireMock.equalTo("application/x-www-form-urlencoded"))
+                .willReturn(
+                    WireMock.aResponse()
+                        .withStatus(200)
+                        .withBody("response body")
+                )
+        )
+
+        // テスト対象のメソッドを呼び出します。
+        val result = sendRequest("$clientHost:${wireMockServer.port()}/", mapOf("key" to "value"), ResponseMode.DIRECT_POST)
+
+        // レスポンスが期待通りであることを確認します。
+        assertEquals(200, result.statusCode)
+
+        // リクエストが期待通りであることを確認します。
+        val recordedRequest = wireMockServer.findAll(WireMock.postRequestedFor(WireMock.urlEqualTo("/"))).first()
+        assertEquals("POST", recordedRequest.method.toString())
+        assertEquals("key=value", recordedRequest.bodyAsString)
     }
 
     @Test

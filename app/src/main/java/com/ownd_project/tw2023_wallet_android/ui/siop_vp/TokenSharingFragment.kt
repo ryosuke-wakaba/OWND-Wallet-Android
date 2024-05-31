@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp
 
 import android.app.AlertDialog
 import android.net.Uri
@@ -30,15 +30,15 @@ import com.ownd_project.tw2023_wallet_android.utils.viewBinding
 // todo レイアウト調整
 // todo SVGをURLから表示
 
-class IdTokenSharringFragment : Fragment(R.layout.fragment_id_token_sharring) {
+class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
     companion object {
-        private val tag = IdTokenSharringFragment::class.simpleName
+        private val tag = TokenSharingFragment::class.simpleName
     }
 
     private val binding by viewBinding(FragmentIdTokenSharringBinding::bind)
     private lateinit var issuerDetailBinding: FragmentIssuerDetailBinding
 
-    private val args: IdTokenSharringFragmentArgs by navArgs()
+    private val args: TokenSharingFragmentArgs by navArgs()
     private val sharedViewModel by activityViewModels<CredentialSharingViewModel>()
     private val viewModel: IdTokenSharringViewModel by viewModels()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -47,7 +47,7 @@ class IdTokenSharringFragment : Fragment(R.layout.fragment_id_token_sharring) {
 
 
         val activity = requireActivity()
-        val menuProvider = IdTokenSharingFragmentMenuProvider(this, activity.menuInflater)
+        val menuProvider = TokenSharingFragmentMenuProvider(this, activity.menuInflater)
         activity.addMenuProvider(menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
         viewModel.initDone.observe(viewLifecycleOwner, ::onInitDone)
@@ -240,7 +240,7 @@ class IdTokenSharringFragment : Fragment(R.layout.fragment_id_token_sharring) {
 
     private fun onOpenSelectCredential(view: View) {
         Log.d(tag, "on click")
-        val action = IdTokenSharringFragmentDirections.actionIdTokenSharringToNavigationCertificate()
+        val action = TokenSharingFragmentDirections.actionIdTokenSharringToNavigationCertificate()
         findNavController().navigate(action)
     }
 
@@ -281,7 +281,7 @@ class IdTokenSharringFragment : Fragment(R.layout.fragment_id_token_sharring) {
         val selectedCredential = sharedViewModel.selectedCredential.value
         if (selectedCredential != null) {
             // todo 複数対応
-            viewModel.shareCredential(this, listOf(selectedCredential))
+            viewModel.shareVpToken(this, listOf(selectedCredential))
         } else {
             viewModel.shareIdToken(this)
         }
@@ -319,7 +319,7 @@ class IdTokenSharringFragment : Fragment(R.layout.fragment_id_token_sharring) {
         if (postResult.location != null) {
             val url = postResult.location
             val cookies = postResult.cookies
-            val action = IdTokenSharringFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
+            val action = TokenSharingFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
             findNavController().navigate(action)
         }
     }
