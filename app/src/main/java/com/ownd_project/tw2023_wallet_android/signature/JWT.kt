@@ -74,6 +74,13 @@ class JWT {
                 throw JWTVerificationException((result as Either.Left).value)
             }
         }
+        suspend fun verifyJwtX509SanDns(jwt: String): DecodedJWT {
+            val decodedJwt = JWT.decode(jwt)
+//            TODO("extract certs")
+//            TODO("verify jwt")
+//            TODO("verify certs")
+            return decodedJwt
+        }
 
         fun verifyJwt(jwt: String, publicKey: PublicKey): Either<String, DecodedJWT> { // todo 戻り値の型がauto0のライブラリの型で良いか検討する
             val decodedJwt = JWT.decode(jwt)

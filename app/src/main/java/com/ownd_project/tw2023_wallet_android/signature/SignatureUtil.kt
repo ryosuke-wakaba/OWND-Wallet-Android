@@ -22,11 +22,14 @@ import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyStore
 import java.security.MessageDigest
+import java.security.PublicKey
 import java.security.Security
 import java.security.cert.CertPathValidator
 import java.security.cert.CertificateFactory
 import java.security.cert.PKIXParameters
 import java.security.cert.X509Certificate
+import java.security.interfaces.ECPublicKey
+import java.security.interfaces.RSAPublicKey
 import java.security.spec.ECFieldFp
 import java.security.spec.ECParameterSpec
 import java.security.spec.ECPoint
@@ -367,6 +370,64 @@ object SignatureUtil {
 //        return false
 //    }
 
+
+    fun correctBytes(value: BigInteger): ByteArray {
+        /*
+        BigInteger の toByteArray() メソッドは、数値をバイト配列に変換しますが、
+        この数値が正の場合、最上位バイトが符号ビットとして解釈されることを避けるために、追加のゼロバイトが先頭に挿入されることがあります。
+        これは、数値が正で、最上位バイトが 0x80 以上の場合（つまり、最上位ビットが 1 の場合）に起こります。
+        その結果、期待していた 32 バイトではなく 33 バイトの配列が得られることがあります。
+
+        期待する 32 バイトの配列を得るには、返されたバイト配列から余分なゼロバイトを取り除くか、
+        または正確なバイト長を指定して配列を生成する必要があります。
+         */
+        val bytes = value.toByteArray()
+        return if (bytes.size == 33 && bytes[0] == 0.toByte()) bytes.copyOfRange(
+            1,
+            bytes.size
+        ) else bytes
+    }
+
+    fun generateEcPublicKeyJwk(
+        ecPublicKey: ECPublicKey,
+        option: ProviderOption
+    ): Map<String, String> {
+        val ecPoint: ECPoint = ecPublicKey.w
+        val x = correctBytes(ecPoint.affineX).toBase64Url()
+        val y = correctBytes(ecPoint.affineY).toBase64Url()
+
+        // return """{"kty":"EC","crv":"P-256","x":"$x","y":"$y"}""" // crvは適宜変更してください
+        return mapOf(
+            "kty" to "EC",
+            "crv" to option.signingCurve,
+            "x" to x,
+            "y" to y
+        )
+    }
+
+    fun generateRsaPublicKeyJwk(rsaPublicKey: RSAPublicKey): Map<String, String> {
+        val n = Base64.getUrlEncoder().encodeToString(rsaPublicKey.modulus.toByteArray())
+        val e = Base64.getUrlEncoder().encodeToString(rsaPublicKey.publicExponent.toByteArray())
+
+        // return """{"kty":"RSA","n":"$n","e":"$e"}"""
+        return mapOf(
+            "kty" to "RSA",
+            "n" to n,
+            "e" to e
+        )
+    }
+
+    fun generatePublicKeyJwk(keyPair: KeyPair, option: ProviderOption): Map<String, String> {
+        val publicKey: PublicKey = keyPair.public
+        return generatePublicKeyJwk(publicKey, option)
+    }
+    fun generatePublicKeyJwk(publicKey: PublicKey, option: ProviderOption): Map<String, String> {
+        return when (publicKey) {
+            is RSAPublicKey -> generateRsaPublicKeyJwk(publicKey)
+            is ECPublicKey -> generateEcPublicKeyJwk(publicKey, option)
+            else -> throw IllegalArgumentException("Unsupported Key Type: ${publicKey::class.java.name}")
+        }
+    }
     fun byte2Base64Url(b: ByteArray) = b.toBase64Url()
 
     fun int2Base64Url(i: BigInteger) = i.toBase64Url()
@@ -375,3 +436,9 @@ object SignatureUtil {
 fun ByteArray.toBase64Url() = Base64.getUrlEncoder().encodeToString(this).trimEnd('=')
 fun BigInteger.toBase64Url() =
     Base64.getUrlEncoder().encodeToString(this.toByteArray()).trimEnd('=')
+
+data class ProviderOption(
+    val expiresIn: Int = 600,
+    val signingAlgo: String = "ES256",
+    val signingCurve: String = "P-256",
+)

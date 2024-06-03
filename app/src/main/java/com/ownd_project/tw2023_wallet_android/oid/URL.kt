@@ -1,6 +1,9 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
 import com.auth0.jwt.JWT
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.Dispatchers
@@ -73,11 +76,13 @@ suspend fun parseAndResolve(uri: String): ParseAndResolveResult {
     println("request jwt: $requestObjectJwt")
 
     println("get client metadata")
-    val mapper = jacksonObjectMapper()
     val decodedJwt = JWT.decode(requestObjectJwt)
     val clientMetadata = decodedJwt.getClaim("client_metadata")?.let {
-        val json = mapper.writeValueAsString(it.asString())
-        mapper.readValue<RPRegistrationMetadataPayload>(json)
+        val mapper: ObjectMapper = jacksonObjectMapper().apply {
+            propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+            configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
+        }
+        mapper.readValue<RPRegistrationMetadataPayload>(it.toString())
     }
     println("client metadata: $clientMetadata")
     val clientMetadataUri = decodedJwt.getClaim("client_metadata_uri").asString()?: authorizationRequestPayload.clientMetadataUri

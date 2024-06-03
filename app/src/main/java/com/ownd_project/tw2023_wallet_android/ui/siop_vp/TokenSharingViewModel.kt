@@ -18,7 +18,7 @@ import com.ownd_project.tw2023_wallet_android.datastore.PreferencesDataStore
 import com.ownd_project.tw2023_wallet_android.pairwise.HDKeyRing
 import com.ownd_project.tw2023_wallet_android.oid.OpenIdProvider
 import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
-import com.ownd_project.tw2023_wallet_android.oid.ProviderOption
+import com.ownd_project.tw2023_wallet_android.signature.ProviderOption
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
 import com.ownd_project.tw2023_wallet_android.signature.ECPrivateJwk
 import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil
@@ -28,6 +28,7 @@ import com.ownd_project.tw2023_wallet_android.utils.CertificateInfo
 import com.ownd_project.tw2023_wallet_android.utils.CertificateUtil.getCertificateInformation
 import com.google.protobuf.Timestamp
 import com.ownd_project.tw2023_wallet_android.oid.PostResult
+import com.ownd_project.tw2023_wallet_android.ui.shared.JwtVpJsonGeneratorImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -198,6 +199,9 @@ class IdTokenSharringViewModel : ViewModel() {
                     } else {
                         val keyBinding = KeyBindingImpl(Constants.KEY_PAIR_ALIAS_FOR_KEY_BINDING)
                         openIdProvider.setKeyBinding(keyBinding)
+
+                        val jwtVpJsonGenerator = JwtVpJsonGeneratorImpl(Constants.KEY_PAIR_ALIAS_FOR_KEY_JWT_VP_JSON)
+                        openIdProvider.setJwtVpJsonGenerator(jwtVpJsonGenerator)
                     }
 
                     // getServerCertificates("https://datasign.jp/")

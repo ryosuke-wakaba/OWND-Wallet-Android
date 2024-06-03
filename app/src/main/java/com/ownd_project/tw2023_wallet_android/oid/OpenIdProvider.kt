@@ -14,32 +14,23 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.ownd_project.tw2023_wallet_android.signature.toBase64Url
+import com.ownd_project.tw2023_wallet_android.signature.ProviderOption
+import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
-import java.math.BigInteger
 import java.net.URI
-import java.net.URLEncoder
 import java.security.KeyPair
-import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
-import java.security.interfaces.RSAPublicKey
 import java.security.spec.ECParameterSpec
-import java.security.spec.ECPoint
 import java.util.Base64
 import java.util.UUID
 
-data class ProviderOption(
-    val expiresIn: Int = 600,
-    val signingAlgo: String = "ES256K",
-    val signingCurve: String = "P-256",
-)
-
-class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOption()) {
+class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOption(signingAlgo = "ES256K")) {
     private lateinit var keyPair: KeyPair
     private lateinit var keyBinding: KeyBinding
+    private lateinit var jwtVpJsonGenerator: JwtVpJsonGenerator
     private lateinit var siopRequest: ProcessSIOPRequestResult
 
     companion object {
@@ -107,6 +98,9 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
     fun setKeyBinding(keyBinding: KeyBinding) {
         this.keyBinding = keyBinding
     }
+    fun setJwtVpJsonGenerator(jwtVpJsonGenerator: JwtVpJsonGenerator) {
+        this.jwtVpJsonGenerator = jwtVpJsonGenerator
+    }
 
     fun getSiopRequest(): ProcessSIOPRequestResult {
         return this.siopRequest
@@ -131,14 +125,23 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
             }
             registerModule(module)
         }
+        val decodedJwt = com.auth0.jwt.JWT.decode(requestObjectJwt)
+        val payloadJson = String(Base64.getUrlDecoder().decode(decodedJwt.payload))
+        val payload = objectMapper.readValue(payloadJson, RequestObjectPayloadImpl::class.java)
+
+        val clientScheme = payload.clientIdScheme?: authorizationRequestPayload.clientIdScheme
 
         return if (requestIsSigned) {
-            val jwksUrl =
-                registrationMetadata.jwksUri ?: throw IllegalStateException("JWKS URLが見つかりません。")
+            val jwtValidationResult =
+            if (clientScheme == "x509_san_dns") {
+                JWT.verifyJwtX509SanDns(requestObjectJwt)
+            } else {
+                val jwksUrl = registrationMetadata.jwksUri ?: throw IllegalStateException("JWKS URLが見つかりません。")
+                JWT.verifyJwtWithJwks(requestObjectJwt, jwksUrl)
+            }
 
             val result = try {
                 // JWTを検証
-                val jwtValidationResult = JWT.verifyJwtWithJwks(requestObjectJwt, jwksUrl)
                 val payloadJson = String(Base64.getUrlDecoder().decode(jwtValidationResult.payload))
                 val payload = objectMapper.readValue(payloadJson, RequestObjectPayloadImpl::class.java)
 
@@ -204,7 +207,7 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
             val nonce = authRequest.nonce
             val SEC_IN_MS = 1000
 
-            val subJwk = generatePublicKeyJwk(keyPair, option)
+            val subJwk = SignatureUtil.generatePublicKeyJwk(keyPair, option)
             // todo: support rsa key
             val jwk = object : ECPublicJwk {
                 override val kty = subJwk["kty"]!!
@@ -399,76 +402,22 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
             val disclosedClaims = payload.mapNotNull { (key, _) ->
                 DisclosedClaim(id = credential.id, types = credential.types, name = key)
             }
-            val pathNested = Path(format = credential.format, path = "$")
-            val dm = DescriptorMap(
-                id = credential.inputDescriptor.id,
-                format = credential.format,
-                path = "$",
-                pathNested = pathNested
+            val vpToken = this.jwtVpJsonGenerator.generateJwt(
+                credential.credential,
+                HeaderOptions(),
+                JwtVpJsonPayloadOptions(aud = authRequest.clientId!!, nonce = authRequest.nonce!!)
             )
-            // todo check credential is matched condition specified by input_descriptor
+
             return Triple(
-                first = credential.credential,
-                second = dm,
+                first = vpToken,
+                second = JwtVpJsonPresentation.genDescriptorMap(presentationDefinition.inputDescriptors[0].id),
                 third = disclosedClaims
             )
+
         } catch (error: Exception) {
             throw error
         }
     }
-}
-
-fun generatePublicKeyJwk(keyPair: KeyPair, option: ProviderOption): Map<String, String> {
-    val publicKey: PublicKey = keyPair.public
-
-    return when (publicKey) {
-        is RSAPublicKey -> generateRsaPublicKeyJwk(publicKey)
-        is ECPublicKey -> generateEcPublicKeyJwk(publicKey, option)
-        else -> throw IllegalArgumentException("Unsupported Key Type: ${publicKey::class.java.name}")
-    }
-}
-
-fun correctBytes(value: BigInteger): ByteArray {
-    /*
-    BigInteger の toByteArray() メソッドは、数値をバイト配列に変換しますが、
-    この数値が正の場合、最上位バイトが符号ビットとして解釈されることを避けるために、追加のゼロバイトが先頭に挿入されることがあります。
-    これは、数値が正で、最上位バイトが 0x80 以上の場合（つまり、最上位ビットが 1 の場合）に起こります。
-    その結果、期待していた 32 バイトではなく 33 バイトの配列が得られることがあります。
-
-    期待する 32 バイトの配列を得るには、返されたバイト配列から余分なゼロバイトを取り除くか、
-    または正確なバイト長を指定して配列を生成する必要があります。
-     */
-    val bytes = value.toByteArray()
-    return if (bytes.size == 33 && bytes[0] == 0.toByte()) bytes.copyOfRange(
-        1,
-        bytes.size
-    ) else bytes
-}
-
-fun generateEcPublicKeyJwk(ecPublicKey: ECPublicKey, option: ProviderOption): Map<String, String> {
-    val ecPoint: ECPoint = ecPublicKey.w
-    val x = correctBytes(ecPoint.affineX).toBase64Url()
-    val y = correctBytes(ecPoint.affineY).toBase64Url()
-
-    // return """{"kty":"EC","crv":"P-256","x":"$x","y":"$y"}""" // crvは適宜変更してください
-    return mapOf(
-        "kty" to "EC",
-        "crv" to option.signingCurve,
-        "x" to x,
-        "y" to y
-    )
-}
-
-fun generateRsaPublicKeyJwk(rsaPublicKey: RSAPublicKey): Map<String, String> {
-    val n = Base64.getUrlEncoder().encodeToString(rsaPublicKey.modulus.toByteArray())
-    val e = Base64.getUrlEncoder().encodeToString(rsaPublicKey.publicExponent.toByteArray())
-
-    // return """{"kty":"RSA","n":"$n","e":"$e"}"""
-    return mapOf(
-        "kty" to "RSA",
-        "n" to n,
-        "e" to e
-    )
 }
 
 fun getCurveName(ecPublicKey: ECPublicKey): String {
