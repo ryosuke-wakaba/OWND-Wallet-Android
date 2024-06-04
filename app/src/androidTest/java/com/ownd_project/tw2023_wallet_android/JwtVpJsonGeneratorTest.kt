@@ -39,8 +39,6 @@ class JwtVpJsonGeneratorTest {
 
         val vpToken = jwtVpJsonGenerator.generateJwt(vcJwt, headerOptions, payloadOptions)
 
-        // 生成されたJWTを検証するためのロジックを追加してください。
-        // ここでは例として、JWTが非空であることを確認しています。
         assert(!vpToken.isEmpty())
 
         val decodedJwt = KeyPairUtil.decodeJwt(vpToken)

@@ -15,17 +15,15 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ownd_project.tw2023_wallet_android.signature.ProviderOption
-import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil
+import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import java.net.URI
 import java.security.KeyPair
-import java.security.interfaces.ECPublicKey
-import java.security.spec.ECParameterSpec
 import java.util.Base64
 import java.util.UUID
+
 
 class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOption(signingAlgo = "ES256K")) {
     private lateinit var keyPair: KeyPair
@@ -207,7 +205,7 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
             val nonce = authRequest.nonce
             val SEC_IN_MS = 1000
 
-            val subJwk = SignatureUtil.generatePublicKeyJwk(keyPair, option)
+            val subJwk = KeyPairUtil.generatePublicKeyJwk(keyPair, option)
             // todo: support rsa key
             val jwk = object : ECPublicJwk {
                 override val kty = subJwk["kty"]!!
@@ -405,7 +403,10 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
             val vpToken = this.jwtVpJsonGenerator.generateJwt(
                 credential.credential,
                 HeaderOptions(),
-                JwtVpJsonPayloadOptions(aud = authRequest.clientId!!, nonce = authRequest.nonce!!)
+                JwtVpJsonPayloadOptions(
+                    aud = authRequest.clientId!!,
+                    nonce = authRequest.nonce!!
+                )
             )
 
             return Triple(
@@ -417,32 +418,6 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
         } catch (error: Exception) {
             throw error
         }
-    }
-}
-
-fun getCurveName(ecPublicKey: ECPublicKey): String {
-    val params = ecPublicKey.params
-
-    return when (params) {
-        is ECNamedCurveSpec -> {
-            // Bouncy Castle の ECNamedCurveSpec の場合
-            params.name
-        }
-
-        is ECParameterSpec -> {
-            val curve = params.curve
-            // 標準の Java ECParameterSpec の場合
-            // ここでは、標準の Java API では曲線名を直接取得できないため、
-            // 曲線のオーダーのビット長などに基づいて推定する方法を採用する
-            when (params.order.bitLength()) {
-                256 -> "P-256"
-                384 -> "P-384"
-                521 -> "P-521"
-                else -> "不明なカーブ"
-            }
-        }
-
-        else -> "サポートされていないパラメータタイプ"
     }
 }
 
