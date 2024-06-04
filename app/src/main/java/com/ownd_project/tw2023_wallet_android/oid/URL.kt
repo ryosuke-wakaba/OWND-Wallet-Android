@@ -82,7 +82,7 @@ suspend fun parseAndResolve(uri: String): ParseAndResolveResult {
             propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
             configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
         }
-        mapper.readValue<RPRegistrationMetadataPayload>(it.toString())
+        if (!it.isMissing && !it.isNull) mapper.readValue<RPRegistrationMetadataPayload>(it.toString()) else null
     }
     println("client metadata: $clientMetadata")
     val clientMetadataUri = decodedJwt.getClaim("client_metadata_uri").asString()?: authorizationRequestPayload.clientMetadataUri
