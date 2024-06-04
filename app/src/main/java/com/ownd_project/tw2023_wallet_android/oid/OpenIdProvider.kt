@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ownd_project.tw2023_wallet_android.utils.SigningOption
-import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
+import com.ownd_project.tw2023_wallet_android.utils.KeyUtil
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -205,7 +205,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val nonce = authRequest.nonce
             val SEC_IN_MS = 1000
 
-            val subJwk = KeyPairUtil.keyPairToPublicJwk(keyPair, option)
+            val subJwk = KeyUtil.keyPairToPublicJwk(keyPair, option)
             // todo: support rsa key
             val jwk = object : ECPublicJwk {
                 override val kty = subJwk["kty"]!!
