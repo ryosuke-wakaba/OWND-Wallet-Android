@@ -71,3 +71,8 @@ object KeyUtil {
     }
 
 }
+
+data class SigningOption(
+    val signingAlgo: String = "ES256",
+    val signingCurve: String = "P-256",
+)

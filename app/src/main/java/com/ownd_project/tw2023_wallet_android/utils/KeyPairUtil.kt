@@ -2,8 +2,8 @@ package com.ownd_project.tw2023_wallet_android.utils
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.ownd_project.tw2023_wallet_android.signature.toBase64Url
 import org.jose4j.jwk.EllipticCurveJsonWebKey
 import org.jose4j.jwk.JsonWebKey
@@ -17,9 +17,7 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.interfaces.ECPrivateKey
 import java.security.interfaces.ECPublicKey
-import java.security.interfaces.RSAPublicKey
 import java.security.spec.ECGenParameterSpec
-import java.security.spec.ECPoint
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 import javax.crypto.KeyGenerator
@@ -218,7 +216,3 @@ fun privateKeyToJwk(privateKey: ECPrivateKey, publicKey: ECPublicKey): Map<Strin
     )
 }
 
-data class SigningOption(
-    val signingAlgo: String = "ES256",
-    val signingCurve: String = "P-256",
-)
