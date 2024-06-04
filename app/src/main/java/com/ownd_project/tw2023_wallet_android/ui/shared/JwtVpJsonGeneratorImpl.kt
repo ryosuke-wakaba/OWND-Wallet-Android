@@ -48,7 +48,7 @@ class JwtVpJsonGeneratorImpl(private val keyAlias: String = Constants.KEY_PAIR_A
         }
         val publicKey: PublicKey = KeyPairUtil.getPublicKey(keyAlias)
             ?: throw IllegalStateException("Public key not found for alias: $keyAlias")
-        val jwk = KeyPairUtil.generatePublicKeyJwk(publicKey, SigningOption())
+        val jwk = KeyPairUtil.publicKeyToJwk(publicKey, SigningOption())
         return jwk
     }
 }

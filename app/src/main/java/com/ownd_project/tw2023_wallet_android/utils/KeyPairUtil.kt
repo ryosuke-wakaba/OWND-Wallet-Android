@@ -155,7 +155,7 @@ object KeyPairUtil {
         ) else bytes
     }
 
-    fun generateEcPublicKeyJwk(
+    private fun publicKeyToJwk(
         ecPublicKey: ECPublicKey,
         option: SigningOption
     ): Map<String, String> {
@@ -172,7 +172,7 @@ object KeyPairUtil {
         )
     }
 
-    fun generateRsaPublicKeyJwk(rsaPublicKey: RSAPublicKey): Map<String, String> {
+    private fun publicKeyToJwk(rsaPublicKey: RSAPublicKey): Map<String, String> {
         val n = Base64.getUrlEncoder().encodeToString(rsaPublicKey.modulus.toByteArray())
         val e = Base64.getUrlEncoder().encodeToString(rsaPublicKey.publicExponent.toByteArray())
 
@@ -184,18 +184,20 @@ object KeyPairUtil {
         )
     }
 
-    fun generatePublicKeyJwk(keyPair: KeyPair, option: SigningOption): Map<String, String> {
+    fun keyPairToPublicJwk(keyPair: KeyPair, option: SigningOption): Map<String, String> {
         val publicKey: PublicKey = keyPair.public
-        return generatePublicKeyJwk(publicKey, option)
+        return publicKeyToJwk(publicKey, option)
     }
-    fun generatePublicKeyJwk(publicKey: PublicKey, option: SigningOption): Map<String, String> {
+
+    fun publicKeyToJwk(publicKey: PublicKey, option: SigningOption): Map<String, String> {
         return when (publicKey) {
-            is RSAPublicKey -> generateRsaPublicKeyJwk(publicKey)
-            is ECPublicKey -> generateEcPublicKeyJwk(publicKey, option)
+            is RSAPublicKey -> publicKeyToJwk(publicKey)
+            is ECPublicKey -> publicKeyToJwk(publicKey, option)
             else -> throw IllegalArgumentException("Unsupported Key Type: ${publicKey::class.java.name}")
         }
     }
 
+    // todo move to anywhere else
     fun verifyJwt(jwkJson: Map<String, String>, jwt: String): Boolean {
         val publicKey = createPublicKey(jwkJson)
         val result = JWT.verifyJwt(jwt, publicKey)

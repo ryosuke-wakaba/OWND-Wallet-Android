@@ -205,7 +205,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val nonce = authRequest.nonce
             val SEC_IN_MS = 1000
 
-            val subJwk = KeyPairUtil.generatePublicKeyJwk(keyPair, option)
+            val subJwk = KeyPairUtil.keyPairToPublicJwk(keyPair, option)
             // todo: support rsa key
             val jwk = object : ECPublicJwk {
                 override val kty = subJwk["kty"]!!
