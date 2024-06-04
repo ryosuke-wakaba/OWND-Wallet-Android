@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.ownd_project.tw2023_wallet_android.signature.ProviderOption
+import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
@@ -25,7 +25,7 @@ import java.util.Base64
 import java.util.UUID
 
 
-class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOption(signingAlgo = "ES256K")) {
+class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(signingAlgo = "ES256K")) {
     private lateinit var keyPair: KeyPair
     private lateinit var keyBinding: KeyBinding
     private lateinit var jwtVpJsonGenerator: JwtVpJsonGenerator
@@ -222,7 +222,7 @@ class OpenIdProvider(val uri: String, val option: ProviderOption = ProviderOptio
                 iss = sub,
                 aud = Audience.Single(authRequest.clientId!!),
                 iat = (System.currentTimeMillis() / SEC_IN_MS).toLong(),
-                exp = (System.currentTimeMillis() / SEC_IN_MS + option.expiresIn).toLong(),
+                exp = (System.currentTimeMillis() / SEC_IN_MS + 600).toLong(),
                 sub = sub,
                 nonce = nonce as? String,
                 subJwk = subJwk,

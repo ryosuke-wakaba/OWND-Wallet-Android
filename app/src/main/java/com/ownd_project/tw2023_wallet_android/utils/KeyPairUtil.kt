@@ -4,7 +4,6 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.ownd_project.tw2023_wallet_android.signature.ProviderOption
 import com.ownd_project.tw2023_wallet_android.signature.toBase64Url
 import org.jose4j.jwk.EllipticCurveJsonWebKey
 import org.jose4j.jwk.JsonWebKey
@@ -158,7 +157,7 @@ object KeyPairUtil {
 
     fun generateEcPublicKeyJwk(
         ecPublicKey: ECPublicKey,
-        option: ProviderOption
+        option: SigningOption
     ): Map<String, String> {
         val ecPoint: ECPoint = ecPublicKey.w
         val x = correctBytes(ecPoint.affineX).toBase64Url()
@@ -185,11 +184,11 @@ object KeyPairUtil {
         )
     }
 
-    fun generatePublicKeyJwk(keyPair: KeyPair, option: ProviderOption): Map<String, String> {
+    fun generatePublicKeyJwk(keyPair: KeyPair, option: SigningOption): Map<String, String> {
         val publicKey: PublicKey = keyPair.public
         return generatePublicKeyJwk(publicKey, option)
     }
-    fun generatePublicKeyJwk(publicKey: PublicKey, option: ProviderOption): Map<String, String> {
+    fun generatePublicKeyJwk(publicKey: PublicKey, option: SigningOption): Map<String, String> {
         return when (publicKey) {
             is RSAPublicKey -> generateRsaPublicKeyJwk(publicKey)
             is ECPublicKey -> generateEcPublicKeyJwk(publicKey, option)
@@ -275,3 +274,8 @@ fun privateKeyToJwk(privateKey: ECPrivateKey, publicKey: ECPublicKey): Map<Strin
         "d" to encoder.encodeToString(privateKey.s.toByteArray())
     )
 }
+
+data class SigningOption(
+    val signingAlgo: String = "ES256",
+    val signingCurve: String = "P-256",
+)

@@ -18,7 +18,7 @@ import com.ownd_project.tw2023_wallet_android.datastore.PreferencesDataStore
 import com.ownd_project.tw2023_wallet_android.pairwise.HDKeyRing
 import com.ownd_project.tw2023_wallet_android.oid.OpenIdProvider
 import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
-import com.ownd_project.tw2023_wallet_android.signature.ProviderOption
+import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
 import com.ownd_project.tw2023_wallet_android.signature.ECPrivateJwk
 import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil
@@ -162,7 +162,7 @@ class IdTokenSharringViewModel : ViewModel() {
     private fun processSiopRequest(context: Context, url: String, seed: String, index: Int) {
         Log.d(TAG, "processSiopRequest")
         viewModelScope.launch(Dispatchers.IO) {
-            val opt = ProviderOption(signingCurve = "secp256k1", signingAlgo = "ES256K")
+            val opt = SigningOption(signingCurve = "secp256k1", signingAlgo = "ES256K")
             openIdProvider = OpenIdProvider(url, opt)
             val result = openIdProvider.processAuthorizationRequest()
             result.fold(

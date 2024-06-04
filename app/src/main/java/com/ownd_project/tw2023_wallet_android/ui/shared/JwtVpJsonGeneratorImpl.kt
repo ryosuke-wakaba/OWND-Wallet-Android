@@ -6,8 +6,7 @@ import com.ownd_project.tw2023_wallet_android.oid.VpJwtPayload
 import com.ownd_project.tw2023_wallet_android.oid.JwtVpJsonGenerator
 import com.ownd_project.tw2023_wallet_android.oid.JwtVpJsonPayloadOptions
 import com.ownd_project.tw2023_wallet_android.signature.JWT
-import com.ownd_project.tw2023_wallet_android.signature.ProviderOption
-import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil
+import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
 import java.security.PublicKey
 
@@ -49,7 +48,7 @@ class JwtVpJsonGeneratorImpl(private val keyAlias: String = Constants.KEY_PAIR_A
         }
         val publicKey: PublicKey = KeyPairUtil.getPublicKey(keyAlias)
             ?: throw IllegalStateException("Public key not found for alias: $keyAlias")
-        val jwk = KeyPairUtil.generatePublicKeyJwk(publicKey, ProviderOption())
+        val jwk = KeyPairUtil.generatePublicKeyJwk(publicKey, SigningOption())
         return jwk
     }
 }

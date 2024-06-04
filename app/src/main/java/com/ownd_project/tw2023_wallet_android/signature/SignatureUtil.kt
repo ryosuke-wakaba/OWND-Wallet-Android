@@ -22,14 +22,11 @@ import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyStore
 import java.security.MessageDigest
-import java.security.PublicKey
 import java.security.Security
 import java.security.cert.CertPathValidator
 import java.security.cert.CertificateFactory
 import java.security.cert.PKIXParameters
 import java.security.cert.X509Certificate
-import java.security.interfaces.ECPublicKey
-import java.security.interfaces.RSAPublicKey
 import java.security.spec.ECFieldFp
 import java.security.spec.ECParameterSpec
 import java.security.spec.ECPoint
@@ -380,8 +377,3 @@ fun ByteArray.toBase64Url() = Base64.getUrlEncoder().encodeToString(this).trimEn
 fun BigInteger.toBase64Url() =
     Base64.getUrlEncoder().encodeToString(this.toByteArray()).trimEnd('=')
 
-data class ProviderOption(
-    val expiresIn: Int = 600,
-    val signingAlgo: String = "ES256",
-    val signingCurve: String = "P-256",
-)
