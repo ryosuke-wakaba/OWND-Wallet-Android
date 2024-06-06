@@ -367,6 +367,7 @@ object SignatureUtil {
 //        return false
 //    }
 
+
     fun byte2Base64Url(b: ByteArray) = b.toBase64Url()
 
     fun int2Base64Url(i: BigInteger) = i.toBase64Url()
@@ -375,3 +376,4 @@ object SignatureUtil {
 fun ByteArray.toBase64Url() = Base64.getUrlEncoder().encodeToString(this).trimEnd('=')
 fun BigInteger.toBase64Url() =
     Base64.getUrlEncoder().encodeToString(this.toByteArray()).trimEnd('=')
+

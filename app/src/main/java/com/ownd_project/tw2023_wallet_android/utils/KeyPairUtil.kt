@@ -2,8 +2,9 @@ package com.ownd_project.tw2023_wallet_android.utils
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.ownd_project.tw2023_wallet_android.signature.JWT
+import com.ownd_project.tw2023_wallet_android.signature.toBase64Url
 import org.jose4j.jwk.EllipticCurveJsonWebKey
 import org.jose4j.jwk.JsonWebKey
 import org.jose4j.lang.JoseException
@@ -135,7 +136,7 @@ object KeyPairUtil {
 
         return keyFactory.generatePublic(keySpec)
     }
-
+    // todo move to anywhere else
     fun verifyJwt(jwkJson: Map<String, String>, jwt: String): Boolean {
         val publicKey = createPublicKey(jwkJson)
         val result = JWT.verifyJwt(jwt, publicKey)
@@ -214,3 +215,4 @@ fun privateKeyToJwk(privateKey: ECPrivateKey, publicKey: ECPublicKey): Map<Strin
         "d" to encoder.encodeToString(privateKey.s.toByteArray())
     )
 }
+
