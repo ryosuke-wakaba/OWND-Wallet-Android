@@ -10,6 +10,7 @@ import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil.validateCe
 import com.ownd_project.tw2023_wallet_android.utils.Constants
 import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil.convertPemToX509Certificates
 import org.jose4j.jwk.HttpsJwks
 import org.jose4j.jwk.Use
 import org.jose4j.jws.AlgorithmIdentifiers
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.Signature
+import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.util.Base64
@@ -74,13 +76,6 @@ class JWT {
                 throw JWTVerificationException((result as Either.Left).value)
             }
         }
-        suspend fun verifyJwtX509SanDns(jwt: String): DecodedJWT {
-            val decodedJwt = JWT.decode(jwt)
-//            TODO("extract certs")
-//            TODO("verify jwt")
-//            TODO("verify certs")
-            return decodedJwt
-        }
 
         fun verifyJwt(jwt: String, publicKey: PublicKey): Either<String, DecodedJWT> { // todo 戻り値の型がauto0のライブラリの型で良いか検討する
             val decodedJwt = JWT.decode(jwt)
@@ -121,6 +116,31 @@ class JWT {
                 Either.Right(verifier.verify(decodedJwt))
             } catch (e: JWTVerificationException) {
                 Either.Left(e.message ?: "JWTの検証に失敗しました")
+            }
+        }
+
+        fun verifyJwtByX5C(jwt: String): Either<String, Pair<DecodedJWT, Array<X509Certificate>>> {
+            // https://www.rfc-editor.org/rfc/rfc7515.html#section-4.1.6
+            // https://www.rfc-editor.org/rfc/rfc7515.html#appendix-B
+            val decodedJwt = JWT.decode(jwt)
+            val certs = decodedJwt.getHeaderClaim("x5c").asList(String::class.java)
+            try {
+                val certificates = convertPemToX509Certificates(certs)
+
+                if (certificates.isNullOrEmpty()) {
+                    return Either.Left("証明書リストが取得できませんでした")
+                }
+                val result = verifyJwt(jwt, certificates[0].publicKey)
+                val b = validateCertificateChain(certificates, certificates.last())
+                // todo row to der エンコーディングの変換ができずjava.security.Signatureを使った実装が未対応(ES256Kサポートのためには対応が必要)
+                return if (result.isRight() && b) {
+                    Either.Right(Pair(decodedJwt, certificates))
+                } else {
+                    Either.Left("JWTの検証に失敗しました")
+                }
+            } catch (e: IOException) {
+                println(e)
+                return Either.Left("JWTの検証に失敗しました")
             }
         }
 
