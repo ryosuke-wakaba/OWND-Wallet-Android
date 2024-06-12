@@ -148,9 +148,12 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                         /*
                         the Client Identifier MUST be a DNS name and match a dNSName Subject Alternative Name (SAN) [RFC5280] entry in the leaf certificate passed with the request.
                          */
-                        if (certificates[0].hasSubjectAlternativeName(clientId)) {
-                            // throw RuntimeException("Invalid client_id or response_uri")
+                        if (!certificates[0].hasSubjectAlternativeName(clientId)) {
                             Either.Left("Invalid client_id or response_uri")
+                        }
+                        val uri = payload.responseUri ?: payload.redirectUri
+                        if (clientId != uri) {
+                            Either.Left("Invalid client_id or host uri")
                         }
                         decodedJwt
                     }
