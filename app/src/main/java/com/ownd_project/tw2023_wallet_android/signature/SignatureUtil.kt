@@ -9,6 +9,9 @@ import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSequenceGenerator
 import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.Extension.subjectAlternativeName
+import org.bouncycastle.asn1.x509.GeneralName
+import org.bouncycastle.asn1.x509.GeneralNames
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
 import org.bouncycastle.jce.ECNamedCurveTable
@@ -190,7 +193,8 @@ object SignatureUtil {
     fun generateCertificate(
         keyPair: KeyPair,
         signerKeyPair: KeyPair,
-        isCa: Boolean
+        isCa: Boolean,
+        subjectAlternativeNames: List<String> = emptyList()
     ): X509Certificate {
         val now = Date()
         val notBefore = Date(now.time)
@@ -213,6 +217,14 @@ object SignatureUtil {
                 Extension.basicConstraints,
                 true,
                 BasicConstraints(true)
+            )
+        }
+
+        if (subjectAlternativeNames.isNotEmpty()) {
+            val generalNames = subjectAlternativeNames.map { GeneralName(GeneralName.dNSName, it) }
+            val subjectAltName = GeneralNames(generalNames.toTypedArray())
+            certBuilder.addExtension(
+                subjectAlternativeName, false, subjectAltName
             )
         }
 
@@ -268,6 +280,7 @@ object SignatureUtil {
     }
 
     fun getX509CertificatesFromUrl(url: String): Array<X509Certificate>? {
+        // https://www.rfc-editor.org/rfc/rfc7515.html#section-4.1.5
         val client = OkHttpClient()
         val request = Request.Builder().url(url).build()
 
@@ -275,18 +288,19 @@ object SignatureUtil {
             if (!response.isSuccessful) throw IOException("Failed to download file: $response")
 
             val responseBody = response.body()?.string() ?: return null
-            return convertPemToX509Certificates(responseBody)
+            return convertPemWithDelimitersToX509Certificates(responseBody)
         }
     }
-
-    private fun convertPemToX509Certificates(pem: String): Array<X509Certificate>? {
-        val certificateFactory = CertificateFactory.getInstance("X.509")
-        val certificates = mutableListOf<X509Certificate>()
-
+    fun convertPemWithDelimitersToX509Certificates(pem: String): Array<X509Certificate>? {
         val pemCertificates = pem.trim().split("-----END CERTIFICATE-----")
             .filter { it.contains("-----BEGIN CERTIFICATE-----") }
             .map { it.trim() + "\n-----END CERTIFICATE-----" }
+        return convertPemToX509Certificates(pemCertificates)
+    }
 
+    fun convertPemToX509Certificates(pemCertificates: List<String>): Array<X509Certificate>? {
+        val certificateFactory = CertificateFactory.getInstance("X.509")
+        val certificates = mutableListOf<X509Certificate>()
         pemCertificates.forEach { certPem ->
             val certBytes = Base64.getMimeDecoder().decode(
                 certPem.lineSequence()
