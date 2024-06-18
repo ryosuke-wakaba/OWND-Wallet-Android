@@ -3,6 +3,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import kotlinx.coroutines.runBlocking
@@ -124,51 +125,190 @@ class URLTest {
             wireMockServer.stop()
         }
         @Test
-        fun testParseAndResolveWithRequestAndClientMetadataUri() = runBlocking {
+        fun testClientMetadataIncludedInRequestObject() = runBlocking {
+            val mapper = jacksonObjectMapper()
+            val map = mapper.readValue<Map<String, Any>>(mockedResponse)
+
+            val algorithm: Algorithm = Algorithm.HMAC512("secret")
+            val requestObjectJwt = JWT.create()
+                .withClaim("client_metadata", map)
+                .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
+                .sign(algorithm)
+            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val testUri = "https://example.com/authorize?request=${encodedJwtString}"
+
+            val result = parseAndResolve(testUri)
+
+            assertNotNull(result)
+            assertEquals("https", result.scheme)
+            assertNotNull(result.authorizationRequestPayload)
+            assertEquals(requestObjectJwt, result.requestObjectJwt)
+            assertNotNull(result.registrationMetadata)
+            assertEquals("client123", result.registrationMetadata.clientId)
+        }
+
+        @Test
+        fun testClientMetadataUriIncludedInRequestObject() = runBlocking {
             val clientMetadataUriPath = "/client-metadata-uri"
             wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(clientMetadataUriPath))
                 .willReturn(WireMock.aResponse()
                     .withStatus(200)
                     .withBody(mockedResponse)))
-            val metadataUri = "http://localhost:${wireMockServer.port()}$clientMetadataUriPath"
-            val encodedJwtString = URLEncoder.encode(token, StandardCharsets.UTF_8.toString())
-            val testUri = "https://example.com/authorize?request=${encodedJwtString}&client_metadata_uri=$metadataUri"
+            val uri = "http://localhost:${wireMockServer.port()}$clientMetadataUriPath"
 
-            // parseAndResolve関数の呼び出し
+            val algorithm: Algorithm = Algorithm.HMAC512("secret")
+            val requestObjectJwt = JWT.create()
+                .withClaim("client_metadata_uri", uri)
+                .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
+                .sign(algorithm)
+            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val testUri = "https://example.com/authorize?request=${encodedJwtString}"
+
             val result = parseAndResolve(testUri)
 
-            // 結果の検証
             assertNotNull(result)
             assertEquals("https", result.scheme)
             assertNotNull(result.authorizationRequestPayload)
-            assertEquals(token, result.requestObjectJwt)
+            assertEquals(requestObjectJwt, result.requestObjectJwt)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.registrationMetadata.clientId)
         }
+
         @Test
-        fun testParseAndResolveWithRequestUriAndClientMetadata() = runBlocking {
+        fun testClientMetadataIncludedInRequestUri() = runBlocking {
+            val mapper = jacksonObjectMapper()
+            val map = mapper.readValue<Map<String, Any>>(mockedResponse)
+            val algorithm: Algorithm = Algorithm.HMAC512("secret")
+            val requestObjectJwt = JWT.create()
+                .withClaim("client_metadata", map)
+                .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
+                .sign(algorithm)
+            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+
             val requestUriPath = "/request-uri"
             wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(requestUriPath))
                 .willReturn(WireMock.aResponse()
                     .withStatus(200)
-                    .withBody(token)))
+                    .withBody(encodedJwtString)))
 
             val requestUri = "http://localhost:${wireMockServer.port()}$requestUriPath"
             val encodedRequestUri = URLEncoder.encode(requestUri, StandardCharsets.UTF_8.toString())
 
-            val encodedMockedResponse = URLEncoder.encode(mockedResponse, StandardCharsets.UTF_8.toString())
-            val testUri = "https://example.com/authorize?request_uri=$requestUri&client_metadata=$encodedMockedResponse"
+            val testUri = "https://example.com/authorize?request_uri=$encodedRequestUri"
 
             // parseAndResolve関数の呼び出し
             val result = parseAndResolve(testUri)
 
-            // 結果の検証
             assertNotNull(result)
             assertEquals("https", result.scheme)
             assertNotNull(result.authorizationRequestPayload)
-            assertEquals(token, result.requestObjectJwt)
+            assertEquals(encodedJwtString, result.requestObjectJwt)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.registrationMetadata.clientId)
+        }
+
+        @Test
+        fun testClientMetadataUriIncludedInRequestUri() = runBlocking {
+            val clientMetadataUriPath = "/client-metadata-uri"
+            wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(clientMetadataUriPath))
+                .willReturn(WireMock.aResponse()
+                    .withStatus(200)
+                    .withBody(mockedResponse)))
+            val uri = "http://localhost:${wireMockServer.port()}$clientMetadataUriPath"
+
+            val algorithm: Algorithm = Algorithm.HMAC512("secret")
+            val requestObjectJwt = JWT.create()
+                .withClaim("client_metadata_uri", uri)
+                .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
+                .sign(algorithm)
+            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+
+            val requestUriPath = "/request-uri"
+            wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(requestUriPath))
+                .willReturn(WireMock.aResponse()
+                    .withStatus(200)
+                    .withBody(encodedJwtString)))
+
+            val requestUri = "http://localhost:${wireMockServer.port()}$requestUriPath"
+            val encodedRequestUri = URLEncoder.encode(requestUri, StandardCharsets.UTF_8.toString())
+
+            val testUri = "https://example.com/authorize?request_uri=$encodedRequestUri"
+
+            // parseAndResolve関数の呼び出し
+            val result = parseAndResolve(testUri)
+
+            assertNotNull(result)
+            assertEquals("https", result.scheme)
+            assertNotNull(result.authorizationRequestPayload)
+            assertEquals(encodedJwtString, result.requestObjectJwt)
+            assertNotNull(result.registrationMetadata)
+            assertEquals("client123", result.registrationMetadata.clientId)
+        }
+
+        @Test
+        fun testClientMetadataIncludedInQueryParameter() = runBlocking {
+            val encodedMetadata = URLEncoder.encode(mockedResponse, StandardCharsets.UTF_8.toString())
+            val testUri = "https://example.com/authorize?client_metadata=${encodedMetadata}"
+
+            val result = parseAndResolve(testUri)
+
+            assertNotNull(result)
+            assertEquals("https", result.scheme)
+            assertNotNull(result.authorizationRequestPayload)
+            assertNotNull(result.registrationMetadata)
+            assertEquals("client123", result.registrationMetadata.clientId)
+        }
+
+        @Test
+        fun testClientMetadataUriIncludedInQueryParameter() = runBlocking {
+            val clientMetadataUriPath = "/client-metadata-uri"
+            wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(clientMetadataUriPath))
+                .willReturn(WireMock.aResponse()
+                    .withStatus(200)
+                    .withBody(mockedResponse)))
+            val uri = "http://localhost:${wireMockServer.port()}$clientMetadataUriPath"
+            val testUri = "https://example.com/authorize?client_metadata_uri=${uri}"
+
+            val result = parseAndResolve(testUri)
+
+            assertNotNull(result)
+            assertEquals("https", result.scheme)
+            assertNotNull(result.authorizationRequestPayload)
+            assertNotNull(result.registrationMetadata)
+            assertEquals("client123", result.registrationMetadata.clientId)
+        }
+
+        @Test
+        fun testPresentationDefinitionIncludedInQueryParameter() = runBlocking {
+            val encodedPresentationDefinitionJson = URLEncoder.encode(presentationDefinitionJson, StandardCharsets.UTF_8.toString())
+            val testUri = "https://example.com/authorize?client_id=client123&presentation_definition=${encodedPresentationDefinitionJson}"
+
+            val result = parseAndResolve(testUri)
+
+            assertNotNull(result)
+            assertEquals("https", result.scheme)
+            assertNotNull(result.authorizationRequestPayload)
+            assertNotNull(result.presentationDefinition)
+            assertEquals("client123", result.authorizationRequestPayload.clientId)
+        }
+
+        @Test
+        fun testPresentationDefinitionUriIncludedInQueryParameter() = runBlocking {
+            val presentationDefinitionUriPath = "/presentation-definition-uri"
+            wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(presentationDefinitionUriPath))
+                .willReturn(WireMock.aResponse()
+                    .withStatus(200)
+                    .withBody(presentationDefinitionJson)))
+            val uri = "http://localhost:${wireMockServer.port()}$presentationDefinitionUriPath"
+            val testUri = "https://example.com/authorize?client_id=client123&presentation_definition_uri=${uri}"
+
+            val result = parseAndResolve(testUri)
+
+            assertNotNull(result)
+            assertEquals("https", result.scheme)
+            assertNotNull(result.authorizationRequestPayload)
+            assertNotNull(result.registrationMetadata)
+            assertEquals("client123", result.authorizationRequestPayload.clientId)
         }
     }
 }

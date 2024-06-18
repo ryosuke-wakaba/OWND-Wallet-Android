@@ -27,12 +27,7 @@ import java.security.interfaces.RSAPublicKey
 import java.util.Date
 
 
-class PresentationDefinitionTest {
-    private lateinit var wireMockServer: WireMockServer
-    private val keyPair = generateRsaKeyPair()
-    private val ecKeyPair = generateEcKeyPair()
-
-    private val presentationDefinitionJson = """
+val presentationDefinitionJson = """
         {
           "id": "12345",
           "input_descriptors": [
@@ -65,6 +60,11 @@ class PresentationDefinitionTest {
           ]
         }
         """.trimIndent()
+
+class PresentationDefinitionTest {
+    private lateinit var wireMockServer: WireMockServer
+    private val keyPair = generateRsaKeyPair()
+    private val ecKeyPair = generateEcKeyPair()
 
     private val presentationDefinitionJson2 = """
         {
