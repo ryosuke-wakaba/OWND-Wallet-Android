@@ -113,24 +113,22 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             uri
         )
 
-        val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
-            propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
-            configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) // ランダムなプロパティは無視する
-            val module = SimpleModule().apply {
-                addDeserializer(Audience::class.java, AudienceDeserializer())
-                addDeserializer(ResponseMode::class.java, EnumDeserializer(ResponseMode::class))
-            }
-            registerModule(module)
-        }
-        val decodedJwt = com.auth0.jwt.JWT.decode(requestObjectJwt)
-        val payloadJson = String(Base64.getUrlDecoder().decode(decodedJwt.payload))
-        val payload = objectMapper.readValue(payloadJson, RequestObjectPayloadImpl::class.java)
-
-        val clientScheme = payload.clientIdScheme?: authorizationRequestPayload.clientIdScheme
-
         return if (requestIsSigned) {
-            val jwtValidationResult =
+            val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
+                propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+                configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) // ランダムなプロパティは無視する
+                val module = SimpleModule().apply {
+                    addDeserializer(Audience::class.java, AudienceDeserializer())
+                    addDeserializer(ResponseMode::class.java, EnumDeserializer(ResponseMode::class))
+                }
+                registerModule(module)
+            }
+            val decodedJwt = com.auth0.jwt.JWT.decode(requestObjectJwt)
+            val payloadJson = String(Base64.getUrlDecoder().decode(decodedJwt.payload))
+            val payload = objectMapper.readValue(payloadJson, RequestObjectPayloadImpl::class.java)
+
+            val clientScheme = payload.clientIdScheme?: authorizationRequestPayload.clientIdScheme
             if (clientScheme == "x509_san_dns") {
                 JWT.verifyJwtX509SanDns(requestObjectJwt)
             } else {
@@ -139,11 +137,6 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             }
 
             val result = try {
-                // JWTを検証
-                val payloadJson = String(Base64.getUrlDecoder().decode(jwtValidationResult.payload))
-                val payload = objectMapper.readValue(payloadJson, RequestObjectPayloadImpl::class.java)
-
-                val clientScheme = payload.clientIdScheme?: authorizationRequestPayload.clientIdScheme
                 if (clientScheme == "redirect_uri") {
                     val clientId = payload.clientId?: authorizationRequestPayload.clientId
                     val responseUri = payload.responseUri?: authorizationRequestPayload.responseUri
@@ -170,21 +163,17 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             }
             return result
         } else {
-            val decodedJwt = com.auth0.jwt.JWT.decode(requestObjectJwt)
-            val payloadJson = String(Base64.getUrlDecoder().decode(decodedJwt.payload))
-            val payload = objectMapper.readValue(payloadJson, RequestObjectPayloadImpl::class.java)
-
-            val clientScheme = payload.clientIdScheme?: authorizationRequestPayload.clientIdScheme
+            val clientScheme = authorizationRequestPayload.clientIdScheme
             if (clientScheme == "redirect_uri") {
-                val clientId = payload.clientId?: authorizationRequestPayload.clientId
-                val responseUri = payload.responseUri?: authorizationRequestPayload.responseUri
+                val clientId = authorizationRequestPayload.clientId
+                val responseUri = authorizationRequestPayload.responseUri
                 if (clientId.isNullOrBlank() || responseUri.isNullOrBlank() || clientId != responseUri) {
                     return Either.Left("Invalid client_id or response_uri")
                 }
             }
             val siopRequest = ProcessSIOPRequestResult(
                     scheme,
-                    payload,
+                    null,
                     authorizationRequestPayload,
                     requestObjectJwt,
                     registrationMetadata,
@@ -559,7 +548,7 @@ fun satisfyConstrains(credential: Map<String, Any>, presentationDefinition: Pres
 
 data class ProcessSIOPRequestResult(
     val scheme: String,
-    val requestObject: RequestObjectPayload,
+    val requestObject: RequestObjectPayload?,
     val authorizationRequestPayload: AuthorizationRequestPayload,
     val requestObjectJwt: String,
     val registrationMetadata: RPRegistrationMetadataPayload,

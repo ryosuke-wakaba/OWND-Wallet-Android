@@ -161,14 +161,14 @@ class OpenIdProviderTest {
             ifRight = { value ->
                 val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = value
                 // RequestObjectPayloadオブジェクトの内容を検証
-                assertEquals("openid", requestObject.scope)
-                assertEquals("code id_token", requestObject.responseType)
-                assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject.clientId)
-                assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject.redirectUri)
+                assertEquals("openid", requestObject?.scope)
+                assertEquals("code id_token", requestObject?.responseType)
+                assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject?.clientId)
+                assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject?.redirectUri)
                 // nonceとstateはランダムに生成される可能性があるため、存在することのみを確認
-                assertNotNull(requestObject.nonce)
-                assertNotNull(requestObject.state)
-                assertEquals(86400, requestObject.maxAge)
+                assertNotNull(requestObject?.nonce)
+                assertNotNull(requestObject?.state)
+                assertEquals(86400, requestObject?.maxAge)
 
                 assertEquals("ClientName", registrationMetadata.clientName)
                 assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)

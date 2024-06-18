@@ -164,6 +164,7 @@ class URLTest {
             assertEquals(requestObjectJwt, result.requestObjectJwt)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.registrationMetadata.clientId)
+            assertTrue(result.requestIsSigned)
         }
 
 
@@ -186,6 +187,7 @@ class URLTest {
             assertEquals(requestObjectJwt, result.requestObjectJwt)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.registrationMetadata.clientId)
+            assertTrue(result.requestIsSigned)
         }
 
         @Test
@@ -204,6 +206,7 @@ class URLTest {
             assertNotNull(result.authorizationRequestPayload)
             assertNotNull(result.presentationDefinition)
             assertEquals("client123", result.authorizationRequestPayload.clientId)
+            assertTrue(result.requestIsSigned)
         }
 
         @Test
@@ -223,6 +226,7 @@ class URLTest {
             assertNotNull(result.authorizationRequestPayload)
             assertNotNull(result.presentationDefinition)
             assertEquals("client123", result.authorizationRequestPayload.clientId)
+            assertTrue(result.requestIsSigned)
         }
     }
 
@@ -258,6 +262,7 @@ class URLTest {
             assertEquals(encodedJwtString, result.requestObjectJwt)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.registrationMetadata.clientId)
+            assertTrue(result.requestIsSigned)
         }
 
         @Test
@@ -282,6 +287,7 @@ class URLTest {
             assertEquals(encodedJwtString, result.requestObjectJwt)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.registrationMetadata.clientId)
+            assertTrue(result.requestIsSigned)
         }
 
         @Test
@@ -302,6 +308,7 @@ class URLTest {
             assertNotNull(result.authorizationRequestPayload)
             assertNotNull(result.presentationDefinition)
             assertEquals("client123", result.authorizationRequestPayload.clientId)
+            assertTrue(result.requestIsSigned)
         }
 
         @Test
@@ -323,10 +330,31 @@ class URLTest {
             assertNotNull(result.authorizationRequestPayload)
             assertNotNull(result.presentationDefinition)
             assertEquals("client123", result.authorizationRequestPayload.clientId)
+            assertTrue(result.requestIsSigned)
         }
     }
 
     class ParseAndResolveUnSignedRequestTest: URLBaseTest() {
+        @Test
+        fun testStringParams() = runBlocking {
+            val encodedMetadata = URLEncoder.encode(mockedResponse, StandardCharsets.UTF_8.toString())
+            val clientId = "https://example.com/response"
+            val responseUri = clientId
+            val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
+            val encodedResponseUri = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
+            val testUri = "https://example.com/authorize?client_id=${encodedClientId}&response_uri=${encodedResponseUri}"
+
+            val result = parseAndResolve(testUri)
+
+            assertNotNull(result)
+            assertEquals("https", result.scheme)
+            assertNotNull(result.authorizationRequestPayload)
+            assertEquals(responseUri, result.authorizationRequestPayload.responseUri)
+            assertNotNull(result.registrationMetadata)
+            assertNull(result.registrationMetadata.clientId)
+            assertEquals(clientId, result.authorizationRequestPayload.clientId)
+            assertFalse(result.requestIsSigned)
+        }
         @Test
         fun testClientMetadata() = runBlocking {
             val encodedMetadata = URLEncoder.encode(mockedResponse, StandardCharsets.UTF_8.toString())
@@ -339,6 +367,7 @@ class URLTest {
             assertNotNull(result.authorizationRequestPayload)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.registrationMetadata.clientId)
+            assertFalse(result.requestIsSigned)
         }
 
         @Test
@@ -353,6 +382,7 @@ class URLTest {
             assertNotNull(result.authorizationRequestPayload)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.registrationMetadata.clientId)
+            assertFalse(result.requestIsSigned)
         }
 
         @Test
@@ -367,6 +397,7 @@ class URLTest {
             assertNotNull(result.authorizationRequestPayload)
             assertNotNull(result.presentationDefinition)
             assertEquals("client123", result.authorizationRequestPayload.clientId)
+            assertFalse(result.requestIsSigned)
         }
 
         @Test
@@ -381,6 +412,7 @@ class URLTest {
             assertNotNull(result.authorizationRequestPayload)
             assertNotNull(result.registrationMetadata)
             assertEquals("client123", result.authorizationRequestPayload.clientId)
+            assertFalse(result.requestIsSigned)
         }
     }
 }

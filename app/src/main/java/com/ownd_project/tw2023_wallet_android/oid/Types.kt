@@ -512,6 +512,7 @@ fun createAuthorizationRequestPayloadFromMap(map: Map<String, Any?>): Authorizat
         responseType = map["response_type"] as? String,
         clientId = map["client_id"] as? String,
         redirectUri = map["redirect_uri"] as? String,
+        responseUri = map["response_uri"] as? String,
         idTokenHint = map["id_token_hint"] as? String,
         nonce = map["nonce"] as? String,
         state = map["state"] as? String,
