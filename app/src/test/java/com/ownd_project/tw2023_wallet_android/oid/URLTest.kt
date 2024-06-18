@@ -312,15 +312,7 @@ class URLTest {
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
             val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
-
-            val requestUriPath = "/request-uri"
-            wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(requestUriPath))
-                .willReturn(WireMock.aResponse()
-                    .withStatus(200)
-                    .withBody(encodedJwtString)))
-
-            val requestUri = "http://localhost:${wireMockServer.port()}$requestUriPath"
-            val encodedRequestUri = URLEncoder.encode(requestUri, StandardCharsets.UTF_8.toString())
+            val encodedRequestUri = prepareRequestUri(encodedJwtString)
 
             val testUri = "https://example.com/authorize?client_id=client123&request_uri=$encodedRequestUri"
 
