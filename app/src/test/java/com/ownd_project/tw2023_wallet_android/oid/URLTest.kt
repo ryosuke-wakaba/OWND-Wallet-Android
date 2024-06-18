@@ -10,60 +10,64 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.experimental.runners.Enclosed
+import org.junit.runner.RunWith
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.Date
 
+@RunWith(Enclosed::class)
 class URLTest {
 
-    @Test
-    fun testDecodeUriAsJsonWithVariousTypes() {
-        val uri = "http://example.com?stringParam=hello&intParam=123&boolParam=true&jsonParam=%7B%22key%22%3A%20%22value%22%7D"
-        val result = decodeUriAsJson(uri)
+    class Misc {
+        @Test
+        fun testDecodeUriAsJsonWithVariousTypes() {
+            val uri = "http://example.com?stringParam=hello&intParam=123&boolParam=true&jsonParam=%7B%22key%22%3A%20%22value%22%7D"
+            val result = decodeUriAsJson(uri)
 
-        assertEquals("hello", result["stringParam"])
-        assertEquals(123, result["intParam"])
-        assertEquals(true, result["boolParam"])
-        assertTrue(result["jsonParam"] is Map<*, *>)
-        assertEquals("value", (result["jsonParam"] as Map<*, *>)["key"])
-    }
+            assertEquals("hello", result["stringParam"])
+            assertEquals(123, result["intParam"])
+            assertEquals(true, result["boolParam"])
+            assertTrue(result["jsonParam"] is Map<*, *>)
+            assertEquals("value", (result["jsonParam"] as Map<*, *>)["key"])
+        }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun testDecodeUriAsJsonWithEmptyUri() {
-        decodeUriAsJson("")
-    }
+        @Test(expected = IllegalArgumentException::class)
+        fun testDecodeUriAsJsonWithEmptyUri() {
+            decodeUriAsJson("")
+        }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun testDecodeUriAsJsonWithInvalidUri() {
-        decodeUriAsJson("http://example.com")
-    }
+        @Test(expected = IllegalArgumentException::class)
+        fun testDecodeUriAsJsonWithInvalidUri() {
+            decodeUriAsJson("http://example.com")
+        }
 
-    @Test
-    fun testParse() {
-        val url = "https://server.example.com/authorize?" +
-                "response_type=code%20id_token" +
-                "&client_id=s6BhdRkqt3" +
-                "&redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb" +
-                "&scope=openid" +
-                "&state=af0ifjsldkj" +
-                "&nonce=n-0S6_WzA2Mj" +
-                "&request=eyJhbGciO"
+        @Test
+        fun testParse() {
+            val url = "https://server.example.com/authorize?" +
+                    "response_type=code%20id_token" +
+                    "&client_id=s6BhdRkqt3" +
+                    "&redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb" +
+                    "&scope=openid" +
+                    "&state=af0ifjsldkj" +
+                    "&nonce=n-0S6_WzA2Mj" +
+                    "&request=eyJhbGciO"
 
-        val result = parse(url)
+            val result = parse(url)
 
-        assertEquals("https", result.first)
-        assertNotNull(result.second)
-        assertEquals("code id_token", result.second.responseType)
-        assertEquals("s6BhdRkqt3", result.second.clientId)
-        assertEquals("https://client.example.org/cb", result.second.redirectUri)
-        assertEquals("openid", result.second.scope)
-        assertEquals("af0ifjsldkj", result.second.state)
-        assertEquals("n-0S6_WzA2Mj", result.second.nonce)
-    }
+            assertEquals("https", result.first)
+            assertNotNull(result.second)
+            assertEquals("code id_token", result.second.responseType)
+            assertEquals("s6BhdRkqt3", result.second.clientId)
+            assertEquals("https://client.example.org/cb", result.second.redirectUri)
+            assertEquals("openid", result.second.scope)
+            assertEquals("af0ifjsldkj", result.second.state)
+            assertEquals("n-0S6_WzA2Mj", result.second.nonce)
+        }
 
-    @Test()
-    fun testDeseriarize() {
-        val json = """
+        @Test()
+        fun testDeseriarize() {
+            val json = """
        {
           "authorization_endpoint": "https://example.com/authorize",
           "issuer": "https://example.com",
@@ -72,14 +76,15 @@ class URLTest {
           "subject_types_supported": ["public", "pairwise"]
         }
         """
-        val mapper = jacksonObjectMapper().apply {
-            propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
-        }
+            val mapper = jacksonObjectMapper().apply {
+                propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+            }
 //        mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(
 //            JsonAutoDetect.Visibility.ANY))
-        val metadata = mapper.readValue(json, AuthorizationServerMetadata::class.java)
-        assertEquals("https://example.com/authorize", metadata.authorizationEndpoint)
-        assertEquals("id_token", metadata.responseTypesSupported?.get(0) ?: "bad value")
+            val metadata = mapper.readValue(json, AuthorizationServerMetadata::class.java)
+            assertEquals("https://example.com/authorize", metadata.authorizationEndpoint)
+            assertEquals("id_token", metadata.responseTypesSupported?.get(0) ?: "bad value")
+        }
     }
 
     class ParseAndResolveTest {
