@@ -1,4 +1,5 @@
 package com.ownd_project.tw2023_wallet_android.oid
+
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
@@ -56,20 +57,28 @@ open class URLBaseTest {
 
     fun prepareClientMetadataUri(response: String): String {
         val clientMetadataUriPath = "/client-metadata-uri"
-        wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(clientMetadataUriPath))
-            .willReturn(WireMock.aResponse()
-                .withStatus(200)
-                .withBody(response)))
+        wireMockServer.stubFor(
+            WireMock.get(WireMock.urlEqualTo(clientMetadataUriPath))
+                .willReturn(
+                    WireMock.aResponse()
+                        .withStatus(200)
+                        .withBody(response)
+                )
+        )
         val uri = "http://localhost:${wireMockServer.port()}$clientMetadataUriPath"
         return uri
     }
 
     fun preparePresentationDefinitionUri(response: String): String {
         val presentationDefinitionUriPath = "/presentation-definition-uri"
-        wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(presentationDefinitionUriPath))
-            .willReturn(WireMock.aResponse()
-                .withStatus(200)
-                .withBody(response)))
+        wireMockServer.stubFor(
+            WireMock.get(WireMock.urlEqualTo(presentationDefinitionUriPath))
+                .willReturn(
+                    WireMock.aResponse()
+                        .withStatus(200)
+                        .withBody(response)
+                )
+        )
         val uri = "http://localhost:${wireMockServer.port()}$presentationDefinitionUriPath"
         return uri
     }
@@ -81,7 +90,8 @@ class URLTest {
     class Misc {
         @Test
         fun testDecodeUriAsJsonWithVariousTypes() {
-            val uri = "http://example.com?stringParam=hello&intParam=123&boolParam=true&jsonParam=%7B%22key%22%3A%20%22value%22%7D"
+            val uri =
+                "http://example.com?stringParam=hello&intParam=123&boolParam=true&jsonParam=%7B%22key%22%3A%20%22value%22%7D"
             val result = decodeUriAsJson(uri)
 
             assertEquals("hello", result["stringParam"])
@@ -146,14 +156,15 @@ class URLTest {
         }
     }
 
-    class ParseAndResolveSignedRequestTest: URLBaseTest() {
+    class ParseAndResolveSignedRequestTest : URLBaseTest() {
         @Test
         fun testClientMetadata() = runBlocking {
             val requestObjectJwt = JWT.create()
                 .withClaim("client_metadata", clientMetadataMap)
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
-            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
             val testUri = "https://example.com/authorize?request=${encodedJwtString}"
 
             val result = parseAndResolve(testUri)
@@ -176,7 +187,8 @@ class URLTest {
                 .withClaim("client_metadata_uri", uri)
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
-            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
             val testUri = "https://example.com/authorize?request=${encodedJwtString}"
 
             val result = parseAndResolve(testUri)
@@ -196,8 +208,10 @@ class URLTest {
                 .withClaim("presentation_definition", presentationDefinitionMap)
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
-            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
-            val testUri = "https://example.com/authorize?client_id=client123&request=${encodedJwtString}"
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val testUri =
+                "https://example.com/authorize?client_id=client123&request=${encodedJwtString}"
 
             val result = parseAndResolve(testUri)
 
@@ -216,8 +230,10 @@ class URLTest {
                 .withClaim("presentation_definition_uri", uri)
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
-            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
-            val testUri = "https://example.com/authorize?client_id=client123&request=${encodedJwtString}"
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val testUri =
+                "https://example.com/authorize?client_id=client123&request=${encodedJwtString}"
 
             val result = parseAndResolve(testUri)
 
@@ -230,13 +246,17 @@ class URLTest {
         }
     }
 
-    class ParseAndResolveSignedRequestByUrlTest: URLBaseTest() {
+    class ParseAndResolveSignedRequestByUrlTest : URLBaseTest() {
         private fun prepareRequestUri(jwt: String): String? {
             val requestUriPath = "/request-uri"
-            wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(requestUriPath))
-                .willReturn(WireMock.aResponse()
-                    .withStatus(200)
-                    .withBody(jwt)))
+            wireMockServer.stubFor(
+                WireMock.get(WireMock.urlEqualTo(requestUriPath))
+                    .willReturn(
+                        WireMock.aResponse()
+                            .withStatus(200)
+                            .withBody(jwt)
+                    )
+            )
 
             val requestUri = "http://localhost:${wireMockServer.port()}$requestUriPath"
             return URLEncoder.encode(requestUri, StandardCharsets.UTF_8.toString())
@@ -248,7 +268,8 @@ class URLTest {
                 .withClaim("client_metadata", clientMetadataMap)
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
-            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
             val encodedRequestUri = prepareRequestUri(encodedJwtString)
 
             val testUri = "https://example.com/authorize?request_uri=$encodedRequestUri"
@@ -273,7 +294,8 @@ class URLTest {
                 .withClaim("client_metadata_uri", uri)
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
-            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
             val encodedRequestUri = prepareRequestUri(encodedJwtString)
 
             val testUri = "https://example.com/authorize?request_uri=$encodedRequestUri"
@@ -296,10 +318,12 @@ class URLTest {
                 .withClaim("presentation_definition", presentationDefinitionMap)
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
-            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
             val encodedRequestUri = prepareRequestUri(encodedJwtString)
 
-            val testUri = "https://example.com/authorize?client_id=client123&request_uri=$encodedRequestUri"
+            val testUri =
+                "https://example.com/authorize?client_id=client123&request_uri=$encodedRequestUri"
 
             val result = parseAndResolve(testUri)
 
@@ -318,10 +342,12 @@ class URLTest {
                 .withClaim("presentation_definition_uri", uri)
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
-            val encodedJwtString = URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
             val encodedRequestUri = prepareRequestUri(encodedJwtString)
 
-            val testUri = "https://example.com/authorize?client_id=client123&request_uri=$encodedRequestUri"
+            val testUri =
+                "https://example.com/authorize?client_id=client123&request_uri=$encodedRequestUri"
 
             val result = parseAndResolve(testUri)
 
@@ -334,7 +360,7 @@ class URLTest {
         }
     }
 
-    class ParseAndResolveUnSignedRequestTest: URLBaseTest() {
+    class ParseAndResolveUnSignedRequestTest : URLBaseTest() {
         @Test
         fun testStringParams() = runBlocking {
             val clientId = "https://example.com/response"
@@ -381,9 +407,11 @@ class URLTest {
             assertNotNull(result.registrationMetadata)
             assertFalse(result.requestIsSigned)
         }
+
         @Test
         fun testClientMetadata() = runBlocking {
-            val encodedMetadata = URLEncoder.encode(mockedResponse, StandardCharsets.UTF_8.toString())
+            val encodedMetadata =
+                URLEncoder.encode(mockedResponse, StandardCharsets.UTF_8.toString())
             val testUri = "https://example.com/authorize?client_metadata=${encodedMetadata}"
 
             val result = parseAndResolve(testUri)
@@ -413,8 +441,10 @@ class URLTest {
 
         @Test
         fun testPresentationDefinition() = runBlocking {
-            val encodedPresentationDefinitionJson = URLEncoder.encode(presentationDefinitionJson, StandardCharsets.UTF_8.toString())
-            val testUri = "https://example.com/authorize?client_id=client123&presentation_definition=${encodedPresentationDefinitionJson}"
+            val encodedPresentationDefinitionJson =
+                URLEncoder.encode(presentationDefinitionJson, StandardCharsets.UTF_8.toString())
+            val testUri =
+                "https://example.com/authorize?client_id=client123&presentation_definition=${encodedPresentationDefinitionJson}"
 
             val result = parseAndResolve(testUri)
 
@@ -429,7 +459,8 @@ class URLTest {
         @Test
         fun testPresentationDefinitionUri() = runBlocking {
             val uri = preparePresentationDefinitionUri(presentationDefinitionJson)
-            val testUri = "https://example.com/authorize?client_id=client123&presentation_definition_uri=${uri}"
+            val testUri =
+                "https://example.com/authorize?client_id=client123&presentation_definition_uri=${uri}"
 
             val result = parseAndResolve(testUri)
 
