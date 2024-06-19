@@ -337,22 +337,48 @@ class URLTest {
     class ParseAndResolveUnSignedRequestTest: URLBaseTest() {
         @Test
         fun testStringParams() = runBlocking {
-            val encodedMetadata = URLEncoder.encode(mockedResponse, StandardCharsets.UTF_8.toString())
             val clientId = "https://example.com/response"
+            val nonce = "dummy nonce"
+            val state = "dummy state"
+            val responseType = "vp_token"
+            val responseMode = "direct_post"
+            val clientIdScheme = "redirect"
             val responseUri = clientId
-            val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
-            val encodedResponseUri = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
-            val testUri = "https://example.com/authorize?client_id=${encodedClientId}&response_uri=${encodedResponseUri}"
+            val params = "client_id=${clientId}" +
+                    "&nonce=${nonce}" +
+                    "&state=${state}" +
+                    "&response_type=${responseType}" +
+                    "&response_mode=${responseMode}" +
+                    "&client_id_scheme=${clientIdScheme}" +
+                    "&response_uri=${responseUri}"
+                URLEncoder.encode(responseUri, StandardCharsets.UTF_8.toString())
+            val testUri = "https://example.com/authorize?" + URLEncoder.encode(
+                params,
+                StandardCharsets.UTF_8.toString()
+            )
 
             val result = parseAndResolve(testUri)
 
             assertNotNull(result)
             assertEquals("https", result.scheme)
             assertNotNull(result.authorizationRequestPayload)
-            assertEquals(responseUri, result.authorizationRequestPayload.responseUri)
-            assertNotNull(result.registrationMetadata)
-            assertNull(result.registrationMetadata.clientId)
+            // client_id
             assertEquals(clientId, result.authorizationRequestPayload.clientId)
+            assertNull(result.registrationMetadata.clientId)
+            // nonce
+            assertEquals(nonce, result.authorizationRequestPayload.nonce)
+            // state
+            assertEquals(state, result.authorizationRequestPayload.state)
+            // response_type
+            assertEquals(responseType, result.authorizationRequestPayload.responseType)
+            // response_mode
+            assertEquals(responseMode, result.authorizationRequestPayload.responseMode?.value)
+            // client_id_scheme
+            assertEquals(clientIdScheme, result.authorizationRequestPayload.clientIdScheme)
+            // response_uri
+            assertEquals(responseUri, result.authorizationRequestPayload.responseUri)
+
+            assertNotNull(result.registrationMetadata)
             assertFalse(result.requestIsSigned)
         }
         @Test
