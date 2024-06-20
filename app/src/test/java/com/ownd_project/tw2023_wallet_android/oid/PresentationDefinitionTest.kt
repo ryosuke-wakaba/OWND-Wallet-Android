@@ -27,12 +27,7 @@ import java.security.interfaces.RSAPublicKey
 import java.util.Date
 
 
-class PresentationDefinitionTest {
-    private lateinit var wireMockServer: WireMockServer
-    private val keyPair = generateRsaKeyPair()
-    private val ecKeyPair = generateEcKeyPair()
-
-    private val presentationDefinitionJson = """
+val presentationDefinitionJson = """
         {
           "id": "12345",
           "input_descriptors": [
@@ -65,6 +60,11 @@ class PresentationDefinitionTest {
           ]
         }
         """.trimIndent()
+
+class PresentationDefinitionTest {
+    private lateinit var wireMockServer: WireMockServer
+    private val keyPair = generateRsaKeyPair()
+    private val ecKeyPair = generateEcKeyPair()
 
     private val presentationDefinitionJson2 = """
         {
@@ -365,20 +365,20 @@ class PresentationDefinitionTest {
             ifRight = { value ->
                 val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata, presentationDefinition) = value
                 // RequestObjectPayloadオブジェクトの内容を検証
-                TestCase.assertEquals("openid", requestObject.scope)
-                TestCase.assertEquals("vp_token", requestObject.responseType)
+                TestCase.assertEquals("openid", requestObject?.scope)
+                TestCase.assertEquals("vp_token", requestObject?.responseType)
                 TestCase.assertEquals(
                     "$clientHost:${wireMockServer.port()}/cb",
-                    requestObject.clientId
+                    requestObject?.clientId
                 )
                 TestCase.assertEquals(
                     "$clientHost:${wireMockServer.port()}/cb",
-                    requestObject.redirectUri
+                    requestObject?.redirectUri
                 )
                 // nonceとstateはランダムに生成される可能性があるため、存在することのみを確認
-                TestCase.assertNotNull(requestObject.nonce)
-                TestCase.assertNotNull(requestObject.state)
-                TestCase.assertEquals(86400, requestObject.maxAge)
+                TestCase.assertNotNull(requestObject?.nonce)
+                TestCase.assertNotNull(requestObject?.state)
+                TestCase.assertEquals(86400, requestObject?.maxAge)
 
                 TestCase.assertEquals("ClientName", registrationMetadata.clientName)
                 TestCase.assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)

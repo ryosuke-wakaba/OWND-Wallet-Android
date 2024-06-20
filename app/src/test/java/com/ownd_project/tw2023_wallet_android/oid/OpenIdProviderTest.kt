@@ -25,13 +25,14 @@ import java.security.interfaces.RSAPublicKey
 import java.util.Date
 
 const val clientHost = "http://localhost"
-fun createRequestObjectJwt(privateKey: PrivateKey, kid: String, clientId: String): String {
+fun createRequestObjectJwt(privateKey: PrivateKey, kid: String, clientId: String, clientMetadataUri: String): String {
     val algorithm = Algorithm.RSA256(null, privateKey as RSAPrivateKey)
 
     return JWT.create().withIssuer("https://client.example.org/cb")
         .withAudience("https://server.example.com").withClaim("response_type", "code id_token")
         .withClaim("client_id", clientId)
         .withClaim("redirect_uri", clientId).withClaim("scope", "openid")
+        .withClaim("client_metadata_uri", clientMetadataUri).withClaim("scope", "openid")
         .withClaim("state", "af0ifjsldkj").withClaim("nonce", "n-0S6_WzA2Mj")
         .withClaim("max_age", 86400).withIssuedAt(Date()).withKeyId(kid).sign(algorithm)
 }
@@ -140,17 +141,15 @@ class OpenIdProviderTest {
 
     @Test
     fun testProcessSIOPRequest() = runBlocking {
+        val clientMetadataUri = "$clientHost:${wireMockServer.port()}/client-metadata-uri"
         val requestJwt = createRequestObjectJwt(
             keyPair.private,
             "test-kid",
-            "$clientHost:${wireMockServer.port()}/cb"
+            "$clientHost:${wireMockServer.port()}/cb",
+            clientMetadataUri
         )
         val uri =
-            "siopv2://?client_id=123&redirect_uri=123&request=$requestJwt&client_metadata_uri=${
-                URLEncoder.encode(
-                    "$clientHost:${wireMockServer.port()}/client-metadata-uri", "UTF-8"
-                )
-            }"
+            "siopv2://?client_id=123&redirect_uri=123&request=$requestJwt"
 
         val op = OpenIdProvider(uri)
         val result = op.processAuthorizationRequest()
@@ -161,14 +160,14 @@ class OpenIdProviderTest {
             ifRight = { value ->
                 val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = value
                 // RequestObjectPayloadオブジェクトの内容を検証
-                assertEquals("openid", requestObject.scope)
-                assertEquals("code id_token", requestObject.responseType)
-                assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject.clientId)
-                assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject.redirectUri)
+                assertEquals("openid", requestObject?.scope)
+                assertEquals("code id_token", requestObject?.responseType)
+                assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject?.clientId)
+                assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject?.redirectUri)
                 // nonceとstateはランダムに生成される可能性があるため、存在することのみを確認
-                assertNotNull(requestObject.nonce)
-                assertNotNull(requestObject.state)
-                assertEquals(86400, requestObject.maxAge)
+                assertNotNull(requestObject?.nonce)
+                assertNotNull(requestObject?.state)
+                assertEquals(86400, requestObject?.maxAge)
 
                 assertEquals("ClientName", registrationMetadata.clientName)
                 assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)

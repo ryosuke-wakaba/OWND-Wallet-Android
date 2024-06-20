@@ -269,6 +269,7 @@ interface AuthorizationRequestCommonPayload {
     val clientMetadataUri: String?
     val responseUri: String?
     val presentationDefinition: PresentationDefinition?
+    val presentationDefinitionUri: String?
     val clientIdScheme: String?
 }
 
@@ -302,6 +303,7 @@ class RequestObjectPayloadImpl(
     override val clientMetadataUri: String? = null,
     override val responseUri: String? = null,
     override val presentationDefinition: PresentationDefinition? = null,
+    override val presentationDefinitionUri: String? = null,
     override val clientIdScheme: String? = null,
 ) : RequestObjectPayload
 
@@ -321,6 +323,7 @@ class AuthorizationRequestPayloadImpl(
     override val requestUri: String? = null,
     override val responseUri: String? = null,
     override val presentationDefinition: PresentationDefinition? = null,
+    override val presentationDefinitionUri: String? = null,
     override val clientIdScheme: String? = null,
 ) : AuthorizationRequestPayload
 
@@ -480,20 +483,36 @@ fun createRequestObjectPayloadFromMap(map: Map<String, Any?>): RequestObjectPayl
 }
 
 fun createAuthorizationRequestPayloadFromMap(map: Map<String, Any?>): AuthorizationRequestPayload {
-    val mapper = jacksonObjectMapper().apply {
+//    val mapper = jacksonObjectMapper().apply {
+//        propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+//    }
+    val mapper: ObjectMapper = jacksonObjectMapper().apply {
         propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+        configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
+        val module = SimpleModule().apply {
+            addDeserializer(LimitDisclosure::class.java, EnumDeserializer(LimitDisclosure::class))
+            addDeserializer(Rule::class.java, EnumDeserializer(Rule::class))
+        }
+        registerModule(module)
     }
 
     val clientMetadata = map["client_metadata"]?.let {
         val json = mapper.writeValueAsString(it)
         mapper.readValue<RPRegistrationMetadataPayload>(json)
     }
+
+    val presentationDefinition = map["presentation_definition"]?.let {
+        val json = mapper.writeValueAsString(it)
+        mapper.readValue<PresentationDefinition>(json)
+    }
+
     return AuthorizationRequestPayloadImpl(
         // RequestCommonPayloadのプロパティ
         scope = map["scope"] as? String,
         responseType = map["response_type"] as? String,
         clientId = map["client_id"] as? String,
         redirectUri = map["redirect_uri"] as? String,
+        responseUri = map["response_uri"] as? String,
         idTokenHint = map["id_token_hint"] as? String,
         nonce = map["nonce"] as? String,
         state = map["state"] as? String,
@@ -507,6 +526,9 @@ fun createAuthorizationRequestPayloadFromMap(map: Map<String, Any?>): Authorizat
         maxAge = map["max_age"] as? Int,
         clientMetadata = clientMetadata,
         clientMetadataUri = map["client_metadata_uri"] as? String,
+
+        presentationDefinition = presentationDefinition,
+        presentationDefinitionUri = map["presentation_definition_uri"] as? String,
 
         // AuthorizationRequestCommonPayloadのプロパティ
         request = map["request"] as? String,

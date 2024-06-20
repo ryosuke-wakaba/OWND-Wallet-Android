@@ -1,6 +1,8 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
 import com.auth0.jwt.JWT
+import com.auth0.jwt.interfaces.Claim
+import com.auth0.jwt.interfaces.DecodedJWT
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
@@ -56,6 +58,117 @@ fun parse(uri: String): Pair<String, AuthorizationRequestPayload> {
     return Pair(scheme, authorizationRequestPayload)
 }
 
+class RequestObjectHandler(private val authorizationRequestPayload: AuthorizationRequestPayload) {
+    lateinit var requestObjectJwt: String
+    private lateinit var decodedJwt: DecodedJWT
+
+    val isSigned: Boolean
+        get() = !((authorizationRequestPayload.request
+            ?: authorizationRequestPayload.requestUri).isNullOrBlank())
+
+    private suspend fun getRequestObjectJwt(): String {
+        if (::requestObjectJwt.isInitialized) {
+            println("request jwt: $requestObjectJwt")
+            return requestObjectJwt
+        }
+        requestObjectJwt = withContext(Dispatchers.IO) {
+            fetchByReferenceOrUseByValue(
+                referenceURI = authorizationRequestPayload.requestUri,
+                valueObject = authorizationRequestPayload.request,
+                responseType = String::class.java,
+                textResponse = true
+            )
+        }
+        println("request jwt: $requestObjectJwt")
+        return requestObjectJwt
+    }
+
+    suspend fun getClaim(claimName: String): Claim? {
+        if (!::decodedJwt.isInitialized) {
+            decodedJwt = JWT.decode(getRequestObjectJwt())
+        }
+        val claim = decodedJwt.getClaim(claimName)
+        return claim
+    }
+}
+
+class ClientMetadataHandler(
+    private val requestObjectHandler: RequestObjectHandler,
+    private val authorizationRequestPayload: AuthorizationRequestPayload
+) {
+    suspend fun get(): RPRegistrationMetadataPayload {
+        println("get client metadata")
+        val clientMetadata = if (requestObjectHandler.isSigned) {
+            val clientMetadataValue = requestObjectHandler.getClaim("client_metadata")
+            val mapper: ObjectMapper = jacksonObjectMapper().apply {
+                propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+                configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
+            }
+            if (clientMetadataValue != null && !clientMetadataValue.isNull && !clientMetadataValue.isMissing) mapper.readValue<RPRegistrationMetadataPayload>(
+                clientMetadataValue.toString()
+            ) else null
+        } else {
+            authorizationRequestPayload.clientMetadata
+        }
+        println("client metadata: $clientMetadata")
+
+        val clientMetadataUri = if (requestObjectHandler.isSigned) {
+            requestObjectHandler.getClaim("client_metadata_uri")?.asString()
+        } else {
+            authorizationRequestPayload.clientMetadataUri
+        }
+        println("client metadata uri: $clientMetadataUri")
+        val registrationMetadata = if (clientMetadataUri == null && clientMetadata == null) {
+            RPRegistrationMetadataPayload()
+        } else {
+            fetchByReferenceOrUseByValue(
+                referenceURI = clientMetadataUri,
+                valueObject = clientMetadata,
+                responseType = RPRegistrationMetadataPayload::class.java
+            )
+        }
+        return registrationMetadata
+    }
+}
+
+class PresentationDefinitionHandler(
+    private val requestObjectHandler: RequestObjectHandler,
+    private val authorizationRequestPayload: AuthorizationRequestPayload
+) {
+    suspend fun get(): PresentationDefinition? {
+        println("get presentation definition")
+        val presentationDefinitionValue = if (requestObjectHandler.isSigned) {
+            val claim = requestObjectHandler.getClaim("presentation_definition")
+            val presentationDefinitionValue =
+                if (claim != null && !claim.isMissing && !claim.isNull) deserializePresentationDefinition(
+                    claim.toString()
+                ) else null
+            presentationDefinitionValue
+        } else {
+            authorizationRequestPayload.presentationDefinition
+        }
+        val presentationDefinitionUri = if (requestObjectHandler.isSigned) {
+            val claim = requestObjectHandler.getClaim("presentation_definition_uri")
+            if (claim != null && !claim.isMissing && !claim.isNull) claim.asString() else null
+        } else {
+            authorizationRequestPayload.presentationDefinitionUri
+        }
+        val presentationDefinition: PresentationDefinition? =
+            if (presentationDefinitionValue != null || presentationDefinitionUri != null) {
+                withContext(Dispatchers.IO) {
+                    fetchByReferenceOrUseByValue(
+                        referenceURI = presentationDefinitionUri,
+                        valueObject = presentationDefinitionValue,
+                        responseType = PresentationDefinition::class.java
+                    )
+                }
+            } else {
+                null
+            }
+        return presentationDefinition
+    }
+}
+
 suspend fun parseAndResolve(uri: String): ParseAndResolveResult {
     println("parseAndResolve: $uri")
     if (uri.isBlank()) {
@@ -64,75 +177,27 @@ suspend fun parseAndResolve(uri: String): ParseAndResolveResult {
 
     println("parse")
     val (scheme, authorizationRequestPayload) = parse(uri)
-    println("get request jwt")
-    val requestObjectJwt = withContext(Dispatchers.IO) {
-        fetchByReferenceOrUseByValue(
-            referenceURI = authorizationRequestPayload.requestUri,
-            valueObject = authorizationRequestPayload.request,
-            responseType = String::class.java,
-            textResponse = true
-        )
-    }
-    println("request jwt: $requestObjectJwt")
 
-    println("get client metadata")
-    val decodedJwt = JWT.decode(requestObjectJwt)
-    val clientMetadata = decodedJwt.getClaim("client_metadata")?.let {
-        val mapper: ObjectMapper = jacksonObjectMapper().apply {
-            propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
-            configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
-        }
-        if (!it.isMissing && !it.isNull) mapper.readValue<RPRegistrationMetadataPayload>(it.toString()) else null
-    }
-    println("client metadata: $clientMetadata")
-    val clientMetadataUri = decodedJwt.getClaim("client_metadata_uri").asString()?: authorizationRequestPayload.clientMetadataUri
-    println("client metadata uri: $clientMetadataUri")
-    // todo client idが数値の時の対応
-    val registrationMetadataUri = authorizationRequestPayload.clientMetadataUri
-    val registrationMetadataValue = clientMetadata?: authorizationRequestPayload.clientMetadata
+    // request object
+    val requestObjectHandler = RequestObjectHandler(authorizationRequestPayload)
 
-    val registrationMetadata: RPRegistrationMetadataPayload = withContext(Dispatchers.IO) {
-        if (clientMetadataUri == null && clientMetadata == null && authorizationRequestPayload.clientMetadata == null) {
-            RPRegistrationMetadataPayload()
-        } else {
-            fetchByReferenceOrUseByValue(
-                referenceURI = clientMetadataUri,
-                valueObject = clientMetadata?: authorizationRequestPayload.clientMetadata,
-                responseType = RPRegistrationMetadataPayload::class.java
-            )
-        }
-    }
+    // client metadata
+    val clientMetadataHandler =
+        ClientMetadataHandler(requestObjectHandler, authorizationRequestPayload)
+    val registrationMetadata = clientMetadataHandler.get()
 
-    println("get presentation definition")
-    val presentationDefinitionValue = decodedJwt.getClaim("presentation_definition").let {
-        if (!it.isMissing && !it.isNull) deserializePresentationDefinition(it.toString()) else null
-    }
-
-    val presentationDefinitionUri = decodedJwt.getClaim("presentation_definition_uri").let {
-        if (!it.isMissing && !it.isNull) it.asString() else null
-    }
-
-    val presentationDefinition: PresentationDefinition? = if (presentationDefinitionValue != null || presentationDefinitionUri != null) {
-        withContext(Dispatchers.IO) {
-            fetchByReferenceOrUseByValue(
-                referenceURI = presentationDefinitionUri,
-                valueObject = presentationDefinitionValue,
-                responseType = PresentationDefinition::class.java
-            )
-        }
-    } else {
-        null
-    }
-
-    // assertValidRPRegistrationMetadataPayload(registrationMetadata)
+    // presentation definition
+    val presentationDefinitionHandler =
+        PresentationDefinitionHandler(requestObjectHandler, authorizationRequestPayload)
+    val presentationDefinition = presentationDefinitionHandler.get()
 
     return ParseAndResolveResult(
         scheme,
         authorizationRequestPayload,
-        requestObjectJwt,
+        if (requestObjectHandler.isSigned) requestObjectHandler.requestObjectJwt else "",
         registrationMetadata,
         presentationDefinition,
-        !decodedJwt.signature.isNullOrBlank()
+        requestObjectHandler.isSigned
     )
 }
 

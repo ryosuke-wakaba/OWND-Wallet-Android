@@ -210,7 +210,7 @@ class IdTokenSharringViewModel : ViewModel() {
                         if (registrationMetadata.clientName != null) {
                             setClientName(registrationMetadata.clientName)
                         }
-                        val clientId = requestObject.clientId
+                        val clientId = requestObject?.clientId ?: authorizationRequestPayload.clientId
                         if (clientId != null) {
                             setClientUrl(clientId)
                         }
