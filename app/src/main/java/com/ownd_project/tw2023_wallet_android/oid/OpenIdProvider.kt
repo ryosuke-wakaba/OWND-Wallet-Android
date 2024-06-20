@@ -129,43 +129,44 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val payloadJson = String(Base64.getUrlDecoder().decode(decodedJwt.payload))
             val payload = objectMapper.readValue(payloadJson, RequestObjectPayloadImpl::class.java)
 
-        val clientId = payload.clientId?: authorizationRequestPayload.clientId
-        if (clientId.isNullOrBlank()) {
-            return Either.Left("Invalid client_id or response_uri")
-        }
-        val clientScheme = payload.clientIdScheme?: authorizationRequestPayload.clientIdScheme
+            val clientId = payload.clientId ?: authorizationRequestPayload.clientId
+            if (clientId.isNullOrBlank()) {
+                return Either.Left("Invalid client_id or response_uri")
+            }
+            val clientScheme = payload.clientIdScheme ?: authorizationRequestPayload.clientIdScheme
 
             val jwtValidationResult =
-            if (clientScheme == "x509_san_dns") {
-                val verifyResult = JWT.verifyJwtByX5C(requestObjectJwt)
-                verifyResult.fold(
-                    ifLeft = {
-                        // throw RuntimeException(it)
-                        Either.Left("Invalid request")
-                    },
-                    ifRight = {(decodedJwt, certificates) ->
-                        // https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
-                        /*
-                        the Client Identifier MUST be a DNS name and match a dNSName Subject Alternative Name (SAN) [RFC5280] entry in the leaf certificate passed with the request.
-                         */
-                        if (!certificates[0].hasSubjectAlternativeName(clientId)) {
-                            Either.Left("Invalid client_id or response_uri")
+                if (clientScheme == "x509_san_dns") {
+                    val verifyResult = JWT.verifyJwtByX5C(requestObjectJwt)
+                    verifyResult.fold(
+                        ifLeft = {
+                            // throw RuntimeException(it)
+                            Either.Left("Invalid request")
+                        },
+                        ifRight = { (decodedJwt, certificates) ->
+                            // https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
+                            /*
+                            the Client Identifier MUST be a DNS name and match a dNSName Subject Alternative Name (SAN) [RFC5280] entry in the leaf certificate passed with the request.
+                             */
+                            if (!certificates[0].hasSubjectAlternativeName(clientId)) {
+                                Either.Left("Invalid client_id or response_uri")
+                            }
+                            val uri = payload.responseUri ?: payload.redirectUri
+                            if (clientId != uri) {
+                                Either.Left("Invalid client_id or host uri")
+                            }
+                            decodedJwt
                         }
-                        val uri = payload.responseUri ?: payload.redirectUri
-                        if (clientId != uri) {
-                            Either.Left("Invalid client_id or host uri")
-                        }
-                        decodedJwt
-                    }
-                )
-            } else {
-                val jwksUrl = registrationMetadata.jwksUri ?: throw IllegalStateException("JWKS URLが見つかりません。")
-                JWT.verifyJwtWithJwks(requestObjectJwt, jwksUrl)
-            }
+                    )
+                } else {
+                    val jwksUrl = registrationMetadata.jwksUri
+                        ?: throw IllegalStateException("JWKS URLが見つかりません。")
+                    JWT.verifyJwtWithJwks(requestObjectJwt, jwksUrl)
+                }
 
             val result = try {
                 if (clientScheme == "redirect_uri") {
-                    val responseUri = payload.responseUri?: authorizationRequestPayload.responseUri
+                    val responseUri = payload.responseUri ?: authorizationRequestPayload.responseUri
                     if (clientId.isNullOrBlank() || responseUri.isNullOrBlank() || clientId != responseUri) {
                         return Either.Left("Invalid client_id or response_uri")
                     }
@@ -198,13 +199,13 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 }
             }
             val siopRequest = ProcessSIOPRequestResult(
-                    scheme,
-                    null,
-                    authorizationRequestPayload,
-                    requestObjectJwt,
-                    registrationMetadata,
-                    presentationDefinition
-                )
+                scheme,
+                null,
+                authorizationRequestPayload,
+                requestObjectJwt,
+                registrationMetadata,
+                presentationDefinition
+            )
             this.siopRequest = siopRequest
             Either.Right(siopRequest)
         }
