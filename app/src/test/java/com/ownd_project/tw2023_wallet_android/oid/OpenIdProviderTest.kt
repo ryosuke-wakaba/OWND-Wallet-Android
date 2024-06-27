@@ -35,7 +35,12 @@ import java.util.Base64
 import java.util.Date
 
 const val clientHost = "http://localhost"
-fun createRequestObjectJwt(privateKey: PrivateKey, kid: String, clientId: String, clientMetadataUri: String): String {
+fun createRequestObjectJwt(
+    privateKey: PrivateKey,
+    kid: String,
+    clientId: String,
+    clientMetadataUri: String
+): String {
     val algorithm = Algorithm.RSA256(null, privateKey as RSAPrivateKey)
 
     return JWT.create().withIssuer("https://client.example.org/cb")
@@ -139,7 +144,10 @@ class OpenIdProviderTest {
             // MockWebServerに対するレスポンスを設定します。
             wireMockServer.stubFor(
                 WireMock.post(WireMock.urlEqualTo("/"))
-                    .withHeader("Content-Type", WireMock.equalTo("application/x-www-form-urlencoded"))
+                    .withHeader(
+                        "Content-Type",
+                        WireMock.equalTo("application/x-www-form-urlencoded")
+                    )
                     .willReturn(
                         WireMock.aResponse()
                             .withStatus(200)
@@ -148,13 +156,18 @@ class OpenIdProviderTest {
             )
 
             // テスト対象のメソッドを呼び出します。
-            val result = sendRequest("$clientHost:${wireMockServer.port()}/", mapOf("key" to "value"), ResponseMode.DIRECT_POST)
+            val result = sendRequest(
+                "$clientHost:${wireMockServer.port()}/",
+                mapOf("key" to "value"),
+                ResponseMode.DIRECT_POST
+            )
 
             // レスポンスが期待通りであることを確認します。
             assertEquals(200, result.statusCode)
 
             // リクエストが期待通りであることを確認します。
-            val recordedRequest = wireMockServer.findAll(WireMock.postRequestedFor(WireMock.urlEqualTo("/"))).first()
+            val recordedRequest =
+                wireMockServer.findAll(WireMock.postRequestedFor(WireMock.urlEqualTo("/"))).first()
             assertEquals("POST", recordedRequest.method.toString())
             assertEquals("key=value", recordedRequest.bodyAsString)
         }
@@ -267,7 +280,8 @@ class OpenIdProviderTest {
             val clientId = "https://www.verifier.com/cb"
             val badRedirectUri = "https://bad-site.com/cb"
             val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
-            val encodedBadRedirectUri = URLEncoder.encode(badRedirectUri, StandardCharsets.UTF_8.toString())
+            val encodedBadRedirectUri =
+                URLEncoder.encode(badRedirectUri, StandardCharsets.UTF_8.toString())
             val encodedClientMetadata =
                 URLEncoder.encode(clientMetadataJson, StandardCharsets.UTF_8.toString())
             val encodedPresentationDefinition =
@@ -348,7 +362,10 @@ class OpenIdProviderTest {
             assertTrue(result.isFailure)
             val error = result.exceptionOrNull()
             assertFalse(error == null)
-            assertEquals("Unsupported serialization of Authorization Request Error", error!!.message)
+            assertEquals(
+                "Unsupported serialization of Authorization Request Error",
+                error!!.message
+            )
         }
     }
 
