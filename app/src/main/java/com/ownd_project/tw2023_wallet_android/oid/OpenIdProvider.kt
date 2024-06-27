@@ -153,9 +153,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                     return Result.failure(Exception("Invalid client_id or host uri"))
                 }
             } else {
-                val jwksUrl = registrationMetadata.jwksUri
-                    ?: throw IllegalStateException("JWKS URLが見つかりません。")
-                JWT.verifyJwtWithJwks(requestObjectJwt, jwksUrl)
+                return Result.failure(Exception("Unsupported serialization of Authorization Request Error"))
             }
 
             val result = try {

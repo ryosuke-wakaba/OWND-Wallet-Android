@@ -14,6 +14,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.ownd_project.tw2023_wallet_android.utils.generateEcKeyPair
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import junit.framework.TestCase.fail
@@ -302,6 +303,31 @@ class OpenIdProviderTest {
             println(result)
 
             assertTrue(result.isSuccess)
+        }
+
+        @Test
+        fun testSIOPv2RequestWithSignedRequestObjectFailure() = runBlocking {
+            // When `Request Object` signed by key published at jwks url is used, it ends with unsupported error.
+            val clientId = "https://not-registered-in-san.verifier.com/cb"
+            val requestObjectJwt = JWT.create()
+                .withClaim("response_type", "id_token")
+                .withClaim("response_uri", clientId)
+                .withClaim("client_metadata", clientMetadataMap)
+                .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
+                .sign(algorithm)
+            val encodedJwtString =
+                URLEncoder.encode(requestObjectJwt, StandardCharsets.UTF_8.toString())
+            val encodedRequestUri = prepareRequestUri(encodedJwtString)
+
+            val uri = "siopv2://?client_id=$clientId&request_uri=$encodedRequestUri"
+
+            val op = OpenIdProvider(uri)
+            val result = op.processAuthorizationRequest()
+
+            assertTrue(result.isFailure)
+            val error = result.exceptionOrNull()
+            assertFalse(error == null)
+            assertEquals("Unsupported serialization of Authorization Request Error", error!!.message)
         }
     }
 
