@@ -105,7 +105,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         return this.siopRequest
     }
 
-    suspend fun processAuthorizationRequest(): Either<String, ProcessSIOPRequestResult> {
+    suspend fun processAuthorizationRequest(): Result<ProcessSIOPRequestResult> {
         if (uri.isBlank()) {
             throw IllegalArgumentException(SIOPErrors.BAD_PARAMS.message)
         }
@@ -131,14 +131,14 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
 
             val clientId = payload.clientId ?: authorizationRequestPayload.clientId
             if (clientId.isNullOrBlank()) {
-                return Either.Left("Invalid client_id or response_uri")
+                return Result.failure(Exception("Invalid client_id or response_uri"))
             }
             val clientScheme = payload.clientIdScheme ?: authorizationRequestPayload.clientIdScheme
 
             if (clientScheme == "x509_san_dns") {
                 val verifyResult = JWT.verifyJwtByX5C(requestObjectJwt)
                 if (!verifyResult.isSuccess) {
-                    return Either.Left("Invalid request")
+                    return Result.failure(Exception("Invalid request"))
                 }
                 val (decodedJwt, certificates) = verifyResult.getOrThrow()
                 // https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
@@ -146,11 +146,11 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 the Client Identifier MUST be a DNS name and match a dNSName Subject Alternative Name (SAN) [RFC5280] entry in the leaf certificate passed with the request.
                  */
                 if (!certificates[0].hasSubjectAlternativeName(clientId)) {
-                    return Either.Left("client_id is not in SAN entry")
+                    return Result.failure(Exception("client_id is not in SAN entry"))
                 }
                 val uri = payload.responseUri ?: payload.redirectUri
                 if (clientId != uri) {
-                    return Either.Left("Invalid client_id or host uri")
+                    return Result.failure(Exception("Invalid client_id or host uri"))
                 }
             } else {
                 val jwksUrl = registrationMetadata.jwksUri
@@ -162,11 +162,11 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 if (clientScheme == "redirect_uri") {
                     val responseUri = payload.responseUri ?: authorizationRequestPayload.responseUri
                     if (clientId.isNullOrBlank() || responseUri.isNullOrBlank() || clientId != responseUri) {
-                        return Either.Left("Invalid client_id or response_uri")
+                        return Result.failure(Exception("Invalid client_id or response_uri"))
                     }
                 }
 
-                Either.Right(
+                Result.success(
                     ProcessSIOPRequestResult(
                         scheme,
                         payload,
@@ -177,10 +177,10 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                     )
                 )
             } catch (e: JWTVerificationException) {
-                Either.Left(e.message ?: "JWT検証エラー")
+                Result.failure(e)
             }
-            if (result.isRight()) {
-                this.siopRequest = (result as Either.Right).value
+            if (result.isSuccess) {
+                this.siopRequest = result.getOrThrow()
             }
             return result
         } else {
@@ -189,7 +189,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 val clientId = authorizationRequestPayload.clientId
                 val responseUri = authorizationRequestPayload.responseUri
                 if (clientId.isNullOrBlank() || responseUri.isNullOrBlank() || clientId != responseUri) {
-                    return Either.Left("Invalid client_id or response_uri")
+                    return Result.failure(Exception("Invalid client_id or response_uri"))
                 }
             }
             val siopRequest = ProcessSIOPRequestResult(
@@ -201,7 +201,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 presentationDefinition
             )
             this.siopRequest = siopRequest
-            Either.Right(siopRequest)
+            Result.success(siopRequest)
         }
     }
 
