@@ -164,10 +164,10 @@ class OpenIdProviderTest {
             val op = OpenIdProvider(uri)
             val result = op.processAuthorizationRequest()
             result.fold(
-                ifLeft = { value ->
-                    fail("エラーが発生しました: ${value}")
+                onFailure = { value ->
+                    fail("エラーが発生しました: ${value.message}")
                 },
-                ifRight = { value ->
+                onSuccess = { value ->
                     val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = value
                     // RequestObjectPayloadオブジェクトの内容を検証
                     assertEquals("openid", requestObject?.scope)
@@ -185,7 +185,7 @@ class OpenIdProviderTest {
 
             // 結果の検証
             assertNotNull(result)
-            assertTrue(result.isRight())
+            assertTrue(result.isSuccess)
 
             // SIOP Response送信
             var keyRing = HDKeyRing(null)
@@ -324,7 +324,7 @@ class OpenIdProviderTest {
             val op = OpenIdProvider(uri)
             val result = op.processAuthorizationRequest()
             println(result)
-            assertTrue(result.isLeft())
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -350,7 +350,7 @@ class OpenIdProviderTest {
             val result = op.processAuthorizationRequest()
             println(result)
 
-            assertTrue(result.isRight())
+            assertTrue(result.isSuccess)
         }
 
         @Test
@@ -374,7 +374,7 @@ class OpenIdProviderTest {
             val result = op.processAuthorizationRequest()
             println(result)
 
-            assertTrue(result.isLeft())
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -396,7 +396,7 @@ class OpenIdProviderTest {
             val result = op.processAuthorizationRequest()
             println(result)
 
-            assertTrue(result.isRight())
+            assertTrue(result.isSuccess)
         }
 
         @Test
@@ -414,7 +414,7 @@ class OpenIdProviderTest {
             val result = op.processAuthorizationRequest()
             println(result)
 
-            assertTrue(result.isRight())
+            assertTrue(result.isSuccess)
         }
     }
 }
