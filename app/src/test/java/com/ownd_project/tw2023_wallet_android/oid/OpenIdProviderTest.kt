@@ -126,137 +126,6 @@ class OpenIdProviderTest {
         }
     }
 
-    class ResponseTest {
-        private val keyPair = generateRsaKeyPair()
-        private lateinit var wireMockServer: WireMockServer
-
-        @Before
-        fun setup() {
-            wireMockServer = WireMockServer().apply {
-                start()
-                WireMock.configureFor("localhost", port())
-            }
-
-            val jwksUrl = "$clientHost:${wireMockServer.port()}/.well-known/jwks.json"
-            val mockedResponse = """{
-            "scopes_supported": ["openid"],
-            "subject_types_supported": ["public"],
-            "id_token_signing_alg_values_supported": ["RS256"],
-            "request_object_signing_alg_values_supported": ["RS256"],
-            "subject_syntax_types_supported": ["syntax1", "syntax2"],
-            "request_object_encryption_alg_values_supported": ["ES256"],
-            "request_object_encryption_enc_values_supported": ["ES256"],
-            "client_id": "client123",
-            "client_name": "ClientName",
-            "jwks_uri": "$jwksUrl",
-            "logo_uri": "https://example.com/logo.png",
-            "client_purpose": "authentication",
-            "vp_formats": {
-                "vc+sd-jwt": {
-                  "sd-jwt_alg_values": [
-                    "ES256",
-                    "ES256K",
-                    "ES384",
-                    "ES512",
-                    "EdDSA"
-                  ],
-                  "kb-jwt_alg_values": [
-                    "ES256",
-                    "ES256K",
-                    "ES384",
-                    "ES512",
-                    "EdDSA"
-                  ]
-                }
-            }
-        }"""
-
-            wireMockServer.stubFor(
-                WireMock.get(WireMock.urlEqualTo("/client-metadata-uri")).willReturn(
-                    WireMock.aResponse().withStatus(200).withBody(mockedResponse)
-                )
-            )
-            wireMockServer.stubFor(
-                WireMock.post(WireMock.urlEqualTo("/cb"))
-                    .withHeader("Content-Type", WireMock.equalTo("application/x-www-form-urlencoded"))
-                    .willReturn(
-                        WireMock.aResponse()
-                            .withStatus(200)
-                            .withBody("レスポンスの内容")
-                    )
-            )
-
-            val publicKey = keyPair.public as RSAPublicKey
-            val jwksResponse = encodePublicKeyToJwks(publicKey, "test-kid")
-
-            wireMockServer.stubFor(
-                WireMock.get(WireMock.urlEqualTo("/.well-known/jwks.json")).willReturn(
-                    WireMock.aResponse().withStatus(200).withBody(jwksResponse)
-                )
-            )
-        }
-
-        @After
-        fun teardown() {
-            wireMockServer.stop()
-        }
-
-
-        @Test
-        fun testRespondIdTokenResponse() = runBlocking {
-            val clientMetadataUri = "$clientHost:${wireMockServer.port()}/client-metadata-uri"
-            val requestJwt = createRequestObjectJwt(
-                keyPair.private,
-                "test-kid",
-                "$clientHost:${wireMockServer.port()}/cb",
-                clientMetadataUri
-            )
-            val uri =
-                "siopv2://?client_id=123&redirect_uri=123&request=$requestJwt"
-
-            val op = OpenIdProvider(uri)
-            val result = op.processAuthorizationRequest()
-            result.fold(
-                onFailure = { value ->
-                    fail("エラーが発生しました: ${value.message}")
-                },
-                onSuccess = { value ->
-                    val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = value
-                    // RequestObjectPayloadオブジェクトの内容を検証
-                    assertEquals("openid", requestObject?.scope)
-                    assertEquals("code id_token", requestObject?.responseType)
-                    assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject?.clientId)
-                    assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject?.redirectUri)
-                    // nonceとstateはランダムに生成される可能性があるため、存在することのみを確認
-                    assertNotNull(requestObject?.nonce)
-                    assertNotNull(requestObject?.state)
-                    assertEquals(86400, requestObject?.maxAge)
-
-                    assertEquals("ClientName", registrationMetadata.clientName)
-                    assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
-                })
-
-            // 結果の検証
-            assertNotNull(result)
-            assertTrue(result.isSuccess)
-
-            // SIOP Response送信
-            var keyRing = HDKeyRing(null)
-            val jwk = keyRing.getPrivateJwk(1)
-            val privateJwk = object : ECPrivateJwk {
-                override val kty = jwk.kty
-                override val crv = jwk.crv
-                override val x = jwk.x
-                override val y = jwk.y
-                override val d = jwk.d
-            }
-            val keyPair = SignatureUtil.generateECKeyPair(privateJwk)
-            op.setKeyPair(keyPair)
-            val responseResult = op.respondIdTokenResponse()
-            assertTrue(responseResult.isRight())
-        }
-    }
-
     class ProcessAuthorizationRequestTest {
         private val keyPairTestCA = generateEcKeyPair()
         private val keyPairTestIssuer = generateEcKeyPair()
@@ -433,6 +302,137 @@ class OpenIdProviderTest {
             println(result)
 
             assertTrue(result.isSuccess)
+        }
+    }
+
+    class ResponseTest {
+        private val keyPair = generateRsaKeyPair()
+        private lateinit var wireMockServer: WireMockServer
+
+        @Before
+        fun setup() {
+            wireMockServer = WireMockServer().apply {
+                start()
+                WireMock.configureFor("localhost", port())
+            }
+
+            val jwksUrl = "$clientHost:${wireMockServer.port()}/.well-known/jwks.json"
+            val mockedResponse = """{
+            "scopes_supported": ["openid"],
+            "subject_types_supported": ["public"],
+            "id_token_signing_alg_values_supported": ["RS256"],
+            "request_object_signing_alg_values_supported": ["RS256"],
+            "subject_syntax_types_supported": ["syntax1", "syntax2"],
+            "request_object_encryption_alg_values_supported": ["ES256"],
+            "request_object_encryption_enc_values_supported": ["ES256"],
+            "client_id": "client123",
+            "client_name": "ClientName",
+            "jwks_uri": "$jwksUrl",
+            "logo_uri": "https://example.com/logo.png",
+            "client_purpose": "authentication",
+            "vp_formats": {
+                "vc+sd-jwt": {
+                  "sd-jwt_alg_values": [
+                    "ES256",
+                    "ES256K",
+                    "ES384",
+                    "ES512",
+                    "EdDSA"
+                  ],
+                  "kb-jwt_alg_values": [
+                    "ES256",
+                    "ES256K",
+                    "ES384",
+                    "ES512",
+                    "EdDSA"
+                  ]
+                }
+            }
+        }"""
+
+            wireMockServer.stubFor(
+                WireMock.get(WireMock.urlEqualTo("/client-metadata-uri")).willReturn(
+                    WireMock.aResponse().withStatus(200).withBody(mockedResponse)
+                )
+            )
+            wireMockServer.stubFor(
+                WireMock.post(WireMock.urlEqualTo("/cb"))
+                    .withHeader("Content-Type", WireMock.equalTo("application/x-www-form-urlencoded"))
+                    .willReturn(
+                        WireMock.aResponse()
+                            .withStatus(200)
+                            .withBody("レスポンスの内容")
+                    )
+            )
+
+            val publicKey = keyPair.public as RSAPublicKey
+            val jwksResponse = encodePublicKeyToJwks(publicKey, "test-kid")
+
+            wireMockServer.stubFor(
+                WireMock.get(WireMock.urlEqualTo("/.well-known/jwks.json")).willReturn(
+                    WireMock.aResponse().withStatus(200).withBody(jwksResponse)
+                )
+            )
+        }
+
+        @After
+        fun teardown() {
+            wireMockServer.stop()
+        }
+
+
+        @Test
+        fun testRespondIdTokenResponse() = runBlocking {
+            val clientMetadataUri = "$clientHost:${wireMockServer.port()}/client-metadata-uri"
+            val requestJwt = createRequestObjectJwt(
+                keyPair.private,
+                "test-kid",
+                "$clientHost:${wireMockServer.port()}/cb",
+                clientMetadataUri
+            )
+            val uri =
+                "siopv2://?client_id=123&redirect_uri=123&request=$requestJwt"
+
+            val op = OpenIdProvider(uri)
+            val result = op.processAuthorizationRequest()
+            result.fold(
+                onFailure = { value ->
+                    fail("エラーが発生しました: ${value.message}")
+                },
+                onSuccess = { value ->
+                    val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = value
+                    // RequestObjectPayloadオブジェクトの内容を検証
+                    assertEquals("openid", requestObject?.scope)
+                    assertEquals("code id_token", requestObject?.responseType)
+                    assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject?.clientId)
+                    assertEquals("$clientHost:${wireMockServer.port()}/cb", requestObject?.redirectUri)
+                    // nonceとstateはランダムに生成される可能性があるため、存在することのみを確認
+                    assertNotNull(requestObject?.nonce)
+                    assertNotNull(requestObject?.state)
+                    assertEquals(86400, requestObject?.maxAge)
+
+                    assertEquals("ClientName", registrationMetadata.clientName)
+                    assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
+                })
+
+            // 結果の検証
+            assertNotNull(result)
+            assertTrue(result.isSuccess)
+
+            // SIOP Response送信
+            var keyRing = HDKeyRing(null)
+            val jwk = keyRing.getPrivateJwk(1)
+            val privateJwk = object : ECPrivateJwk {
+                override val kty = jwk.kty
+                override val crv = jwk.crv
+                override val x = jwk.x
+                override val y = jwk.y
+                override val d = jwk.d
+            }
+            val keyPair = SignatureUtil.generateECKeyPair(privateJwk)
+            op.setKeyPair(keyPair)
+            val responseResult = op.respondIdTokenResponse()
+            assertTrue(responseResult.isRight())
         }
     }
 }
