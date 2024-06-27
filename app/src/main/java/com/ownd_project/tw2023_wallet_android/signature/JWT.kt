@@ -119,7 +119,7 @@ class JWT {
             }
         }
 
-        fun verifyJwtByX5C(jwt: String): Either<String, Pair<DecodedJWT, Array<X509Certificate>>> {
+        fun verifyJwtByX5C(jwt: String): Result<Pair<DecodedJWT, Array<X509Certificate>>> {
             // https://www.rfc-editor.org/rfc/rfc7515.html#section-4.1.6
             // https://www.rfc-editor.org/rfc/rfc7515.html#appendix-B
             val decodedJwt = JWT.decode(jwt)
@@ -128,19 +128,19 @@ class JWT {
                 val certificates = convertPemToX509Certificates(certs)
 
                 if (certificates.isNullOrEmpty()) {
-                    return Either.Left("証明書リストが取得できませんでした")
+                    return Result.failure(Exception("証明書リストが取得できませんでした"))
                 }
                 val result = verifyJwt(jwt, certificates[0].publicKey)
                 val b = validateCertificateChain(certificates, certificates.last())
                 // todo row to der エンコーディングの変換ができずjava.security.Signatureを使った実装が未対応(ES256Kサポートのためには対応が必要)
                 return if (result.isRight() && b) {
-                    Either.Right(Pair(decodedJwt, certificates))
+                    Result.success(Pair(decodedJwt, certificates))
                 } else {
-                    Either.Left("JWTの検証に失敗しました")
+                    Result.failure(Exception("JWTの検証に失敗しました"))
                 }
             } catch (e: IOException) {
                 println(e)
-                return Either.Left("JWTの検証に失敗しました")
+                return Result.failure(Exception("JWTの検証に失敗しました"))
             }
         }
 

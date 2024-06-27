@@ -167,19 +167,13 @@ class CredentialVerifierTest {
             .withHeader(mapOf("x5c" to certs))
             .sign(algorithm)
         val result = verifyJwtByX5C(token)
-        Assert.assertTrue(result.isRight())
-        result.fold(
-            ifLeft = {
-                Assert.fail()
-            },
-            ifRight = {(decodedJwt, certificates) ->
-                if (!certificates[0].hasSubjectAlternativeName("alt1.verifier.com")) {
-                    Assert.fail()
-                }
-                val vc = decodedJwt.getClaim("vc")
-                Assert.assertNotNull(vc)
-            }
-        )
+        Assert.assertTrue(result.isSuccess)
+        val (decodedJwt, certificates) = result.getOrThrow()
+        if (!certificates[0].hasSubjectAlternativeName("alt1.verifier.com")) {
+            Assert.fail()
+        }
+        val vc = decodedJwt.getClaim("vc")
+        Assert.assertNotNull(vc)
     }
 }
 
