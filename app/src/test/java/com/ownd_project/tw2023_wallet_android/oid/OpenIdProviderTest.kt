@@ -398,6 +398,24 @@ class OpenIdProviderTest {
 
             assertTrue(result.isRight())
         }
+
+        @Test
+        fun testSIOPv2RedirectUriSuccess() = runBlocking {
+            val clientId = "https://www.verifier.com/cb"
+            val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
+            val encodedClientMetadata =
+                URLEncoder.encode(clientMetadataJson, StandardCharsets.UTF_8.toString())
+            val uri =
+                "siopv2://?client_id=${encodedClientId}" +
+                        "&response_type=id_token" +
+                        "&response_uri=${encodedClientId}" +
+                        "&client_metadata=${encodedClientMetadata}"
+            val op = OpenIdProvider(uri)
+            val result = op.processAuthorizationRequest()
+            println(result)
+
+            assertTrue(result.isRight())
+        }
     }
 }
 
