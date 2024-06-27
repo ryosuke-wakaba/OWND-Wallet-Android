@@ -47,6 +47,74 @@ fun createRequestObjectJwt(privateKey: PrivateKey, kid: String, clientId: String
         .withClaim("max_age", 86400).withIssuedAt(Date()).withKeyId(kid).sign(algorithm)
 }
 
+open class OpenIdProviderTestBase {
+    private val keyPairTestCA = generateEcKeyPair()
+    private val keyPairTestIssuer = generateEcKeyPair()
+    lateinit var wireMockServer: WireMockServer
+    lateinit var clientMetadataMap: Map<String, Any>
+    lateinit var presentationDefinitionMap: Map<String, Any>
+
+    // val algorithm: Algorithm = Algorithm.HMAC512("secret")
+    val algorithm =
+        Algorithm.ECDSA256(
+            keyPairTestIssuer.public as ECPublicKey,
+            keyPairTestIssuer.private as ECPrivateKey?
+        )
+
+    val clientMetadataJson = """{
+            "scopes_supported": ["openid"],
+            "subject_types_supported": ["public"],
+            "id_token_signing_alg_values_supported": ["ES256"],
+            "request_object_signing_alg_values_supported": ["ES256"],
+            "subject_syntax_types_supported": ["syntax1", "syntax2"],
+            "request_object_encryption_alg_values_supported": ["ES256"],
+            "request_object_encryption_enc_values_supported": ["ES256"],
+            "client_name": "ClientName",
+            "logo_uri": "https://example.com/logo.png",
+            "client_purpose": "authentication"
+        }"""
+
+    @Before
+    fun setup() {
+        wireMockServer = WireMockServer(8080)
+        wireMockServer.start()
+        WireMock.configureFor("localhost", 8080)
+
+        val mapper = jacksonObjectMapper()
+        clientMetadataMap = mapper.readValue<Map<String, Any>>(clientMetadataJson)
+        presentationDefinitionMap = mapper.readValue<Map<String, Any>>(presentationDefinitionJson)
+
+        wireMockServer.stubFor(
+            WireMock.post(WireMock.urlEqualTo("/cb"))
+                .withHeader("Content-Type", WireMock.equalTo("application/x-www-form-urlencoded"))
+                .willReturn(
+                    WireMock.aResponse()
+                        .withStatus(200)
+                        .withBody("レスポンスの内容")
+                )
+        )
+    }
+
+    @After
+    fun teardown() {
+        wireMockServer.stop()
+    }
+
+    fun prepareCerts(): List<String> {
+        val cert0 = SignatureUtil.generateCertificate(
+            keyPairTestIssuer,
+            keyPairTestCA,
+            false,
+            listOf("alt1.verifier.com")
+        )
+        val encodedCert0 = Base64.getEncoder().encodeToString(cert0.encoded)
+        val cert1 =
+            SignatureUtil.generateCertificate(keyPairTestCA, keyPairTestCA, true) // 認証局は自己証明
+        val encodedCert1 = Base64.getEncoder().encodeToString(cert1.encoded)
+        return listOf(encodedCert0, encodedCert1)
+    }
+}
+
 @RunWith(Enclosed::class)
 class OpenIdProviderTest {
     class Misc {
@@ -127,47 +195,7 @@ class OpenIdProviderTest {
         }
     }
 
-    class ProcessAuthorizationRequestTest {
-        private val keyPairTestCA = generateEcKeyPair()
-        private val keyPairTestIssuer = generateEcKeyPair()
-        lateinit var wireMockServer: WireMockServer
-        lateinit var clientMetadataMap: Map<String, Any>
-        lateinit var presentationDefinitionMap: Map<String, Any>
-        val algorithm =
-            Algorithm.ECDSA256(
-                keyPairTestIssuer.public as ECPublicKey,
-                keyPairTestIssuer.private as ECPrivateKey?
-            )
-
-        val clientMetadataJson = """{
-            "scopes_supported": ["openid"],
-            "subject_types_supported": ["public"],
-            "id_token_signing_alg_values_supported": ["ES256"],
-            "request_object_signing_alg_values_supported": ["ES256"],
-            "subject_syntax_types_supported": ["syntax1", "syntax2"],
-            "request_object_encryption_alg_values_supported": ["ES256"],
-            "request_object_encryption_enc_values_supported": ["ES256"],
-            "client_name": "ClientName",
-            "logo_uri": "https://example.com/logo.png",
-            "client_purpose": "authentication"
-        }"""
-
-        @Before
-        fun setup() {
-            wireMockServer = WireMockServer(8080)
-            wireMockServer.start()
-            WireMock.configureFor("localhost", 8080)
-
-            val mapper = jacksonObjectMapper()
-            clientMetadataMap = mapper.readValue<Map<String, Any>>(clientMetadataJson)
-            presentationDefinitionMap = mapper.readValue<Map<String, Any>>(presentationDefinitionJson)
-        }
-
-        @After
-        fun teardown() {
-            wireMockServer.stop()
-        }
-
+    class ProcessAuthorizationRequestTest : OpenIdProviderTestBase() {
         private fun prepareRequestUri(jwt: String): String? {
             val requestUriPath = "/request-uri"
             wireMockServer.stubFor(
@@ -183,13 +211,6 @@ class OpenIdProviderTest {
             return URLEncoder.encode(requestUri, StandardCharsets.UTF_8.toString())
         }
 
-        val cert0 = SignatureUtil.generateCertificate(keyPairTestIssuer, keyPairTestCA, false, listOf("alt1.verifier.com"))
-        val encodedCert0 = Base64.getEncoder().encodeToString(cert0.encoded)
-        val cert1 =
-            SignatureUtil.generateCertificate(keyPairTestCA, keyPairTestCA, true) // 認証局は自己証明
-        val encodedCert1 = Base64.getEncoder().encodeToString(cert1.encoded)
-        val certs = listOf(encodedCert0, encodedCert1)
-
         @Test
         fun testClientIdSchemeX509SanDnsFailure() = runBlocking {
             val clientId = "https://not-registered-in-san.verifier.com/cb"
@@ -199,7 +220,7 @@ class OpenIdProviderTest {
                 .withClaim("response_uri", clientId)
                 .withClaim("client_metadata", clientMetadataMap)
                 .withClaim("presentation_definition", presentationDefinitionMap)
-                .withHeader(mapOf("x5c" to certs))
+                .withHeader(mapOf("x5c" to prepareCerts()))
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
             val encodedJwtString =
@@ -224,7 +245,7 @@ class OpenIdProviderTest {
                 .withClaim("response_uri", clientId)
                 .withClaim("client_metadata", clientMetadataMap)
                 .withClaim("presentation_definition", presentationDefinitionMap)
-                .withHeader(mapOf("x5c" to certs))
+                .withHeader(mapOf("x5c" to prepareCerts()))
                 .withExpiresAt(Date(System.currentTimeMillis() + 60 * 1000))
                 .sign(algorithm)
             val encodedJwtString =
