@@ -48,6 +48,84 @@ fun createRequestObjectJwt(privateKey: PrivateKey, kid: String, clientId: String
 
 @RunWith(Enclosed::class)
 class OpenIdProviderTest {
+    class Misc {
+        private lateinit var wireMockServer: WireMockServer
+
+
+        @Before
+        fun setup() {
+            wireMockServer = WireMockServer().apply {
+                start()
+                WireMock.configureFor("localhost", port())
+            }
+        }
+
+        @After
+        fun teardown() {
+            wireMockServer.stop()
+        }
+
+        @Test
+        fun testSendRequestWithDirectPost() = runBlocking {
+            // MockWebServerに対するレスポンスを設定します。
+            wireMockServer.stubFor(
+                WireMock.post(WireMock.urlEqualTo("/"))
+                    .withHeader("Content-Type", WireMock.equalTo("application/x-www-form-urlencoded"))
+                    .willReturn(
+                        WireMock.aResponse()
+                            .withStatus(200)
+                            .withBody("response body")
+                    )
+            )
+
+            // テスト対象のメソッドを呼び出します。
+            val result = sendRequest("$clientHost:${wireMockServer.port()}/", mapOf("key" to "value"), ResponseMode.DIRECT_POST)
+
+            // レスポンスが期待通りであることを確認します。
+            assertEquals(200, result.statusCode)
+
+            // リクエストが期待通りであることを確認します。
+            val recordedRequest = wireMockServer.findAll(WireMock.postRequestedFor(WireMock.urlEqualTo("/"))).first()
+            assertEquals("POST", recordedRequest.method.toString())
+            assertEquals("key=value", recordedRequest.bodyAsString)
+        }
+
+        @Test
+        fun testMergeOAuth2AndOpenIdInRequestPayload() {
+            val payload = AuthorizationRequestPayloadImpl(
+                scope = "openid email",
+                responseType = "code",
+                clientId = "client123",
+                redirectUri = "https://client.example.com/cb",
+                nonce = "nonce123",
+                state = "state123",
+                clientIdScheme = "redirect_uri"
+            )
+
+            val requestObject = RequestObjectPayloadImpl(
+                iss = "issuer2",
+                aud = Audience.Single("aud2"),
+                responseType = "code id_token",
+                clientId = "client456",
+                redirectUri = "https://client.example.com/redirect",
+                idTokenHint = "idTokenHint",
+                clientIdScheme = "redirect_uri"
+            )
+
+            val mergedMap = mergeOAuth2AndOpenIdInRequestPayload(payload, requestObject)
+
+            // マージされたプロパティを検証
+            assertEquals("issuer2", mergedMap.iss)
+            assertEquals(Audience.Single("aud2"), mergedMap.aud)
+            assertEquals("code id_token", mergedMap.responseType)
+            assertEquals("client456", mergedMap.clientId)
+            assertEquals("https://client.example.com/redirect", mergedMap.redirectUri)
+            assertEquals("idTokenHint", mergedMap.idTokenHint)
+            assertEquals("nonce123", mergedMap.nonce)
+            assertEquals("state123", mergedMap.state)
+        }
+    }
+
     class ResponseTest {
         private val keyPair = generateRsaKeyPair()
         private lateinit var wireMockServer: WireMockServer
@@ -125,31 +203,6 @@ class OpenIdProviderTest {
 
 
         @Test
-        fun testSendRequestWithDirectPost() = runBlocking {
-            // MockWebServerに対するレスポンスを設定します。
-            wireMockServer.stubFor(
-                WireMock.post(WireMock.urlEqualTo("/"))
-                    .withHeader("Content-Type", WireMock.equalTo("application/x-www-form-urlencoded"))
-                    .willReturn(
-                        WireMock.aResponse()
-                            .withStatus(200)
-                            .withBody("response body")
-                    )
-            )
-
-            // テスト対象のメソッドを呼び出します。
-            val result = sendRequest("$clientHost:${wireMockServer.port()}/", mapOf("key" to "value"), ResponseMode.DIRECT_POST)
-
-            // レスポンスが期待通りであることを確認します。
-            assertEquals(200, result.statusCode)
-
-            // リクエストが期待通りであることを確認します。
-            val recordedRequest = wireMockServer.findAll(WireMock.postRequestedFor(WireMock.urlEqualTo("/"))).first()
-            assertEquals("POST", recordedRequest.method.toString())
-            assertEquals("key=value", recordedRequest.bodyAsString)
-        }
-
-        @Test
         fun testRespondIdTokenResponse() = runBlocking {
             val clientMetadataUri = "$clientHost:${wireMockServer.port()}/client-metadata-uri"
             val requestJwt = createRequestObjectJwt(
@@ -201,41 +254,6 @@ class OpenIdProviderTest {
             op.setKeyPair(keyPair)
             val responseResult = op.respondIdTokenResponse()
             assertTrue(responseResult.isRight())
-        }
-
-        @Test
-        fun testMergeOAuth2AndOpenIdInRequestPayload() {
-            val payload = AuthorizationRequestPayloadImpl(
-                scope = "openid email",
-                responseType = "code",
-                clientId = "client123",
-                redirectUri = "https://client.example.com/cb",
-                nonce = "nonce123",
-                state = "state123",
-                clientIdScheme = "redirect_uri"
-            )
-
-            val requestObject = RequestObjectPayloadImpl(
-                iss = "issuer2",
-                aud = Audience.Single("aud2"),
-                responseType = "code id_token",
-                clientId = "client456",
-                redirectUri = "https://client.example.com/redirect",
-                idTokenHint = "idTokenHint",
-                clientIdScheme = "redirect_uri"
-            )
-
-            val mergedMap = mergeOAuth2AndOpenIdInRequestPayload(payload, requestObject)
-
-            // マージされたプロパティを検証
-            assertEquals("issuer2", mergedMap.iss)
-            assertEquals(Audience.Single("aud2"), mergedMap.aud)
-            assertEquals("code id_token", mergedMap.responseType)
-            assertEquals("client456", mergedMap.clientId)
-            assertEquals("https://client.example.com/redirect", mergedMap.redirectUri)
-            assertEquals("idTokenHint", mergedMap.idTokenHint)
-            assertEquals("nonce123", mergedMap.nonce)
-            assertEquals("state123", mergedMap.state)
         }
     }
 
