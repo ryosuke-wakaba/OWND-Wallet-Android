@@ -3,6 +3,8 @@ package com.ownd_project.tw2023_wallet_android.oid
 import android.util.Log
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.authlete.sd.Disclosure
+import com.authlete.sd.SDObjectBuilder
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.ownd_project.tw2023_wallet_android.encodePublicKeyToJwks
@@ -12,7 +14,9 @@ import com.ownd_project.tw2023_wallet_android.signature.ECPrivateJwk
 import com.ownd_project.tw2023_wallet_android.utils.generateRsaKeyPair
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
+import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
 import com.ownd_project.tw2023_wallet_android.utils.generateEcKeyPair
+import com.ownd_project.tw2023_wallet_android.utils.publicKeyToJwk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
@@ -26,6 +30,7 @@ import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.interfaces.ECPrivateKey
 import java.security.interfaces.ECPublicKey
@@ -389,15 +394,13 @@ class OpenIdProviderTest {
             val result = op.processAuthorizationRequest()
             assertTrue(result.isSuccess)
             val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = result.getOrThrow()
-            // RequestObjectPayloadオブジェクトの内容を検証
-            assertEquals("openid", authorizationRequestPayload?.scope)
-            assertEquals("id_token", authorizationRequestPayload?.responseType)
-            assertEquals(clientId, authorizationRequestPayload?.clientId)
-            assertEquals(clientId, authorizationRequestPayload?.redirectUri)
-            // nonceとstateはランダムに生成される可能性があるため、存在することのみを確認
-            assertNotNull(authorizationRequestPayload?.nonce)
-            assertNotNull(authorizationRequestPayload?.state)
-            assertEquals(86400, authorizationRequestPayload?.maxAge)
+            assertEquals("openid", authorizationRequestPayload.scope)
+            assertEquals("id_token", authorizationRequestPayload.responseType)
+            assertEquals(clientId, authorizationRequestPayload.clientId)
+            assertEquals(clientId, authorizationRequestPayload.redirectUri)
+            assertNotNull(authorizationRequestPayload.nonce)
+            assertNotNull(authorizationRequestPayload.state)
+            assertEquals(86400, authorizationRequestPayload.maxAge)
 
             assertEquals("ClientName", registrationMetadata.clientName)
             assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
@@ -417,6 +420,111 @@ class OpenIdProviderTest {
             val responseResult = op.respondIdTokenResponse()
             assertTrue(responseResult.isRight())
         }
+
+        @Test
+        fun testRespondVpTokenResponse() = runBlocking {
+            val clientId = "https://www.verifier.com/cb"
+            val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
+            val encodedClientMetadata =
+                URLEncoder.encode(clientMetadataJson, StandardCharsets.UTF_8.toString())
+            val encodedPresentationDefinition =
+                URLEncoder.encode(presentationDefinitionJson, StandardCharsets.UTF_8.toString())
+            val uri =
+                "oid4vp://?client_id=${encodedClientId}" +
+                        "&response_type=vp_token" +
+                        "&response_mode=direct_post" +
+                        "&scope=openid" +
+                        "&nonce=dummy-nonce" +
+                        "&state=dummy-state" +
+                        "&max_age=86400" +
+                        "&response_uri=${encodedClientId}" +
+                        "&client_metadata=${encodedClientMetadata}" +
+                        "&presentation_definition=${encodedPresentationDefinition}"
+            val op = OpenIdProvider(uri)
+            val result = op.processAuthorizationRequest()
+            assertTrue(result.isSuccess)
+            val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = result.getOrThrow()
+            assertEquals("openid", authorizationRequestPayload.scope)
+            assertEquals("vp_token", authorizationRequestPayload.responseType)
+            assertEquals(clientId, authorizationRequestPayload.clientId)
+            assertEquals(clientId, authorizationRequestPayload.responseUri)
+            assertNotNull(authorizationRequestPayload.nonce)
+            assertNotNull(authorizationRequestPayload.state)
+            assertEquals(86400, authorizationRequestPayload.maxAge)
+
+            assertEquals("ClientName", registrationMetadata.clientName)
+            assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
+
+            // VP Response送信
+            val keyPairHolder = generateEcKeyPair()
+            val keyBinding = KeyBinding4Test(
+                Algorithm.ECDSA256(
+                    keyPairHolder.public as ECPublicKey,
+                    keyPairHolder.private as ECPrivateKey?
+                )
+            )
+            op.setKeyBinding(keyBinding)
+
+            val disclosure1 = Disclosure("given_name", "value1")
+            val disclosure2 = Disclosure("family_name", "value2")
+            val disclosure3 = Disclosure("is_older_than_13", "true")
+            val disclosures = listOf(disclosure1, disclosure2, disclosure3)
+            val builder = SDObjectBuilder()
+            disclosures.forEach { it ->
+                builder.putSDClaim(it)
+            }
+            val claims = builder.build()
+            val holderJwk = publicKeyToJwk(keyPairHolder.public)
+            val cnf = mapOf("jwk" to holderJwk)
+            val issuerSignedJwt = JWT.create().withIssuer("https://client.example.org/cb")
+                .withAudience("https://server.example.com")
+                .withClaim("cnf", cnf)
+                .withClaim("vct", "IdentityCredential")
+                .withClaim("_sd", (claims["_sd"] as List<*>))
+                .sign(algorithm)
+            val sdJwt = "$issuerSignedJwt~${disclosures.joinToString("~") { it.disclosure }}~"
+
+            val presentationDefinition = authorizationRequestPayload.presentationDefinition
+            val inputDescriptor = presentationDefinition!!.inputDescriptors[0]
+            val submissionCredential = SubmissionCredential(
+                id = "dummy",
+                format = "vc+sd-jwt",
+                types = listOf(""),
+                credential = sdJwt,
+                inputDescriptor = inputDescriptor
+            )
+            val credentials = listOf(submissionCredential)
+            val responseResult = op.respondVPResponse(credentials)
+            assertTrue(responseResult.isRight())
+        }
     }
 }
 
+class KeyBinding4Test(private val keyPair: Algorithm) : KeyBinding {
+    override fun generateJwt(
+        sdJwt: String,
+        selectedDisclosures: List<SDJwtUtil.Disclosure>,
+        aud: String,
+        nonce: String
+    ): String {
+        val parts = sdJwt.split('~')
+        val issuerSignedJwt = parts[0]
+        // It MUST be taken over the US-ASCII bytes preceding the KB-JWT in the Presentation
+        val sd =
+            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~"
+
+        val sdHash = sd.toByteArray(Charsets.US_ASCII).sha256ToBase64Url()
+        val sdJwtVc = JWT.create().withIssuer("https://client.example.org/cb")
+            .withAudience(aud)
+            .withClaim("nonce", nonce)
+            .withClaim("_sd_hash", sdHash)
+            .withHeader(mapOf("typ" to "kb+jwt", "alg" to "ES256"))
+            .sign(keyPair)
+        return sdJwtVc
+    }
+
+    private fun ByteArray.sha256ToBase64Url(): String {
+        val sha = MessageDigest.getInstance("SHA-256").digest(this)
+        return Base64.getUrlEncoder().encodeToString(sha).trimEnd('=')
+    }
+}
