@@ -166,14 +166,14 @@ class IdTokenSharringViewModel : ViewModel() {
             openIdProvider = OpenIdProvider(url, opt)
             val result = openIdProvider.processAuthorizationRequest()
             result.fold(
-                ifLeft = { value ->
+                onFailure = { value ->
                     Log.e(TAG, "エラーが発生しました: ${value}")
                     withContext(Dispatchers.Main) {
                         _initDone.value = true
-                        _errorMessage.value = value
+                        _errorMessage.value = value.message
                     }
                 },
-                ifRight = { siopRequest ->
+                onSuccess = { siopRequest ->
                     Log.d(TAG, "processSiopRequest success")
                     val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata, presentationDefinition) = siopRequest
                     val certificateInfo =

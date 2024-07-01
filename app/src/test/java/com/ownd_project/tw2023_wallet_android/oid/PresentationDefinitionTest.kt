@@ -359,10 +359,10 @@ class PresentationDefinitionTest {
         val op = OpenIdProvider(uri)
         val result = op.processAuthorizationRequest()
         result.fold(
-            ifLeft = { value ->
-                TestCase.fail("エラーが発生しました: ${value}")
+            onFailure = { value ->
+                TestCase.fail("エラーが発生しました: ${value.message}")
             },
-            ifRight = { value ->
+            onSuccess = { value ->
                 val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata, presentationDefinition) = value
                 // RequestObjectPayloadオブジェクトの内容を検証
                 TestCase.assertEquals("openid", requestObject?.scope)
@@ -388,7 +388,7 @@ class PresentationDefinitionTest {
 
         // 結果の検証
         TestCase.assertNotNull(result)
-        TestCase.assertTrue(result.isRight())
+        TestCase.assertTrue(result.isSuccess)
 
         val disclosure1 = Disclosure("claim1", "value1")
         val disclosure2 = Disclosure("claim2", "value2")
