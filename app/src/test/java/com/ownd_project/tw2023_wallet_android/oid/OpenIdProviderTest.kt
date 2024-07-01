@@ -14,7 +14,12 @@ import com.ownd_project.tw2023_wallet_android.signature.ECPrivateJwk
 import com.ownd_project.tw2023_wallet_android.utils.generateRsaKeyPair
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.stubbing.ServeEvent
+import com.ownd_project.tw2023_wallet_android.signature.ECPublicJwk
+import com.ownd_project.tw2023_wallet_android.utils.KeyUtil
+import com.ownd_project.tw2023_wallet_android.utils.KeyUtil.toJwkThumbprintUri
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
+import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.utils.generateEcKeyPair
 import com.ownd_project.tw2023_wallet_android.utils.publicKeyToJwk
 import junit.framework.TestCase.assertEquals
@@ -28,8 +33,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
+import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.interfaces.ECPrivateKey
@@ -58,8 +65,8 @@ fun createRequestObjectJwt(
 }
 
 open class OpenIdProviderTestBase {
-    private val keyPairTestCA = generateEcKeyPair()
-    private val keyPairTestIssuer = generateEcKeyPair()
+    val keyPairTestCA = generateEcKeyPair()
+    val keyPairTestIssuer = generateEcKeyPair()
     lateinit var wireMockServer: WireMockServer
     lateinit var clientMetadataMap: Map<String, Any>
     lateinit var presentationDefinitionMap: Map<String, Any>
@@ -422,7 +429,7 @@ class OpenIdProviderTest {
         }
 
         @Test
-        fun testRespondVpTokenResponse() = runBlocking {
+        fun testRespondVpTokenResponseSdJwtVc() = runBlocking {
             val clientId = "https://www.verifier.com/cb"
             val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
             val encodedClientMetadata =
@@ -497,6 +504,134 @@ class OpenIdProviderTest {
             val responseResult = op.respondVPResponse(credentials)
             assertTrue(responseResult.isRight())
         }
+
+        @Test
+        fun testRespondVpTokenResponseJwtVcJson() = runBlocking {
+            val clientId = "$clientHost:${wireMockServer.port()}/cb"
+            val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
+            val encodedClientMetadata =
+                URLEncoder.encode(clientMetadataJson, StandardCharsets.UTF_8.toString())
+            val encodedPresentationDefinition =
+                URLEncoder.encode(presentationDefinitionJwtVcJsonJson, StandardCharsets.UTF_8.toString())
+            val uri =
+                "oid4vp://?client_id=${encodedClientId}" +
+                        "&response_type=vp_token" +
+                        "&response_mode=direct_post" +
+                        "&scope=openid" +
+                        "&nonce=dummy-nonce" +
+                        "&state=dummy-state" +
+                        "&max_age=86400" +
+                        "&response_uri=${encodedClientId}" +
+                        "&client_metadata=${encodedClientMetadata}" +
+                        "&presentation_definition=${encodedPresentationDefinition}"
+            val op = OpenIdProvider(uri)
+            val result = op.processAuthorizationRequest()
+            assertTrue(result.isSuccess)
+            val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = result.getOrThrow()
+            assertEquals("openid", authorizationRequestPayload.scope)
+            assertEquals("vp_token", authorizationRequestPayload.responseType)
+            assertEquals(clientId, authorizationRequestPayload.clientId)
+            assertEquals(clientId, authorizationRequestPayload.responseUri)
+            assertNotNull(authorizationRequestPayload.nonce)
+            assertNotNull(authorizationRequestPayload.state)
+            assertEquals(86400, authorizationRequestPayload.maxAge)
+
+            assertEquals("ClientName", registrationMetadata.clientName)
+            assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
+
+            // VP Response送信
+            val keyPairHolder = generateEcKeyPair()
+            op.setJwtVpJsonGenerator(JwtVpJsonGenerator4Test(keyPairHolder))
+
+            val vcClaims = mapOf(
+                "@context" to listOf("https://www.w3.org/2018/credentials/v1"),
+                "type" to listOf("VerifiableCredential", "IDCredential"),
+                "credentialSubject" to mapOf(
+                    "given_name" to "Max",
+                    "family_name" to "Mustermann"
+                )
+            )
+            val algorithm =
+                Algorithm.ECDSA256(
+                    keyPairTestIssuer.public as ECPublicKey,
+                    keyPairTestIssuer.private as ECPrivateKey?
+                )
+            // val objectMapper = ObjectMapper()
+            val objectMapper = jacksonObjectMapper()
+            val vcJsonString = objectMapper.writeValueAsString(vcClaims)
+            val issuerSignedJwt = JWT.create().withIssuer("https://client.example.org/cb")
+                .withAudience("https://server.example.com")
+                .withClaim("vc", vcJsonString)
+                .sign(algorithm)
+
+            val presentationDefinition = authorizationRequestPayload.presentationDefinition
+            val inputDescriptor = presentationDefinition!!.inputDescriptors[0]
+            val submissionCredential = SubmissionCredential(
+                id = "dummy",
+                format = "jwt_vc_json",
+                types = listOf("IDCredential"),
+                credential = issuerSignedJwt,
+                inputDescriptor = inputDescriptor
+            )
+            val credentials = listOf(submissionCredential)
+            val responseResult = op.respondVPResponse(credentials)
+            assertTrue(responseResult.isRight())
+            val (postResult, sharedContents) = responseResult.getOrNull()!!
+            assertEquals(200, postResult.statusCode)
+            assertEquals(1, sharedContents.size)
+            val sharedClaims = sharedContents[0].sharedClaims
+            assertEquals(2, sharedClaims.size)
+            assertEquals("given_name", sharedClaims[0].name)
+            assertEquals("family_name", sharedClaims[1].name)
+
+            val serveEvents: List<ServeEvent> = WireMock.getAllServeEvents()
+            val request = serveEvents[0].request
+
+            // HTTPメソッドとURLのアサート
+            assertEquals("POST", request.method.value())
+            assertEquals("/cb", request.url)
+
+            // ヘッダーのアサート
+            assertEquals("localhost:${wireMockServer.port()}", request.header("Host").firstValue())
+            assertEquals("application/x-www-form-urlencoded", request.header("Content-Type").firstValue())
+
+            // ボディのアサート
+            val body = request.bodyAsString
+            val bodyParams = parseFormBody(body)
+            assertEquals("dummy-state", bodyParams["state"])
+
+            val postedPresentationSubmission = bodyParams["presentation_submission"]
+            val submissionMap = objectMapper.readValue(postedPresentationSubmission, Map::class.java)
+            val definitionId = submissionMap["definition_id"]
+            assertEquals(presentationDefinition.id, definitionId)
+            val descriptorMaps = submissionMap["descriptor_map"] as List<Any>
+            assertEquals(1, descriptorMaps.size)
+            val descriptorMap = descriptorMaps[0] as Map<String, Any>
+            assertEquals(presentationDefinition.inputDescriptors[0].id, descriptorMap["id"])
+            assertEquals("$", descriptorMap["path"])
+            assertEquals("jwt_vp_json", descriptorMap["format"])
+            val pathNested = descriptorMap["path_nested"] as Map<String, Any>
+            assertEquals("\$.vp.verifiableCredential[0]", pathNested["path"])
+            assertEquals("jwt_vc_json", pathNested["format"])
+
+            val postedVpToken = bodyParams["vp_token"]
+            val algorithmOfHolder =
+                Algorithm.ECDSA256(
+                    keyPairHolder.public as ECPublicKey,
+                )
+            val verifier = JWT.require(algorithmOfHolder).build()
+            val decoded = verifier.verify(postedVpToken)
+            val vpMap = decoded.getClaim("vp").asMap()
+            val verifiableCredential = vpMap["verifiableCredential"] as List<Any>
+            assertEquals(1, verifiableCredential.size)
+        }
+    }
+}
+
+private fun parseFormBody(body: String): Map<String, String> {
+    return body.split("&").associate {
+        val (key, value) = it.split("=")
+        key to URLDecoder.decode(value, "UTF-8")
     }
 }
 
@@ -528,3 +663,76 @@ class KeyBinding4Test(private val keyPair: Algorithm) : KeyBinding {
         return Base64.getUrlEncoder().encodeToString(sha).trimEnd('=')
     }
 }
+
+class JwtVpJsonGenerator4Test(private val keyPair: KeyPair) : JwtVpJsonGenerator {
+    override fun generateJwt(
+        vcJwt: String,
+        headerOptions: HeaderOptions,
+        payloadOptions: JwtVpJsonPayloadOptions
+    ): String {
+        val alg = Algorithm.ECDSA256(
+            keyPair.public as ECPublicKey,
+            keyPair.private as ECPrivateKey?
+        )
+        val jwk = getJwk()
+        val jwk2 = object : ECPublicJwk {
+            override val kty = jwk["kty"]!!
+            override val crv = jwk["crv"]!!
+            override val x = jwk["x"]!!
+            override val y = jwk["y"]!!
+        }
+        val sub = toJwkThumbprintUri(jwk2)
+        val jwtPayload = JwtVpJsonPresentation.genVpJwtPayload(vcJwt, payloadOptions)
+        val sdJwtVc = JWT.create()
+            .withIssuer(sub)
+            .withAudience(jwtPayload.aud)
+            .withClaim("nonce", jwtPayload.nonce)
+            .withClaim("exp", jwtPayload.exp)
+            .withClaim("vp", jwtPayload.vp)
+            .withHeader(mapOf("typ" to headerOptions.typ, "alg" to "ES256", "jwk" to jwk))
+            .sign(alg)
+        return sdJwtVc
+    }
+
+    override fun getJwk(): Map<String, String> {
+        return KeyUtil.publicKeyToJwk(keyPair.public, SigningOption())
+    }
+
+    private fun ByteArray.sha256ToBase64Url(): String {
+        val sha = MessageDigest.getInstance("SHA-256").digest(this)
+        return Base64.getUrlEncoder().encodeToString(sha).trimEnd('=')
+    }
+}
+
+val presentationDefinitionJwtVcJsonJson = """
+{
+    "id": "example_jwt_vc",
+    "input_descriptors": [
+        {
+            "id": "id_credential",
+            "format": {
+                "jwt_vc_json": {
+                    "proof_type": [
+                        "JsonWebSignature2020"
+                    ]
+                }
+            },
+            "constraints": {
+                "fields": [
+                    {
+                        "path": [
+                            "${'$'}.vc.type"
+                        ],
+                        "filter": {
+                            "type": "array",
+                            "contains": {
+                                "const": "IDCredential"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+""".trimIndent()
