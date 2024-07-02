@@ -735,7 +735,7 @@ class KeyBinding4Test(private val keyPair: KeyPair) : KeyBinding {
             keyPair.public as ECPublicKey,
             keyPair.private as ECPrivateKey?
         )
-        val (header, payload) = JwtVpJsonPresentation.genKeyBindingJwtParts(
+        val (header, payload) = SdJwtVcPresentation.genKeyBindingJwtParts(
             sdJwt,
             selectedDisclosures,
             aud,

@@ -1,7 +1,7 @@
 package com.ownd_project.tw2023_wallet_android.ui.shared
 
-import com.ownd_project.tw2023_wallet_android.oid.JwtVpJsonPresentation
 import com.ownd_project.tw2023_wallet_android.oid.KeyBinding
+import com.ownd_project.tw2023_wallet_android.oid.SdJwtVcPresentation
 import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
 
@@ -12,7 +12,7 @@ class KeyBindingImpl(val keyAlias: String): KeyBinding {
         aud: String,
         nonce: String
     ): String {
-        val (header, payload) = JwtVpJsonPresentation.genKeyBindingJwtParts(
+        val (header, payload) = SdJwtVcPresentation.genKeyBindingJwtParts(
             sdJwt,
             selectedDisclosures,
             aud,

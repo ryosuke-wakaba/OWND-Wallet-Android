@@ -282,25 +282,11 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val vpTokens = credentials.mapNotNull { it ->
                 when (it.format) {
                     "vc+sd-jwt" -> {
-                        Pair(
-                            it.id,
-                            createPresentationSubmissionSdJwtVc(
-                                it,
-                                authRequest,
-                                presentationDefinition
-                            )
-                        )
+                        createPresentationSubmissionSdJwtVc(it, authRequest, presentationDefinition)
                     }
 
                     "jwt_vc_json" -> {
-                        Pair(
-                            it.id,
-                            createPresentationSubmissionJwtVc(
-                                it,
-                                authRequest,
-                                presentationDefinition
-                            )
-                        )
+                        createPresentationSubmissionJwtVc(it, authRequest)
                     }
 
                     else -> {
@@ -365,76 +351,31 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         credential: SubmissionCredential,
         authRequest: RequestObjectPayload,
         presentationDefinition: PresentationDefinition
-    ): Triple<String, DescriptorMap, List<DisclosedClaim>> {
+    ): Pair<String, Triple<String, DescriptorMap, List<DisclosedClaim>>> {
         val sdJwt = credential.credential
         val (_, selectedDisclosures) = selectDisclosure(sdJwt, presentationDefinition)!!
-        val keyBindingJwt = keyBinding.generateJwt(
-            sdJwt,
+        val presentation =  SdJwtVcPresentation.createPresentation(
+            credential,
             selectedDisclosures,
-            authRequest.clientId!!,
-            authRequest.nonce!!,
+            authRequest,
+            keyBinding
         )
-        // 絞ったdisclosureでチルダ連結してsd-jwtを構成
-        val parts = sdJwt.split('~')
-        val issuerSignedJwt = parts[0]
-        val vpToken =
-            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~" + keyBindingJwt
-
-        val dm = DescriptorMap(
-            id = credential.inputDescriptor.id,
-            format = credential.format,
-            path = "$"
-        )
-        val disclosedClaims =
-            selectedDisclosures.map { DisclosedClaim(credential.id, credential.types, it.key!!) }
-        return Triple(vpToken, dm, disclosedClaims)
+        return Pair( credential.id, presentation )
     }
 
     private fun createPresentationSubmissionJwtVc(
         credential: SubmissionCredential,
         authRequest: RequestObjectPayload,
-        presentationDefinition: PresentationDefinition
-    ): Triple<String, DescriptorMap, List<DisclosedClaim>> {
+    ): Pair<String, Triple<String, DescriptorMap, List<DisclosedClaim>>> {
         if (authRequest.responseMode != ResponseMode.DIRECT_POST) {
             throw IllegalArgumentException("Unsupported response mode: ${authRequest.responseMode}")
         }
-        val objectMapper = jacksonObjectMapper()
-        try {
-            val (_, payload, _) = JWT.decodeJwt(jwt = credential.credential)
-            val disclosedClaims = payload.mapNotNull { (key, value) ->
-                if (key == "vc") {
-                    val vcMap = objectMapper.readValue(value as String, Map::class.java)
-                    vcMap.mapNotNull { (vcKey, vcValue) ->
-                        if (vcKey == "credentialSubject") {
-                            (vcValue as Map<String, Any>).mapNotNull { (subKey, subValue) ->
-                                DisclosedClaim(id = credential.id, types = credential.types, name = subKey as String)
-                            }
-                        } else {
-                            null
-                        }
-                    }.flatten()
-                } else {
-                    null
-                }
-            }.flatten()
-            val vpToken = this.jwtVpJsonGenerator.generateJwt(
-                credential.credential,
-                HeaderOptions(),
-                JwtVpJsonPayloadOptions(
-                    aud = authRequest.clientId!!,
-                    nonce = authRequest.nonce!!
-                )
-            )
-
-            return Triple(
-                first = vpToken,
-                second = JwtVpJsonPresentation.genDescriptorMap(presentationDefinition.inputDescriptors[0].id),
-                third = disclosedClaims
-            )
-
-        } catch (error: Exception) {
-            throw error
-        }
+        val presentation =  JwtVpJsonPresentation.createPresentation(
+            credential,
+            authRequest,
+            jwtVpJsonGenerator
+        )
+        return Pair( credential.id, presentation )
     }
 }
 

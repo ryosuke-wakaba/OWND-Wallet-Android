@@ -1,6 +1,8 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
 import java.security.MessageDigest
 import java.util.Base64
@@ -33,8 +35,71 @@ data class JwtVpJsonPayloadOptions(
     var nonce: String
 )
 
+object SdJwtVcPresentation {
+    fun genKeyBindingJwtParts(
+        sdJwt: String,
+        selectedDisclosures: List<SDJwtUtil.Disclosure>,
+        aud: String,
+        nonce: String,
+        iat: Long? = null
+    ): Pair<Map<String, Any>, Map<String, Any>> {
+        val header = mapOf("typ" to "kb+jwt", "alg" to "ES256")
+
+        val parts = sdJwt.split('~')
+        val issuerSignedJwt = parts[0]
+        // It MUST be taken over the US-ASCII bytes preceding the KB-JWT in the Presentation
+        val sd =
+            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~"
+        // The bytes of the digest MUST then be base64url-encoded.
+        val sdHash = sd.toByteArray(Charsets.US_ASCII).sha256ToBase64Url()
+
+        val _iat = iat ?: (System.currentTimeMillis() / 1000)
+        val payload = mapOf(
+            "aud" to aud,
+            "iat" to _iat,
+            "_sd_hash" to sdHash,
+            "nonce" to nonce
+        )
+        return Pair(header, payload)
+    }
+
+    private fun ByteArray.sha256ToBase64Url(): String {
+        val sha = MessageDigest.getInstance("SHA-256").digest(this)
+        return Base64.getUrlEncoder().encodeToString(sha).trimEnd('=')
+    }
+
+    fun createPresentation(
+        credential: SubmissionCredential,
+        selectedDisclosures: List<SDJwtUtil.Disclosure>,
+        authRequest: RequestObjectPayload,
+        keyBinding: KeyBinding
+    ): Triple<String, DescriptorMap, List<DisclosedClaim>> {
+        val sdJwt = credential.credential
+        val keyBindingJwt = keyBinding.generateJwt(
+            sdJwt,
+            selectedDisclosures,
+            authRequest.clientId!!,
+            authRequest.nonce!!,
+        )
+        // 絞ったdisclosureでチルダ連結してsd-jwtを構成
+        val parts = sdJwt.split('~')
+        val issuerSignedJwt = parts[0]
+        val vpToken =
+            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~" + keyBindingJwt
+
+        val dm = DescriptorMap(
+            id = credential.inputDescriptor.id,
+            format = credential.format,
+            path = "$"
+        )
+        val disclosedClaims =
+            selectedDisclosures.map { DisclosedClaim(credential.id, credential.types, it.key!!) }
+        return Triple(vpToken, dm, disclosedClaims)
+    }
+}
+
 object JwtVpJsonPresentation {
-    fun genDescriptorMap(
+    private fun genDescriptorMap(
         inputDescriptorId: String,
         pathIndex: Int? = -1,
         pathNestedIndex: Int? = 0
@@ -71,38 +136,6 @@ object JwtVpJsonPresentation {
         )
     }
 
-    fun genKeyBindingJwtParts(
-        sdJwt: String,
-        selectedDisclosures: List<SDJwtUtil.Disclosure>,
-        aud: String,
-        nonce: String,
-        iat: Long? = null
-    ): Pair<Map<String, Any>, Map<String, Any>> {
-        val header = mapOf("typ" to "kb+jwt", "alg" to "ES256")
-
-        val parts = sdJwt.split('~')
-        val issuerSignedJwt = parts[0]
-        // It MUST be taken over the US-ASCII bytes preceding the KB-JWT in the Presentation
-        val sd =
-            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~"
-        // The bytes of the digest MUST then be base64url-encoded.
-        val sdHash = sd.toByteArray(Charsets.US_ASCII).sha256ToBase64Url()
-
-        val _iat = iat ?: (System.currentTimeMillis() / 1000)
-        val payload = mapOf(
-            "aud" to aud,
-            "iat" to _iat,
-            "_sd_hash" to sdHash,
-            "nonce" to nonce
-        )
-        return Pair(header, payload)
-    }
-
-    private fun ByteArray.sha256ToBase64Url(): String {
-        val sha = MessageDigest.getInstance("SHA-256").digest(this)
-        return Base64.getUrlEncoder().encodeToString(sha).trimEnd('=')
-    }
-
     fun genVpJwtPayload(vcJwt: String, payloadOptions: JwtVpJsonPayloadOptions): VpJwtPayload {
         val vpClaims = mapOf(
             "@context" to listOf("https://www.w3.org/2018/credentials/v1"),
@@ -120,6 +153,49 @@ object JwtVpJsonPresentation {
             exp = payloadOptions.exp ?: (currentTimeSeconds + 2 * 3600),
             nonce = payloadOptions.nonce,
             vp = vpClaims
+        )
+    }
+
+    fun createPresentation(
+        credential: SubmissionCredential,
+        authRequest: RequestObjectPayload,
+        jwtVpJsonGenerator: JwtVpJsonGenerator
+    ): Triple<String, DescriptorMap, List<DisclosedClaim>> {
+        val objectMapper = jacksonObjectMapper()
+        val (_, payload, _) = JWT.decodeJwt(jwt = credential.credential)
+        val disclosedClaims = payload.mapNotNull { (key, value) ->
+            if (key == "vc") {
+                val vcMap = objectMapper.readValue(value as String, Map::class.java)
+                vcMap.mapNotNull { (vcKey, vcValue) ->
+                    if (vcKey == "credentialSubject") {
+                        (vcValue as Map<String, Any>).mapNotNull { (subKey, subValue) ->
+                            DisclosedClaim(
+                                id = credential.id,
+                                types = credential.types,
+                                name = subKey as String
+                            )
+                        }
+                    } else {
+                        null
+                    }
+                }.flatten()
+            } else {
+                null
+            }
+        }.flatten()
+        val vpToken = jwtVpJsonGenerator.generateJwt(
+            credential.credential,
+            HeaderOptions(),
+            JwtVpJsonPayloadOptions(
+                aud = authRequest.clientId!!,
+                nonce = authRequest.nonce!!
+            )
+        )
+
+        return Triple(
+            first = vpToken,
+            second = genDescriptorMap(credential.inputDescriptor.id),
+            third = disclosedClaims
         )
     }
 }
