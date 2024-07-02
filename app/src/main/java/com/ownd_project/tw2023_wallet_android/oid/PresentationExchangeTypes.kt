@@ -58,7 +58,7 @@ data class DescriptorMap(
     val id: String, // The value of this property MUST be a string that matches the id property of the Input Descriptor in the Presentation Definition that this Presentation Submission is related to.
     val format: String, // The value of this property MUST be a string that matches one of the Claim Format Designation. This denotes the data format of the Claim.
     val path: String, //  The value of this property MUST be a JSONPath string expression. The path property indicates the Claim submitted in relation to the identified Input Descriptor, when executed against the top-level of the object the Presentation Submission is embedded within.
-    val pathNested: Path,
+    val pathNested: Path? = null,
 )
 
 data class PresentationSubmission(

@@ -25,6 +25,7 @@ import com.ownd_project.tw2023_wallet_android.utils.publicKeyToJwk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
 import junit.framework.TestCase.fail
 import kotlinx.coroutines.runBlocking
@@ -325,6 +326,10 @@ class OpenIdProviderTest {
                         "&client_id_scheme=redirect_uri" +
                         "&response_type=vp_token" +
                         "&response_uri=${encodedClientId}" +
+                        "&scope=openid" +
+                        "&nonce=dummy-nonce" +
+                        "&state=dummy-state" +
+                        "&max_age=86400" +
                         "&client_metadata=${encodedClientMetadata}" +
                         "&presentation_definition=${encodedPresentationDefinition}"
             val op = OpenIdProvider(uri)
@@ -332,6 +337,18 @@ class OpenIdProviderTest {
             println(result)
 
             assertTrue(result.isSuccess)
+
+            val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = result.getOrThrow()
+            assertEquals("openid", authorizationRequestPayload.scope)
+            assertEquals("vp_token", authorizationRequestPayload.responseType)
+            assertEquals(clientId, authorizationRequestPayload.clientId)
+            assertEquals(clientId, authorizationRequestPayload.responseUri)
+            assertNotNull(authorizationRequestPayload.nonce)
+            assertNotNull(authorizationRequestPayload.state)
+            assertEquals(86400, authorizationRequestPayload.maxAge)
+
+            assertEquals("ClientName", registrationMetadata.clientName)
+            assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
         }
 
         @Test
@@ -384,7 +401,7 @@ class OpenIdProviderTest {
     class ResponseTest : OpenIdProviderTestBase() {
         @Test
         fun testRespondIdTokenResponse() = runBlocking {
-            val clientId = "https://www.verifier.com/cb"
+            val clientId = "$clientHost:${wireMockServer.port()}/cb"
             val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
             val encodedClientMetadata =
                 URLEncoder.encode(clientMetadataJson, StandardCharsets.UTF_8.toString())
@@ -426,11 +443,14 @@ class OpenIdProviderTest {
             op.setKeyPair(keyPair)
             val responseResult = op.respondIdTokenResponse()
             assertTrue(responseResult.isRight())
+
+            val postResult = responseResult.getOrNull()!!
+            assertEquals(200, postResult.statusCode)
         }
 
         @Test
         fun testRespondVpTokenResponseSdJwtVc() = runBlocking {
-            val clientId = "https://www.verifier.com/cb"
+            val clientId = "$clientHost:${wireMockServer.port()}/cb"
             val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
             val encodedClientMetadata =
                 URLEncoder.encode(clientMetadataJson, StandardCharsets.UTF_8.toString())
@@ -450,17 +470,7 @@ class OpenIdProviderTest {
             val op = OpenIdProvider(uri)
             val result = op.processAuthorizationRequest()
             assertTrue(result.isSuccess)
-            val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = result.getOrThrow()
-            assertEquals("openid", authorizationRequestPayload.scope)
-            assertEquals("vp_token", authorizationRequestPayload.responseType)
-            assertEquals(clientId, authorizationRequestPayload.clientId)
-            assertEquals(clientId, authorizationRequestPayload.responseUri)
-            assertNotNull(authorizationRequestPayload.nonce)
-            assertNotNull(authorizationRequestPayload.state)
-            assertEquals(86400, authorizationRequestPayload.maxAge)
-
-            assertEquals("ClientName", registrationMetadata.clientName)
-            assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
+            val (_, _, authorizationRequestPayload, _, _) = result.getOrThrow()
 
             // VP Response送信
             val keyPairHolder = generateEcKeyPair()
@@ -503,6 +513,64 @@ class OpenIdProviderTest {
             val credentials = listOf(submissionCredential)
             val responseResult = op.respondVPResponse(credentials)
             assertTrue(responseResult.isRight())
+
+            // 処理結果をアサート
+            val (postResult, sharedContents) = responseResult.getOrNull()!!
+            assertEquals(200, postResult.statusCode)
+            assertEquals(1, sharedContents.size)
+            val sharedClaims = sharedContents[0].sharedClaims
+            assertEquals(1, sharedClaims.size)
+            assertEquals("is_older_than_13", sharedClaims[0].name)
+
+            // 送信したレススポンス内容をアサート
+            val serveEvents: List<ServeEvent> = WireMock.getAllServeEvents()
+            val request = serveEvents[0].request
+
+            // HTTPメソッドとURLのアサート
+            assertEquals("POST", request.method.value())
+            assertEquals("/cb", request.url)
+
+            // ヘッダーのアサート
+            assertEquals("localhost:${wireMockServer.port()}", request.header("Host").firstValue())
+            assertEquals("application/x-www-form-urlencoded", request.header("Content-Type").firstValue())
+
+            // ボディのアサート
+            val body = request.bodyAsString
+            val bodyParams = parseFormBody(body)
+            assertEquals("dummy-state", bodyParams["state"])
+
+            val ps = deserializePresentationSubmission(bodyParams)
+            assertEquals(presentationDefinition.id, ps.definitionId)
+            assertEquals(1, ps.descriptorMap.size)
+            val descriptorMap = ps.descriptorMap[0]
+            assertEquals(presentationDefinition.inputDescriptors[0].id, descriptorMap.id)
+            assertEquals("$", descriptorMap.path)
+            assertEquals("vc+sd-jwt", descriptorMap.format)
+            val pathNested = descriptorMap.pathNested
+            assertNull(pathNested)
+
+            val postedVpToken = bodyParams["vp_token"]
+            val algorithmOfHolder =
+                Algorithm.ECDSA256(
+                    keyPairHolder.public as ECPublicKey,
+                )
+            val verifier = JWT.require(algorithmOfHolder).build()
+            val keyBindingJwt = postedVpToken?.split("~")?.get(2)
+            val decoded = verifier.verify(keyBindingJwt)
+
+            val typ = decoded.getHeaderClaim("typ").asString()
+            val alg = decoded.getHeaderClaim("alg").asString()
+            assertEquals("kb+jwt", typ)
+            assertEquals("ES256", alg)
+
+            val iat = decoded.getClaim("iat").asLong()
+            val aud = decoded.getClaim("aud").asString()
+            val nonce = decoded.getClaim("nonce").asString()
+            val sdHash = decoded.getClaim("_sd_hash").asString()
+            assertNotNull(iat)
+            assertEquals(aud, clientId)
+            assertEquals(nonce, "dummy-nonce")
+            assertNotNull(sdHash)
         }
 
         @Test
@@ -527,17 +595,7 @@ class OpenIdProviderTest {
             val op = OpenIdProvider(uri)
             val result = op.processAuthorizationRequest()
             assertTrue(result.isSuccess)
-            val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = result.getOrThrow()
-            assertEquals("openid", authorizationRequestPayload.scope)
-            assertEquals("vp_token", authorizationRequestPayload.responseType)
-            assertEquals(clientId, authorizationRequestPayload.clientId)
-            assertEquals(clientId, authorizationRequestPayload.responseUri)
-            assertNotNull(authorizationRequestPayload.nonce)
-            assertNotNull(authorizationRequestPayload.state)
-            assertEquals(86400, authorizationRequestPayload.maxAge)
-
-            assertEquals("ClientName", registrationMetadata.clientName)
-            assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
+            val (_, _, authorizationRequestPayload, _, _) = result.getOrThrow()
 
             // VP Response送信
             val keyPairHolder = generateEcKeyPair()
@@ -556,7 +614,6 @@ class OpenIdProviderTest {
                     keyPairTestIssuer.public as ECPublicKey,
                     keyPairTestIssuer.private as ECPrivateKey?
                 )
-            // val objectMapper = ObjectMapper()
             val objectMapper = jacksonObjectMapper()
             val vcJsonString = objectMapper.writeValueAsString(vcClaims)
             val issuerSignedJwt = JWT.create().withIssuer("https://client.example.org/cb")
@@ -577,6 +634,8 @@ class OpenIdProviderTest {
             val responseResult = op.respondVPResponse(credentials)
             assertTrue(responseResult.isRight())
             val (postResult, sharedContents) = responseResult.getOrNull()!!
+
+            // 処理結果をアサート
             assertEquals(200, postResult.statusCode)
             assertEquals(1, sharedContents.size)
             val sharedClaims = sharedContents[0].sharedClaims
@@ -584,6 +643,7 @@ class OpenIdProviderTest {
             assertEquals("given_name", sharedClaims[0].name)
             assertEquals("family_name", sharedClaims[1].name)
 
+            // 送信したレススポンス内容をアサート
             val serveEvents: List<ServeEvent> = WireMock.getAllServeEvents()
             val request = serveEvents[0].request
 
@@ -600,19 +660,16 @@ class OpenIdProviderTest {
             val bodyParams = parseFormBody(body)
             assertEquals("dummy-state", bodyParams["state"])
 
-            val postedPresentationSubmission = bodyParams["presentation_submission"]
-            val submissionMap = objectMapper.readValue(postedPresentationSubmission, Map::class.java)
-            val definitionId = submissionMap["definition_id"]
-            assertEquals(presentationDefinition.id, definitionId)
-            val descriptorMaps = submissionMap["descriptor_map"] as List<Any>
-            assertEquals(1, descriptorMaps.size)
-            val descriptorMap = descriptorMaps[0] as Map<String, Any>
-            assertEquals(presentationDefinition.inputDescriptors[0].id, descriptorMap["id"])
-            assertEquals("$", descriptorMap["path"])
-            assertEquals("jwt_vp_json", descriptorMap["format"])
-            val pathNested = descriptorMap["path_nested"] as Map<String, Any>
-            assertEquals("\$.vp.verifiableCredential[0]", pathNested["path"])
-            assertEquals("jwt_vc_json", pathNested["format"])
+            val ps = deserializePresentationSubmission(bodyParams)
+            assertEquals(presentationDefinition.id, ps.definitionId)
+            assertEquals(1, ps.descriptorMap.size)
+            val descriptorMap = ps.descriptorMap[0]
+            assertEquals(presentationDefinition.inputDescriptors[0].id, descriptorMap.id)
+            assertEquals("$", descriptorMap.path)
+            assertEquals("jwt_vp_json", descriptorMap.format)
+            val pathNested = descriptorMap.pathNested!!
+            assertEquals("\$.vp.verifiableCredential[0]", pathNested.path)
+            assertEquals("jwt_vc_json", pathNested.format)
 
             val postedVpToken = bodyParams["vp_token"]
             val algorithmOfHolder =
@@ -635,6 +692,43 @@ private fun parseFormBody(body: String): Map<String, String> {
     }
 }
 
+private fun deserializePresentationSubmission(bodyParams: Map<String, String>): PresentationSubmission {
+    val objectMapper = jacksonObjectMapper()
+    val postedPresentationSubmission = bodyParams["presentation_submission"]
+    val submissionMap = objectMapper.readValue(postedPresentationSubmission, Map::class.java)
+    val id = submissionMap["id"] as String
+    val definitionId = submissionMap["definition_id"] as String
+    val descriptorMaps = submissionMap["descriptor_map"] as List<Map<String, Any>>
+    val descriptorMap = descriptorMaps[0] as Map<String, Any>
+    val descriptorMapList = descriptorMaps.map { it ->
+        val pathNested = descriptorMap["path_nested"]
+        if (pathNested == null) {
+            DescriptorMap(
+                id = it["id"] as String,
+                format = it["format"] as String,
+                path = it["path"] as String,
+            )
+        } else {
+            val pn = pathNested as Map<String, String>
+            DescriptorMap(
+                id = it["id"] as String,
+                format = it["format"] as String,
+                path = it["path"] as String,
+                pathNested = Path(
+                    format = pn["format"] as String,
+                    path = pn["path"] as String
+                )
+            )
+
+        }
+    }
+    return PresentationSubmission(
+        id = id,
+        definitionId = definitionId,
+        descriptorMap = descriptorMapList
+    )
+}
+
 class KeyBinding4Test(private val keyPair: Algorithm) : KeyBinding {
     override fun generateJwt(
         sdJwt: String,
@@ -642,18 +736,18 @@ class KeyBinding4Test(private val keyPair: Algorithm) : KeyBinding {
         aud: String,
         nonce: String
     ): String {
-        val parts = sdJwt.split('~')
-        val issuerSignedJwt = parts[0]
-        // It MUST be taken over the US-ASCII bytes preceding the KB-JWT in the Presentation
-        val sd =
-            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~"
-
-        val sdHash = sd.toByteArray(Charsets.US_ASCII).sha256ToBase64Url()
-        val sdJwtVc = JWT.create().withIssuer("https://client.example.org/cb")
+        val (header, payload) = JwtVpJsonPresentation.genKeyBindingJwtParts(
+            sdJwt,
+            selectedDisclosures,
+            aud,
+            nonce
+        )
+        val sdJwtVc = JWT.create()
             .withAudience(aud)
-            .withClaim("nonce", nonce)
-            .withClaim("_sd_hash", sdHash)
-            .withHeader(mapOf("typ" to "kb+jwt", "alg" to "ES256"))
+            .withClaim("nonce", payload["nonce"] as String)
+            .withClaim("iat", payload["iat"] as Long)
+            .withClaim("_sd_hash", payload["_sd_hash"] as String)
+            .withHeader(header)
             .sign(keyPair)
         return sdJwtVc
     }

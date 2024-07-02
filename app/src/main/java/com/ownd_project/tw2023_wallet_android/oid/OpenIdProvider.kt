@@ -380,12 +380,10 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         val vpToken =
             issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~" + keyBindingJwt
 
-        val pathNested = Path(format = credential.format, path = "$")
         val dm = DescriptorMap(
             id = credential.inputDescriptor.id,
             format = credential.format,
-            path = "$",
-            pathNested = pathNested
+            path = "$"
         )
         val disclosedClaims =
             selectedDisclosures.map { DisclosedClaim(credential.id, credential.types, it.key!!) }
