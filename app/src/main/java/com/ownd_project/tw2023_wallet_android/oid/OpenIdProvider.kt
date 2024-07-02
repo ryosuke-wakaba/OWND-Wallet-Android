@@ -203,7 +203,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         }
     }
 
-    suspend fun respondIdTokenResponse(): Either<String?, PostResult> {
+    suspend fun respondIdTokenResponse(): Result<PostResult> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.siopRequest.authorizationRequestPayload,
@@ -254,15 +254,15 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val result = sendRequest(redirectUrl, body, ResponseMode.DIRECT_POST)
 
             println("Received result: $result")
-            return Either.Right(result)
+            return Result.success(result)
         } catch (e: Exception) {
-            return Either.Left(e.message ?: "IDToken Response Error")
+            return Result.failure(e)
         }
     }
 
     suspend fun respondVPResponse(
         credentials: List<SubmissionCredential>,
-    ): Either<String, Pair<PostResult, List<SharedContent>>> {
+    ): Result<Pair<PostResult, List<SharedContent>>> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.siopRequest.authorizationRequestPayload,
@@ -336,7 +336,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 authRequest.redirectUri
             }
             if (destinationUri.isNullOrBlank()) {
-                return Either.Left("Unknown destination for response")
+                return Result.failure(Exception("Unknown destination for response"))
             }
 
 
@@ -355,9 +355,9 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             print("location: ${result.location}")
             print("cookies: ${result.cookies}")
             val sharedContents = vpTokens.map { SharedContent(it.first, it.second.third) }
-            return Either.Right(Pair(result, sharedContents))
+            return Result.success(Pair(result, sharedContents))
         } catch (e: Exception) {
-            return Either.Left(e.message ?: "IDToken Response Error")
+            return Result.failure(e)
         }
     }
 

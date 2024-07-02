@@ -442,7 +442,7 @@ class OpenIdProviderTest {
             val keyPair = SignatureUtil.generateECKeyPair(privateJwk)
             op.setKeyPair(keyPair)
             val responseResult = op.respondIdTokenResponse()
-            assertTrue(responseResult.isRight())
+            assertTrue(responseResult.isSuccess)
 
             val postResult = responseResult.getOrNull()!!
             assertEquals(200, postResult.statusCode)
@@ -512,7 +512,7 @@ class OpenIdProviderTest {
             )
             val credentials = listOf(submissionCredential)
             val responseResult = op.respondVPResponse(credentials)
-            assertTrue(responseResult.isRight())
+            assertTrue(responseResult.isSuccess)
 
             // 処理結果をアサート
             val (postResult, sharedContents) = responseResult.getOrNull()!!
@@ -632,7 +632,7 @@ class OpenIdProviderTest {
             )
             val credentials = listOf(submissionCredential)
             val responseResult = op.respondVPResponse(credentials)
-            assertTrue(responseResult.isRight())
+            assertTrue(responseResult.isSuccess)
             val (postResult, sharedContents) = responseResult.getOrNull()!!
 
             // 処理結果をアサート
