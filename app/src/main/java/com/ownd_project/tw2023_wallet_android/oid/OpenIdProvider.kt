@@ -279,7 +279,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val responseMode = authRequest.responseMode ?: ResponseMode.FRAGMENT
 
             // presentationDefinition.inputDescriptors を使って選択項目でフィルター
-            val vpTokens = credentials.mapNotNull { it ->
+            val presentingContents = credentials.mapNotNull { it ->
                 when (it.format) {
                     "vc+sd-jwt" -> {
                         createPresentationSubmissionSdJwtVc(it, authRequest, presentationDefinition)
@@ -295,10 +295,10 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 }
             }
             // presentation_submissionを生成
-            val vpTokenValue = if (vpTokens.size == 1) {
-                vpTokens[0].second.first
-            } else if (vpTokens.isNotEmpty()) {
-                val tokens = vpTokens.map { it.second.first }
+            val vpTokenValue = if (presentingContents.size == 1) {
+                presentingContents[0].vpToken
+            } else if (presentingContents.isNotEmpty()) {
+                val tokens = presentingContents.map { it.vpToken }
                 jacksonObjectMapper().writeValueAsString(tokens)
             } else {
                 "" // 0件の場合はブランク
@@ -306,7 +306,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val presentationSubmission = PresentationSubmission(
                 id = UUID.randomUUID().toString(),
                 definitionId = presentationDefinition.id,
-                descriptorMap = vpTokens.map { it.second.second }
+                descriptorMap = presentingContents.map { it.descriptorMap }
             )
             println(presentationSubmission)
             val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
@@ -325,7 +325,6 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 return Result.failure(Exception("Unknown destination for response"))
             }
 
-
             val body = mutableMapOf(
                 "vp_token" to vpTokenValue,
                 "presentation_submission" to jsonString
@@ -340,7 +339,8 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             print("status code: ${result.statusCode}")
             print("location: ${result.location}")
             print("cookies: ${result.cookies}")
-            val sharedContents = vpTokens.map { SharedContent(it.first, it.second.third) }
+            val sharedContents =
+                presentingContents.map { SharedContent(it.credential.id, it.disclosedClaims) }
             return Result.success(Pair(result, sharedContents))
         } catch (e: Exception) {
             return Result.failure(e)
@@ -351,31 +351,29 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         credential: SubmissionCredential,
         authRequest: RequestObjectPayload,
         presentationDefinition: PresentationDefinition
-    ): Pair<String, Triple<String, DescriptorMap, List<DisclosedClaim>>> {
+    ): PresentingContent {
         val sdJwt = credential.credential
         val (_, selectedDisclosures) = selectDisclosure(sdJwt, presentationDefinition)!!
-        val presentation =  SdJwtVcPresentation.createPresentation(
+        return SdJwtVcPresentation.createPresentation(
             credential,
             selectedDisclosures,
             authRequest,
             keyBinding
         )
-        return Pair( credential.id, presentation )
     }
 
     private fun createPresentationSubmissionJwtVc(
         credential: SubmissionCredential,
         authRequest: RequestObjectPayload,
-    ): Pair<String, Triple<String, DescriptorMap, List<DisclosedClaim>>> {
+    ): PresentingContent {
         if (authRequest.responseMode != ResponseMode.DIRECT_POST) {
             throw IllegalArgumentException("Unsupported response mode: ${authRequest.responseMode}")
         }
-        val presentation =  JwtVpJsonPresentation.createPresentation(
+        return JwtVpJsonPresentation.createPresentation(
             credential,
             authRequest,
             jwtVpJsonGenerator
         )
-        return Pair( credential.id, presentation )
     }
 }
 

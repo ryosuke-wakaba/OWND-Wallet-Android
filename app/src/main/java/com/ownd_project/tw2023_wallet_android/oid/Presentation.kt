@@ -35,6 +35,13 @@ data class JwtVpJsonPayloadOptions(
     var nonce: String
 )
 
+data class PresentingContent (
+    val credential: SubmissionCredential,
+    val vpToken: String,
+    val descriptorMap: DescriptorMap,
+    val disclosedClaims: List<DisclosedClaim>
+)
+
 object SdJwtVcPresentation {
     fun genKeyBindingJwtParts(
         sdJwt: String,
@@ -73,7 +80,7 @@ object SdJwtVcPresentation {
         selectedDisclosures: List<SDJwtUtil.Disclosure>,
         authRequest: RequestObjectPayload,
         keyBinding: KeyBinding
-    ): Triple<String, DescriptorMap, List<DisclosedClaim>> {
+    ): PresentingContent {
         val sdJwt = credential.credential
         val keyBindingJwt = keyBinding.generateJwt(
             sdJwt,
@@ -94,7 +101,12 @@ object SdJwtVcPresentation {
         )
         val disclosedClaims =
             selectedDisclosures.map { DisclosedClaim(credential.id, credential.types, it.key!!) }
-        return Triple(vpToken, dm, disclosedClaims)
+        return PresentingContent(
+            credential = credential,
+            vpToken = vpToken,
+            descriptorMap = dm,
+            disclosedClaims = disclosedClaims
+        )
     }
 }
 
@@ -160,7 +172,7 @@ object JwtVpJsonPresentation {
         credential: SubmissionCredential,
         authRequest: RequestObjectPayload,
         jwtVpJsonGenerator: JwtVpJsonGenerator
-    ): Triple<String, DescriptorMap, List<DisclosedClaim>> {
+    ): PresentingContent {
         val objectMapper = jacksonObjectMapper()
         val (_, payload, _) = JWT.decodeJwt(jwt = credential.credential)
         val disclosedClaims = payload.mapNotNull { (key, value) ->
@@ -192,10 +204,11 @@ object JwtVpJsonPresentation {
             )
         )
 
-        return Triple(
-            first = vpToken,
-            second = genDescriptorMap(credential.inputDescriptor.id),
-            third = disclosedClaims
+        return PresentingContent(
+            credential = credential,
+            vpToken = vpToken,
+            descriptorMap = genDescriptorMap(credential.inputDescriptor.id),
+            disclosedClaims = disclosedClaims
         )
     }
 }
