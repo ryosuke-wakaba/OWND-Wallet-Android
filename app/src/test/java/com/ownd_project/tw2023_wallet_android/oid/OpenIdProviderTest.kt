@@ -474,12 +474,7 @@ class OpenIdProviderTest {
 
             // VP Response送信
             val keyPairHolder = generateEcKeyPair()
-            val keyBinding = KeyBinding4Test(
-                Algorithm.ECDSA256(
-                    keyPairHolder.public as ECPublicKey,
-                    keyPairHolder.private as ECPrivateKey?
-                )
-            )
+            val keyBinding = KeyBinding4Test(keyPairHolder)
             op.setKeyBinding(keyBinding)
 
             val disclosure1 = Disclosure("given_name", "value1")
@@ -729,13 +724,17 @@ private fun deserializePresentationSubmission(bodyParams: Map<String, String>): 
     )
 }
 
-class KeyBinding4Test(private val keyPair: Algorithm) : KeyBinding {
+class KeyBinding4Test(private val keyPair: KeyPair) : KeyBinding {
     override fun generateJwt(
         sdJwt: String,
         selectedDisclosures: List<SDJwtUtil.Disclosure>,
         aud: String,
         nonce: String
     ): String {
+        val alg = Algorithm.ECDSA256(
+            keyPair.public as ECPublicKey,
+            keyPair.private as ECPrivateKey?
+        )
         val (header, payload) = JwtVpJsonPresentation.genKeyBindingJwtParts(
             sdJwt,
             selectedDisclosures,
@@ -748,7 +747,7 @@ class KeyBinding4Test(private val keyPair: Algorithm) : KeyBinding {
             .withClaim("iat", payload["iat"] as Long)
             .withClaim("_sd_hash", payload["_sd_hash"] as String)
             .withHeader(header)
-            .sign(keyPair)
+            .sign(alg)
         return sdJwtVc
     }
 
