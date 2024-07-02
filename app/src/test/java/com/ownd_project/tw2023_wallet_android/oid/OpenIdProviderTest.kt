@@ -675,13 +675,7 @@ class JwtVpJsonGenerator4Test(private val keyPair: KeyPair) : JwtVpJsonGenerator
             keyPair.private as ECPrivateKey?
         )
         val jwk = getJwk()
-        val jwk2 = object : ECPublicJwk {
-            override val kty = jwk["kty"]!!
-            override val crv = jwk["crv"]!!
-            override val x = jwk["x"]!!
-            override val y = jwk["y"]!!
-        }
-        val sub = toJwkThumbprintUri(jwk2)
+        val sub = toJwkThumbprintUri(jwk)
         val jwtPayload = JwtVpJsonPresentation.genVpJwtPayload(vcJwt, payloadOptions)
         val sdJwtVc = JWT.create()
             .withIssuer(sub)

@@ -214,13 +214,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
 
             val subJwk = KeyUtil.keyPairToPublicJwk(keyPair, option)
             // todo: support rsa key
-            val jwk = object : ECPublicJwk {
-                override val kty = subJwk["kty"]!!
-                override val crv = subJwk["crv"]!!
-                override val x = subJwk["x"]!!
-                override val y = subJwk["y"]!!
-            }
-            val sub = toJwkThumbprintUri(jwk)
+            val sub = toJwkThumbprintUri(subJwk)
             // https://openid.github.io/SIOPv2/openid-connect-self-issued-v2-wg-draft.html#section-11.1
             // The RP MUST validate that the aud (audience) Claim contains the value of the Client ID that the RP sent in the Authorization Request as an audience.
             // When the request has been signed, the value might be an HTTPS URL, or a Decentralized Identifier.

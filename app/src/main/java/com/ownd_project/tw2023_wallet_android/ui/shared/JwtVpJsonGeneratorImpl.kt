@@ -5,7 +5,6 @@ import com.ownd_project.tw2023_wallet_android.oid.HeaderOptions
 import com.ownd_project.tw2023_wallet_android.oid.JwtVpJsonGenerator
 import com.ownd_project.tw2023_wallet_android.oid.JwtVpJsonPayloadOptions
 import com.ownd_project.tw2023_wallet_android.oid.JwtVpJsonPresentation
-import com.ownd_project.tw2023_wallet_android.signature.ECPublicJwk
 import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
@@ -23,13 +22,7 @@ class JwtVpJsonGeneratorImpl(private val keyAlias: String = Constants.KEY_PAIR_A
         val jwk = getJwk()
         val header =
             mapOf("alg" to headerOptions.alg, "typ" to headerOptions.typ, "jwk" to jwk)
-        val jwk2 = object : ECPublicJwk {
-            override val kty = jwk["kty"]!!
-            override val crv = jwk["crv"]!!
-            override val x = jwk["x"]!!
-            override val y = jwk["y"]!!
-        }
-        val sub = toJwkThumbprintUri(jwk2)
+        val sub = toJwkThumbprintUri(jwk)
         payloadOptions.iss = sub
         val jwtPayload = JwtVpJsonPresentation.genVpJwtPayload(vcJwt, payloadOptions)
         val objectMapper = jacksonObjectMapper()
