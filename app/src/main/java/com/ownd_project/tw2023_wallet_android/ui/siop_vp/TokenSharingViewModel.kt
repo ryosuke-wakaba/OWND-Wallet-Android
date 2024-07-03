@@ -245,11 +245,11 @@ class IdTokenSharringViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val result = openIdProvider.respondIdTokenResponse()
             result.fold(
-                ifLeft = { value ->
-                    Log.e(TAG, "エラーが発生しました: $value")
+                onFailure = { value ->
+                    Log.e(TAG, value.message, value)
                     withContext(Dispatchers.Main) {
                         val context = fragment.requireContext()
-                        val msg = "${context.getString(R.string.error_occurred)} $value"
+                        val msg = "${context.getString(R.string.error_occurred)} ${value.message}"
                         Toast.makeText(
                             context,
                             msg,
@@ -258,7 +258,7 @@ class IdTokenSharringViewModel : ViewModel() {
                         requestClose()
                     }
                 },
-                ifRight = { postResult ->
+                onSuccess = { postResult ->
                     // postに成功したらログイン履歴を記録
                     Log.d(TAG, "store login history")
                     val store: IdTokenSharingHistoryStore =
@@ -295,11 +295,11 @@ class IdTokenSharringViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val result = openIdProvider.respondVPResponse(credentials)
             result.fold(
-                ifLeft = { value ->
-                    Log.e(TAG, "エラーが発生しました: $value")
+                onFailure = { value ->
+                    Log.e(TAG, value.message, value)
                     withContext(Dispatchers.Main) {
                         val context = fragment.requireContext()
-                        val msg = "${context.getString(R.string.error_occurred)} $value"
+                        val msg = "${context.getString(R.string.error_occurred)} ${value.message}"
                         Toast.makeText(
                             context,
                             msg,
@@ -308,7 +308,7 @@ class IdTokenSharringViewModel : ViewModel() {
                         requestClose()
                     }
                 },
-                ifRight = { value ->
+                onSuccess = { value ->
                     // postに成功したら提供履歴を記録
                     Log.d(TAG, "store presentation history")
                     val store = CredentialSharingHistoryStore.getInstance(fragment.requireContext())

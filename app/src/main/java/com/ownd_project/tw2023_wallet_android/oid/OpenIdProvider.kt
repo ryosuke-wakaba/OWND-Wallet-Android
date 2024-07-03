@@ -5,7 +5,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException
 import com.ownd_project.tw2023_wallet_android.signature.ECPublicJwk
 import com.ownd_project.tw2023_wallet_android.signature.ES256K.createJws
 import com.ownd_project.tw2023_wallet_android.signature.JWT
-import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil.toJwkThumbprint
 import com.ownd_project.tw2023_wallet_android.utils.EnumDeserializer
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -16,6 +15,7 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil
+import com.ownd_project.tw2023_wallet_android.utils.KeyUtil.toJwkThumbprintUri
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -153,9 +153,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                     return Result.failure(Exception("Invalid client_id or host uri"))
                 }
             } else {
-                val jwksUrl = registrationMetadata.jwksUri
-                    ?: throw IllegalStateException("JWKS URLが見つかりません。")
-                JWT.verifyJwtWithJwks(requestObjectJwt, jwksUrl)
+                return Result.failure(Exception("Unsupported serialization of Authorization Request Error"))
             }
 
             val result = try {
@@ -205,26 +203,18 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         }
     }
 
-    suspend fun respondIdTokenResponse(): Either<String?, PostResult> {
+    suspend fun respondIdTokenResponse(): Result<PostResult> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.siopRequest.authorizationRequestPayload,
                 this.siopRequest.requestObject
             )
-            val state = authRequest.state
             val nonce = authRequest.nonce
             val SEC_IN_MS = 1000
 
             val subJwk = KeyUtil.keyPairToPublicJwk(keyPair, option)
             // todo: support rsa key
-            val jwk = object : ECPublicJwk {
-                override val kty = subJwk["kty"]!!
-                override val crv = subJwk["crv"]!!
-                override val x = subJwk["x"]!!
-                override val y = subJwk["y"]!!
-            }
-            val prefix = "urn:ietf:params:oauth:jwk-thumbprint:sha-256"
-            val sub = "$prefix:${toJwkThumbprint(jwk)}"
+            val sub = toJwkThumbprintUri(subJwk)
             // https://openid.github.io/SIOPv2/openid-connect-self-issued-v2-wg-draft.html#section-11.1
             // The RP MUST validate that the aud (audience) Claim contains the value of the Client ID that the RP sent in the Authorization Request as an audience.
             // When the request has been signed, the value might be an HTTPS URL, or a Decentralized Identifier.
@@ -256,18 +246,23 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
 
             // As a temporary value, give DIRECT_POST a fixed value.
             // It needs to be modified when responding to redirect responses.
-            val result = sendRequest(redirectUrl, mapOf("id_token" to idToken), ResponseMode.DIRECT_POST)
+            val body = mutableMapOf("id_token" to idToken)
+            val state = authRequest.state
+            if (!state.isNullOrBlank()) {
+                body["state"] = state
+            }
+            val result = sendRequest(redirectUrl, body, ResponseMode.DIRECT_POST)
 
             println("Received result: $result")
-            return Either.Right(result)
+            return Result.success(result)
         } catch (e: Exception) {
-            return Either.Left(e.message ?: "IDToken Response Error")
+            return Result.failure(e)
         }
     }
 
     suspend fun respondVPResponse(
         credentials: List<SubmissionCredential>,
-    ): Either<String, Pair<PostResult, List<SharedContent>>> {
+    ): Result<Pair<PostResult, List<SharedContent>>> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.siopRequest.authorizationRequestPayload,
@@ -284,28 +279,14 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val responseMode = authRequest.responseMode ?: ResponseMode.FRAGMENT
 
             // presentationDefinition.inputDescriptors を使って選択項目でフィルター
-            val vpTokens = credentials.mapNotNull { it ->
+            val presentingContents = credentials.mapNotNull { it ->
                 when (it.format) {
                     "vc+sd-jwt" -> {
-                        Pair(
-                            it.id,
-                            createPresentationSubmissionSdJwtVc(
-                                it,
-                                authRequest,
-                                presentationDefinition
-                            )
-                        )
+                        createPresentationSubmissionSdJwtVc(it, authRequest, presentationDefinition)
                     }
 
                     "jwt_vc_json" -> {
-                        Pair(
-                            it.id,
-                            createPresentationSubmissionJwtVc(
-                                it,
-                                authRequest,
-                                presentationDefinition
-                            )
-                        )
+                        createPresentationSubmissionJwtVc(it, authRequest)
                     }
 
                     else -> {
@@ -314,10 +295,10 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 }
             }
             // presentation_submissionを生成
-            val vpTokenValue = if (vpTokens.size == 1) {
-                vpTokens[0].second.first
-            } else if (vpTokens.isNotEmpty()) {
-                val tokens = vpTokens.map { it.second.first }
+            val vpTokenValue = if (presentingContents.size == 1) {
+                presentingContents[0].vpToken
+            } else if (presentingContents.isNotEmpty()) {
+                val tokens = presentingContents.map { it.vpToken }
                 jacksonObjectMapper().writeValueAsString(tokens)
             } else {
                 "" // 0件の場合はブランク
@@ -325,7 +306,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val presentationSubmission = PresentationSubmission(
                 id = UUID.randomUUID().toString(),
                 definitionId = presentationDefinition.id,
-                descriptorMap = vpTokens.map { it.second.second }
+                descriptorMap = presentingContents.map { it.descriptorMap }
             )
             println(presentationSubmission)
             val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
@@ -341,9 +322,8 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 authRequest.redirectUri
             }
             if (destinationUri.isNullOrBlank()) {
-                return Either.Left("Unknown destination for response")
+                return Result.failure(Exception("Unknown destination for response"))
             }
-
 
             val body = mutableMapOf(
                 "vp_token" to vpTokenValue,
@@ -359,10 +339,11 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             print("status code: ${result.statusCode}")
             print("location: ${result.location}")
             print("cookies: ${result.cookies}")
-            val sharedContents = vpTokens.map { SharedContent(it.first, it.second.third) }
-            return Either.Right(Pair(result, sharedContents))
+            val sharedContents =
+                presentingContents.map { SharedContent(it.credential.id, it.disclosedClaims) }
+            return Result.success(Pair(result, sharedContents))
         } catch (e: Exception) {
-            return Either.Left(e.message ?: "IDToken Response Error")
+            return Result.failure(e)
         }
     }
 
@@ -370,64 +351,29 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         credential: SubmissionCredential,
         authRequest: RequestObjectPayload,
         presentationDefinition: PresentationDefinition
-    ): Triple<String, DescriptorMap, List<DisclosedClaim>> {
+    ): PresentingContent {
         val sdJwt = credential.credential
         val (_, selectedDisclosures) = selectDisclosure(sdJwt, presentationDefinition)!!
-        val keyBindingJwt = keyBinding.generateJwt(
-            sdJwt,
+        return SdJwtVcPresentation.createPresentation(
+            credential,
             selectedDisclosures,
-            authRequest.clientId!!,
-            authRequest.nonce!!,
+            authRequest,
+            keyBinding
         )
-        // 絞ったdisclosureでチルダ連結してsd-jwtを構成
-        val parts = sdJwt.split('~')
-        val issuerSignedJwt = parts[0]
-        val vpToken =
-            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~" + keyBindingJwt
-
-        val pathNested = Path(format = credential.format, path = "$")
-        val dm = DescriptorMap(
-            id = credential.inputDescriptor.id,
-            format = credential.format,
-            path = "$",
-            pathNested = pathNested
-        )
-        val disclosedClaims =
-            selectedDisclosures.map { DisclosedClaim(credential.id, credential.types, it.key!!) }
-        return Triple(vpToken, dm, disclosedClaims)
     }
 
     private fun createPresentationSubmissionJwtVc(
         credential: SubmissionCredential,
         authRequest: RequestObjectPayload,
-        presentationDefinition: PresentationDefinition
-    ): Triple<String, DescriptorMap, List<DisclosedClaim>> {
+    ): PresentingContent {
         if (authRequest.responseMode != ResponseMode.DIRECT_POST) {
             throw IllegalArgumentException("Unsupported response mode: ${authRequest.responseMode}")
         }
-        try {
-            val (_, payload, _) = JWT.decodeJwt(jwt = credential.credential)
-            val disclosedClaims = payload.mapNotNull { (key, _) ->
-                DisclosedClaim(id = credential.id, types = credential.types, name = key)
-            }
-            val vpToken = this.jwtVpJsonGenerator.generateJwt(
-                credential.credential,
-                HeaderOptions(),
-                JwtVpJsonPayloadOptions(
-                    aud = authRequest.clientId!!,
-                    nonce = authRequest.nonce!!
-                )
-            )
-
-            return Triple(
-                first = vpToken,
-                second = JwtVpJsonPresentation.genDescriptorMap(presentationDefinition.inputDescriptors[0].id),
-                third = disclosedClaims
-            )
-
-        } catch (error: Exception) {
-            throw error
-        }
+        return JwtVpJsonPresentation.createPresentation(
+            credential,
+            authRequest,
+            jwtVpJsonGenerator
+        )
     }
 }
 

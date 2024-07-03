@@ -1,6 +1,11 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.ownd_project.tw2023_wallet_android.signature.JWT
+import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
+import java.security.MessageDigest
+import java.util.Base64
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class VpJwtPayload(
@@ -21,17 +26,92 @@ data class HeaderOptions(
 )
 
 data class JwtVpJsonPayloadOptions(
-    val iss: String? = null,
-    val jti: String? = null,
-    val aud: String,
-    val nbf: Long? = null,
-    val iat: Long? = null,
-    val exp: Long? = null,
-    val nonce: String
+    var iss: String? = null,
+    var jti: String? = null,
+    var aud: String,
+    var nbf: Long? = null,
+    var iat: Long? = null,
+    var exp: Long? = null,
+    var nonce: String
 )
 
+data class PresentingContent (
+    val credential: SubmissionCredential,
+    val vpToken: String,
+    val descriptorMap: DescriptorMap,
+    val disclosedClaims: List<DisclosedClaim>
+)
+
+object SdJwtVcPresentation {
+    fun genKeyBindingJwtParts(
+        sdJwt: String,
+        selectedDisclosures: List<SDJwtUtil.Disclosure>,
+        aud: String,
+        nonce: String,
+        iat: Long? = null
+    ): Pair<Map<String, Any>, Map<String, Any>> {
+        val header = mapOf("typ" to "kb+jwt", "alg" to "ES256")
+
+        val parts = sdJwt.split('~')
+        val issuerSignedJwt = parts[0]
+        // It MUST be taken over the US-ASCII bytes preceding the KB-JWT in the Presentation
+        val sd =
+            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~"
+        // The bytes of the digest MUST then be base64url-encoded.
+        val sdHash = sd.toByteArray(Charsets.US_ASCII).sha256ToBase64Url()
+
+        val _iat = iat ?: (System.currentTimeMillis() / 1000)
+        val payload = mapOf(
+            "aud" to aud,
+            "iat" to _iat,
+            "_sd_hash" to sdHash,
+            "nonce" to nonce
+        )
+        return Pair(header, payload)
+    }
+
+    private fun ByteArray.sha256ToBase64Url(): String {
+        val sha = MessageDigest.getInstance("SHA-256").digest(this)
+        return Base64.getUrlEncoder().encodeToString(sha).trimEnd('=')
+    }
+
+    fun createPresentation(
+        credential: SubmissionCredential,
+        selectedDisclosures: List<SDJwtUtil.Disclosure>,
+        authRequest: RequestObjectPayload,
+        keyBinding: KeyBinding
+    ): PresentingContent {
+        val sdJwt = credential.credential
+        val keyBindingJwt = keyBinding.generateJwt(
+            sdJwt,
+            selectedDisclosures,
+            authRequest.clientId!!,
+            authRequest.nonce!!,
+        )
+        // 絞ったdisclosureでチルダ連結してsd-jwtを構成
+        val parts = sdJwt.split('~')
+        val issuerSignedJwt = parts[0]
+        val vpToken =
+            issuerSignedJwt + "~" + selectedDisclosures.joinToString("~") { it.disclosure } + "~" + keyBindingJwt
+
+        val dm = DescriptorMap(
+            id = credential.inputDescriptor.id,
+            format = credential.format,
+            path = "$"
+        )
+        val disclosedClaims =
+            selectedDisclosures.map { DisclosedClaim(credential.id, credential.types, it.key!!) }
+        return PresentingContent(
+            credential = credential,
+            vpToken = vpToken,
+            descriptorMap = dm,
+            disclosedClaims = disclosedClaims
+        )
+    }
+}
+
 object JwtVpJsonPresentation {
-    fun genDescriptorMap(
+    private fun genDescriptorMap(
         inputDescriptorId: String,
         pathIndex: Int? = -1,
         pathNestedIndex: Int? = 0
@@ -65,6 +145,70 @@ object JwtVpJsonPresentation {
                 format = "jwt_vc_json",
                 path = "$.vp.verifiableCredential[${pathNestedIndex}]"
             )
+        )
+    }
+
+    fun genVpJwtPayload(vcJwt: String, payloadOptions: JwtVpJsonPayloadOptions): VpJwtPayload {
+        val vpClaims = mapOf(
+            "@context" to listOf("https://www.w3.org/2018/credentials/v1"),
+            "type" to listOf("VerifiablePresentation"),
+            "verifiableCredential" to listOf(vcJwt)
+        )
+
+        val currentTimeSeconds = System.currentTimeMillis() / 1000
+        return VpJwtPayload(
+            iss = payloadOptions.iss,
+            jti = payloadOptions.jti,
+            aud = payloadOptions.aud,
+            nbf = payloadOptions.nbf ?: currentTimeSeconds,
+            iat = payloadOptions.iat ?: currentTimeSeconds,
+            exp = payloadOptions.exp ?: (currentTimeSeconds + 2 * 3600),
+            nonce = payloadOptions.nonce,
+            vp = vpClaims
+        )
+    }
+
+    fun createPresentation(
+        credential: SubmissionCredential,
+        authRequest: RequestObjectPayload,
+        jwtVpJsonGenerator: JwtVpJsonGenerator
+    ): PresentingContent {
+        val objectMapper = jacksonObjectMapper()
+        val (_, payload, _) = JWT.decodeJwt(jwt = credential.credential)
+        val disclosedClaims = payload.mapNotNull { (key, value) ->
+            if (key == "vc") {
+                val vcMap = objectMapper.readValue(value as String, Map::class.java)
+                vcMap.mapNotNull { (vcKey, vcValue) ->
+                    if (vcKey == "credentialSubject") {
+                        (vcValue as Map<String, Any>).mapNotNull { (subKey, subValue) ->
+                            DisclosedClaim(
+                                id = credential.id,
+                                types = credential.types,
+                                name = subKey as String
+                            )
+                        }
+                    } else {
+                        null
+                    }
+                }.flatten()
+            } else {
+                null
+            }
+        }.flatten()
+        val vpToken = jwtVpJsonGenerator.generateJwt(
+            credential.credential,
+            HeaderOptions(),
+            JwtVpJsonPayloadOptions(
+                aud = authRequest.clientId!!,
+                nonce = authRequest.nonce!!
+            )
+        )
+
+        return PresentingContent(
+            credential = credential,
+            vpToken = vpToken,
+            descriptorMap = genDescriptorMap(credential.inputDescriptor.id),
+            disclosedClaims = disclosedClaims
         )
     }
 }
