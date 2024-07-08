@@ -299,7 +299,12 @@ class IdTokenSharringViewModel : ViewModel() {
                     Log.e(TAG, value.message, value)
                     withContext(Dispatchers.Main) {
                         val context = fragment.requireContext()
-                        val msg = "${context.getString(R.string.error_occurred)} ${value.message}"
+                        // todo 例外クラスを用意してメッセージを出し分ける
+                        // todo OID4VPClientError, OID4VPServerError, それ以外
+                        // todo OID4VPClientErrorの場合は固定の`R.string.error_occurred(エラーが発生しました)`を表示しない
+                        // todo それ以外の場合は固定の`R.string.error_occurred(エラーが発生しました)`を表示する
+                        val msg = "${value.message}"
+                        // val msg = "${context.getString(R.string.error_occurred)} ${value.message}"
                         Toast.makeText(
                             context,
                             msg,
@@ -344,7 +349,10 @@ class IdTokenSharringViewModel : ViewModel() {
 
                     withContext(Dispatchers.Main) {
                         // 処理完了フラグを更新
-                        _doneSuccessfully.value = true
+                        if (postResult.location.isNullOrBlank()) {
+                            // if subsequent action isn't it finishes.
+                             _doneSuccessfully.value = true
+                        }
                         _postResult.value = postResult
                     }
                 },

@@ -609,11 +609,9 @@ class OpenIdProviderTest {
                     keyPairTestIssuer.public as ECPublicKey,
                     keyPairTestIssuer.private as ECPrivateKey?
                 )
-            val objectMapper = jacksonObjectMapper()
-            val vcJsonString = objectMapper.writeValueAsString(vcClaims)
             val issuerSignedJwt = JWT.create().withIssuer("https://client.example.org/cb")
                 .withAudience("https://server.example.com")
-                .withClaim("vc", vcJsonString)
+                .withClaim("vc", vcClaims)
                 .sign(algorithm)
 
             val presentationDefinition = authorizationRequestPayload.presentationDefinition

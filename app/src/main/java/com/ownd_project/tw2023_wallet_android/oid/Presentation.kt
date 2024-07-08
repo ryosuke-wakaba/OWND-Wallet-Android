@@ -173,11 +173,10 @@ object JwtVpJsonPresentation {
         authRequest: RequestObjectPayload,
         jwtVpJsonGenerator: JwtVpJsonGenerator
     ): PresentingContent {
-        val objectMapper = jacksonObjectMapper()
         val (_, payload, _) = JWT.decodeJwt(jwt = credential.credential)
         val disclosedClaims = payload.mapNotNull { (key, value) ->
             if (key == "vc") {
-                val vcMap = objectMapper.readValue(value as String, Map::class.java)
+                val vcMap = value as Map<String, Any>
                 vcMap.mapNotNull { (vcKey, vcValue) ->
                     if (vcKey == "credentialSubject") {
                         (vcValue as Map<String, Any>).mapNotNull { (subKey, subValue) ->
