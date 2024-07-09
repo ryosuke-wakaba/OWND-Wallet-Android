@@ -85,7 +85,7 @@ class CredentialDetailViewModelTest {
         assertNotNull(credentialData)
         assertNotNull(credentialData!!.id)
         assertEquals("jwt_vc_json", credentialData.format)
-        assertEquals("EventParticipationCredential", credentialData.type)
+        assertEquals("UniversityDegreeCredential", credentialData.type)
         assertEquals("https://event.company/issuers/565049", credentialData.iss)
         assertEquals("test_accessToken", credentialData.accessToken)
         assertEquals(86400, credentialData.iat)
@@ -127,7 +127,7 @@ class CredentialDetailViewModelTest {
 
         // credentialTypeName の LiveData の値を検証
         viewModel.credentialTypeName.observeForever { typeName ->
-            assertEquals("IdentityCredential", typeName)
+            assertEquals("学位証明書", typeName)
         }
     }
 

@@ -117,6 +117,10 @@ class CredentialDetailViewModel(
     fun setCredentialData(byteArray: ByteArray) {
         val credentialDataSchema =
             com.ownd_project.tw2023_wallet_android.datastore.CredentialData.parseFrom(byteArray)
+        metadata = mapper.readValue(
+            credentialDataSchema.credentialIssuerMetadata,
+            CredentialIssuerMetadata::class.java
+        )
         _credentialData.value = credentialDataSchema
     }
 
@@ -133,12 +137,12 @@ class CredentialDetailViewModel(
 
     val credentialTypeName: LiveData<String> = _credentialData.map { credentialData ->
         // CredentialDataからCredentialsSupportedDisplayのnameを取得
-        val metadata: CredentialIssuerMetadata = mapper.readValue(
-            credentialData.credentialIssuerMetadata, CredentialIssuerMetadata::class.java
-        )
-        val displayList =
-            metadata.credentialsSupported.values.flatMap { it.display ?: emptyList() }
-        val display = selectDisplay(displayList)
+        val format = credentialData.format
+        val types =
+            MetadataUtil.extractTypes(format, credentialData.credential)
+        val credentialSupported = types.mapNotNull { it -> metadata.credentialsSupported[it] }
+        val displayData = credentialSupported.firstOrNull()?.display
+        val display = selectDisplay(displayData)
         display?.name ?: "不明なタイプ"
     }
 
@@ -189,11 +193,12 @@ class CredentialDetailViewModel(
 
     val displayData: LiveData<CredentialsSupportedDisplay> = _credentialData.map { credential ->
         credential?.credentialIssuerMetadata?.let {
-            val metadata: CredentialIssuerMetadata =
-                mapper.readValue(it, CredentialIssuerMetadata::class.java)
-            selectDisplay(metadata.credentialsSupported.values.flatMap {
-                it.display ?: emptyList()
-            })
+            val format = credential.format
+            val types =
+                MetadataUtil.extractTypes(format, credential.credential)
+            val credentialSupported = types.mapNotNull { it -> metadata.credentialsSupported[it] }
+            val displayData = credentialSupported.firstOrNull()?.display
+            selectDisplay(displayData)
         }!!
     }
 

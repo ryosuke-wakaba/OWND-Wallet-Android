@@ -158,7 +158,7 @@ class ConfirmationViewModelTest {
         viewModel.processMetadata(credentialOffer.credentialIssuer, credentialOffer)
 
         // アサーション
-        verify(textObserver).onChanged("オウンドプロジェクト が IdentityCredential の証明書を発行します")
+        verify(textObserver).onChanged("オウンドプロジェクト が University Credential の証明書を発行します")
         val expectedMap = mapOf(
             "given_name" to IssuerCredentialSubject(
                 mandatory = null,
