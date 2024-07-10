@@ -299,12 +299,7 @@ class IdTokenSharringViewModel : ViewModel() {
                     Log.e(TAG, value.message, value)
                     withContext(Dispatchers.Main) {
                         val context = fragment.requireContext()
-                        val msg = "${context.getString(R.string.error_occurred)} ${value.message}"
-                        Toast.makeText(
-                            context,
-                            msg,
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(context, value.message, Toast.LENGTH_SHORT).show()
                         requestClose()
                     }
                 },
@@ -344,7 +339,10 @@ class IdTokenSharringViewModel : ViewModel() {
 
                     withContext(Dispatchers.Main) {
                         // 処理完了フラグを更新
-                        _doneSuccessfully.value = true
+                        if (postResult.location.isNullOrBlank()) {
+                            // if subsequent action isn't it finishes.
+                             _doneSuccessfully.value = true
+                        }
                         _postResult.value = postResult
                     }
                 },

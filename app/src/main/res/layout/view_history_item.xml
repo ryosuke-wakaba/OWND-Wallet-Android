@@ -22,10 +22,18 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textAppearance="@style/text_sub_text"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/historyItemChevron"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/createdAt" />
+
+    <TextView
+        android:id="@+id/spacer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/text_sub_text"
+        app:layout_constraintEnd_toStartOf="@+id/historyItemChevron"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/claims" />
 
     <ImageView
         android:id="@+id/historyItemChevron"

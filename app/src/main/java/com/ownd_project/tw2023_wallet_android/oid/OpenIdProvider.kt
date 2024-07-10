@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil.toJwkThumbprintUri
@@ -336,13 +337,27 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
 
             println("send vp token to $destinationUri")
             val result = sendRequest(destinationUri, body, responseMode)
-            print("status code: ${result.statusCode}")
-            print("location: ${result.location}")
-            print("cookies: ${result.cookies}")
+            println("status code: ${result.statusCode}")
+            println("location: ${result.location}")
+            println("cookies: ${result.cookies}")
+            if (400 <= result.statusCode) {
+                // todo ここに入るケースは本来は開発中のみでリリース後はここに入ることは無い(提供したvpの検証はverifier側のクライアントからのリクエストで実行されるため)
+                // todo よって、ここではステータスコードとステータスメッセージを文字列として例外に詰めてスローしておけば問題無い
+                // todo 2024.7.10時点では同期的にvp_tokenの検証をする構成になっているので、暫定的にこの実装を残すが、response_codeに対応するタイミングで適切な方法に切り替える
+                // todo 500系のエラーも同様
+                println(result.responseBody)
+                val msg = if (result.responseBody?.containsKey("message") == true) {
+                    result.responseBody["message"] as String
+                } else {
+                    "Response Error: ${result.statusCode}"
+                }
+                return Result.failure(Exception(msg))
+            }
             val sharedContents =
                 presentingContents.map { SharedContent(it.credential.id, it.disclosedClaims) }
             return Result.success(Pair(result, sharedContents))
         } catch (e: Exception) {
+            e.printStackTrace()
             return Result.failure(e)
         }
     }
@@ -438,6 +453,7 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
         val contentType = response.header("Content-Type")
         val cookies = response.headers("Set-Cookie")
         print("cookies@sendRequest: $cookies")
+        var responseBody = emptyMap<String, Any>()
 
         if (statusCode == 302 && location != null) {
             // URI解析を使用して絶対URLかどうかを判断
@@ -448,24 +464,22 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
                 val portPart = if (originalUri.port != -1) ":${originalUri.port}" else ""
                 location = "${originalUri.scheme}://${originalUri.host}$portPart$location"
             }
-        } else if (statusCode == 200 && contentType?.contains("application/json") == true) {
+        } else if (contentType?.contains("application/json") == true) {
             response.body()?.string()?.let { body ->
-//                val jsonObject = JSONObject(body)
-//                if (jsonObject.has("redirect_uri")) {
-//                    location = jsonObject.getString("redirect_uri")
-//                }
                 val mapper = jacksonObjectMapper()
                 val jsonNode = mapper.readTree(body)
                 if (jsonNode.has("redirect_uri")) {
                     location = jsonNode.get("redirect_uri").asText()
                 }
+                responseBody = mapper.readValue<Map<String, Any>>(body)
             }
         }
 
         return PostResult(
             statusCode = statusCode,
             location = location,
-            cookies = if (cookies.isNotEmpty()) cookies.toTypedArray() else emptyArray()
+            cookies = if (cookies.isNotEmpty()) cookies.toTypedArray() else emptyArray(),
+            responseBody = responseBody
         )
     }
 }
@@ -485,32 +499,30 @@ fun satisfyConstrains(credential: Map<String, Any>, presentationDefinition: Pres
     val inputDescriptors = presentationDefinition.inputDescriptors
 
     var matchingFieldsCount = 0
+    val matchedInputDescriptors = mutableListOf<InputDescriptor>()
 
     inputDescriptors.forEach { inputDescriptor ->
-        inputDescriptor.constraints.fields?.let { fields ->
-            fields.forEach { field ->
-                val isFieldMatched = field.path.any { jsonPath ->
-                    val pathComponents = jsonPath.split(".")
-                    pathComponents.last().let { lastComponent ->
-                        if (lastComponent != "$") {
-                            val key = lastComponent.replace("vc.", "")
-                            // credentialのキーとして含まれているか判定
-                            credentialSubject.keys.contains(key)
-                        } else false
-                    }
-                }
-
-                if (isFieldMatched) {
-                    matchingFieldsCount++
-                    return@forEach // pathのいずれかがマッチしたら、そのfieldは条件を満たしていると見なす
+        var fields = inputDescriptor.constraints.fields ?: return@forEach
+        val isFieldMatched = fields.all { field ->
+            field.path.any { jsonPath ->
+                val pathComponents = jsonPath.split(".")
+                pathComponents.last().let { lastComponent ->
+                    if (lastComponent != "$") {
+                        val key = lastComponent.replace("vc.", "")
+                        // credentialのキーとして含まれているか判定
+                        credentialSubject.keys.contains(key)
+                    } else false
                 }
             }
         }
+        if (isFieldMatched) {
+            matchedInputDescriptors.add(inputDescriptor)
+        }
     }
 
-    println("match count: $matchingFieldsCount")
-    // 元のfieldsの件数と該当したfieldの件数が一致するか判定
-    return matchingFieldsCount == inputDescriptors.mapNotNull { it.constraints.fields }.size
+    println("matched : $matchedInputDescriptors")
+    val matchedInputDescriptorsCount = matchedInputDescriptors.size
+    return 0 < matchedInputDescriptorsCount
 }
 
 data class ProcessSIOPRequestResult(
@@ -545,7 +557,8 @@ data class SharedContent(
 data class PostResult(
     val statusCode: Int,
     val location: String?,
-    val cookies: Array<String>
+    val cookies: Array<String>,
+    val responseBody: Map<String, Any>? = null
 )
 
 fun X509Certificate.hasSubjectAlternativeName(target: String): Boolean {

@@ -1,6 +1,8 @@
 package com.ownd_project.tw2023_wallet_android
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -14,12 +16,14 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.navArgs
 import com.ownd_project.tw2023_wallet_android.utils.DisplayUtil
 import java.net.URI
+
 
 class WebViewFragment : Fragment() {
 
@@ -46,9 +50,18 @@ class WebViewFragment : Fragment() {
         webView = view.findViewById(R.id.webview)
 
         webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                view?.loadUrl(request?.url.toString())
-                return true // WebView内でリンクを処理することを示す
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                val uri: Uri = request.url
+                if ("openid-credential-offer" == uri.scheme) {
+                    val intent = Intent(activity, MainActivity::class.java)
+                    intent.data = uri
+                    startActivity(intent)
+                    return true // URL ロードをキャンセルし、カスタム処理に委ねる
+                } else {
+                    view?.loadUrl(request?.url.toString())
+                    return true // WebView内でリンクを処理することを示す
+                }
+                return super.shouldOverrideUrlLoading(view, request)
             }
         }
 
@@ -57,10 +70,12 @@ class WebViewFragment : Fragment() {
         val url = args.url
         val cookies = args.cookies ?: arrayOf()
 
-        DisplayUtil.setFragmentTitle(
-            activity as? AppCompatActivity,
-            URI.create(url).host
-        )
+        if (url.startsWith("http")) {
+            DisplayUtil.setFragmentTitle(
+                activity as? AppCompatActivity,
+                URI.create(url).host
+            )
+        }
 
         print("set cookies")
         setCookies(url, cookies, webView)

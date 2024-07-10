@@ -14,7 +14,7 @@ class MetadataUtilTest {
     }
     @Test
     fun testExtractDisplayByClaimJwtVc() {
-        val types = listOf("IdentityCredential")
+        val types = listOf("UniversityDegreeCredential")
         val json =
             this::class.java.classLoader?.getResource("credential_issuer_metadata_jwt_vc.json")
                 ?.readText()
@@ -81,7 +81,7 @@ class MetadataUtilTest {
     }
     @Test
     fun testDeserializeDisplayMap() {
-        val types = listOf("IdentityCredential")
+        val types = listOf("UniversityDegreeCredential")
         val json =
             this::class.java.classLoader?.getResource("credential_issuer_metadata_jwt_vc.json")
                 ?.readText()

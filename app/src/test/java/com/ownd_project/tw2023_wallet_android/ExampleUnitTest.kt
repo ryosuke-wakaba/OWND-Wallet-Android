@@ -167,7 +167,7 @@ class ExampleUnitTest {
         val credentials = credentialOffer.credentials
         assertTrue("Credentials list should have at least one element", credentials.isNotEmpty())
 
-        assertEquals("IdentityCredential", credentials[0])
+        assertEquals("UniversityDegreeCredential", credentials[0])
 
         val grants = credentialOffer.grants
         assertEquals("eyJhbGciOiJSU0Et...FYUaBy", grants?.authorizationCode?.issuerState)

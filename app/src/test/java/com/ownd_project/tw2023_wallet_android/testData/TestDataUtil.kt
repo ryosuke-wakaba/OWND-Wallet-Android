@@ -37,7 +37,7 @@ object TestDataUtil {
                 "MIIC0TCCAbkCFC3AD/GzaWqjVIQFY1eaZ4SFuO6rMA0GCSqGSIb3DQEBCwUAMCUxIzAhBgNVBAMMGlRlc3QgQ2VydGlmaWNhdGUgQXV0aG9yaXR5MB4XDTIzMTEwOTAxNDk0NVoXDTI0MTEwODAxNDk0NVowJTEjMCEGA1UEAwwaVGVzdCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDCj2g1m7YQZb1LMOlMy2zrOCg9cAEzrK7rctymFFd9r77JMOi1c3nzIm6ZWemwSNxGY2yUSB+CNHJDQ+W9vO2M/9FFvuKxMfVCDDEBV1w9rkNdjIGcvhLA6VjhxoAN0X4VRm8pzW7KKsr9PMr2HZVbqorLTnTkC5aHhoqVcLe/OFnm4NzU02B9xecaaoqajPAXHltFtD+DVKE6mQuRtD8KOIRhPfH9UuorOYV2emLKw1b7MFM5O8IETcKD2tazcHRQbFio/6VSYXikBzHI9bttfd2qmmTmTOLIhFsgTbnZqlGc9mYb3HA2mSynXg0/NzdO4MsF/bhFmwSvCxBPCYmRAgMBAAEwDQYJKoZIhvcNAQELBQADggEBALzHBevOxbVXHD8iHdhjLqbUDiZkOO84UNIFOIceq4J685qxJaJZ65SJV6f3gwbRa3BCeJsLGSktcKJ5kcN8S3sFABmMoYSBn/KLG2672oOCmdaZV/notuhx2pwqrTtN/5Zw14UlA78bH8suCzHKpdSbGR7rZQmXyAkIl2VUGOFCklWKylsXFYcoT/jwggTlf26zwbzlkjIFFY+sXr0n8gCal9o40eHaNWAskNdA2Cviqx5FIlto7/OK0lrKiJxkNI8EcBBQRe0mDnzj6QXxYLOqihC1owQukUcNFHdya4lvVX1f1hx2RDLYG2qgvZePzf6GyRH0mUS9asp6cBR8Asc="
             )
         )
-        val type = listOf<String>("VerifiableCredential", "EventParticipationCredential")
+        val type = listOf<String>("VerifiableCredential", "UniversityDegreeCredential")
         val context = listOf<String>(
             "https://www.w3.org/ns/credentials/v2",
             "https://www.w3.org/ns/credentials/examples/v2"
@@ -86,7 +86,7 @@ object TestDataUtil {
                 .setIss("https://event.company/issuers/565049")
                 .setIat(86400L)
                 .setExp(86400L)
-                .setType("EventParticipationCredential")
+                .setType("UniversityDegreeCredential")
                 .setAccessToken("test_accessToken")
                 .setCredentialIssuerMetadata(jwtVcMetadataStr)
                 .build()
@@ -109,6 +109,7 @@ object TestDataUtil {
         val issuerSignedJwt = JWT.create().withIssuer("https://client.example.org/cb")
             .withAudience("https://server.example.com")
             .withClaim("cnf", cnf)
+            .withClaim("vct", "EmployeeCredential")
             .withClaim("_sd", (claims["_sd"] as List<*>))
             .sign(algorithm)
         return "$issuerSignedJwt~${disclosures.joinToString("~") { it.disclosure }}"
