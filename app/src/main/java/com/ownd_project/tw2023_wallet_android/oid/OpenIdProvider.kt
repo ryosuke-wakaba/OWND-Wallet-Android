@@ -341,6 +341,10 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             println("location: ${result.location}")
             println("cookies: ${result.cookies}")
             if (400 <= result.statusCode) {
+                // todo ここに入るケースは本来は開発中のみでリリース後はここに入ることは無い(提供したvpの検証はverifier側のクライアントからのリクエストで実行されるため)
+                // todo よって、ここではステータスコードとステータスメッセージを文字列として例外に詰めてスローしておけば問題無い
+                // todo 2024.7.10時点では同期的にvp_tokenの検証をする構成になっているので、暫定的にこの実装を残すが、response_codeに対応するタイミングで適切な方法に切り替える
+                // todo 500系のエラーも同様
                 println(result.responseBody)
                 val msg = if (result.responseBody?.containsKey("message") == true) {
                     result.responseBody["message"] as String
