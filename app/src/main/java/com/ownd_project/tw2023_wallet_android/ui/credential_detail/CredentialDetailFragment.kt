@@ -35,12 +35,12 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentCredentialDetailBinding
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialData
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
+import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistoryStore
 import com.ownd_project.tw2023_wallet_android.oid.OpenIdProvider
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
@@ -265,7 +265,7 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
         } else {
             // 提供履歴
             val historyLayoutManager = LinearLayoutManager(context)
-            val historyAdapter = HistoryAdapter(emptyList()) // 初期状態では空リスト
+            val historyAdapter = HistoryAdapter(emptyList(), viewModel.displayMap) // 初期状態では空リスト
             binding.historyContainer.layoutManager = historyLayoutManager
             binding.historyContainer.adapter = historyAdapter
 
@@ -416,7 +416,10 @@ class DisclosureDiffCallback(
     }
 }
 
-class HistoryAdapter(private var histories: List<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory>) :
+class HistoryAdapter(
+    private var histories: List<CredentialSharingHistory>,
+    private val displayMap: Map<String, List<Display>>
+) :
     RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -436,13 +439,16 @@ class HistoryAdapter(private var histories: List<com.ownd_project.tw2023_wallet_
         val date = Date(history.createdAt.seconds * 1000L) // TimestampからDateに変換
         holder.createdAt.text = dateFormat.format(date)
         val claimsList = history.claimsList
-        val claimsText = claimsList.joinToString(" | ") + " 全${claimsList.size}項目"
+        val claimsText = claimsList.mapNotNull { it ->
+            val display = displayMap[it.name]
+            display?.get(0)?.name ?: it.name // todo get value dynamically by current locale.
+        }.joinToString(" | ") + " 全${claimsList.size}項目"
         holder.claims.text = claimsText
     }
 
     override fun getItemCount() = histories.size
 
-    fun updateHistories(newHistories: List<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory>) {
+    fun updateHistories(newHistories: List<CredentialSharingHistory>) {
         histories = newHistories
         notifyDataSetChanged() // ここでは単純な更新を行っていますが、必要に応じてDiffUtilを使用することもできます
     }
