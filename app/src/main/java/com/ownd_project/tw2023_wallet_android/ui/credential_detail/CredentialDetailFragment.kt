@@ -130,7 +130,6 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
         viewModel.setCredentialDataById(credentialId)
         viewModel.credentialData.observe(viewLifecycleOwner) { data ->
             data?.let {
-                bindDataToView(it, viewModel.displayMap)
                 viewModel.findHistoriesByCredentialId(it.id)
             }
         }
@@ -239,6 +238,8 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
             // DisclosureAdapterの呼び出し
             adapter.updateDisclosures(details.disclosures)
 
+            bindDataToView(details, viewModel.displayMap)
+
             // QRコード表示用リンクの可視性とアンダーラインの設定
             if (details.showQRCode) {
                 val qrCodeText = SpannableString(getString(R.string.show_qrcode)).apply {
@@ -255,7 +256,6 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
             binding.disclosuresNotSharingTitleTextView.visibility = View.VISIBLE
             binding.disclosureContainerSharing.visibility = View.VISIBLE
             binding.disclosureContainerNotSharing.visibility = View.VISIBLE
-            binding.disclosureContainer.visibility = View.GONE
             binding.disclosureContainer.visibility = View.GONE
             binding.textHistoryTitle.visibility = View.GONE
 
@@ -303,10 +303,11 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
         findNavController().popBackStack(R.id.id_token_sharring, false)
     }
 
-    private fun bindDataToView(credential: CredentialData, displayMap: Map<String, List<Display>>) {
+    private fun bindDataToView(credentialDetail: CredentialDetailViewModel.CredentialDetails, displayMap: Map<String, List<Display>>) {
         val presentationDefinition = sharedViewModel.presentationDefinition.value
         val fromSharingData = presentationDefinition != null
 
+        val credential = credentialDetail.credential
         if (fromSharingData && credential.format == "vc+sd-jwt") {
             val (_, sharingData) = OpenIdProvider.selectDisclosure(
                 credential.credential,
@@ -330,6 +331,13 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
             val notSharingAdapter = DisclosureAdapter(notSharingDisclosureItems, displayMap)
             binding.disclosureContainerNotSharing.layoutManager = notSharingLayoutManager // 使用
             binding.disclosureContainerNotSharing.adapter = notSharingAdapter
+        } else if (fromSharingData && credential.format == "jwt_vc_json") {
+            // when jwt_vp_json it is, all claims are disclosing.
+            val disclosures = credentialDetail.disclosures ?: emptyList()
+            val sharingAdapter = DisclosureAdapter(disclosures, displayMap)
+            val sharingLayoutManager = LinearLayoutManager(context) // ここで定義
+            binding.disclosureContainerSharing.layoutManager = sharingLayoutManager
+            binding.disclosureContainerSharing.adapter = sharingAdapter
         }
     }
 

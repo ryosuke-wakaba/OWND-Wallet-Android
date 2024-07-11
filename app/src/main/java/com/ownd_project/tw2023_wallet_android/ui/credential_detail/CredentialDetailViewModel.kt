@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.ownd_project.tw2023_wallet_android.datastore.CredentialData
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistoryStore
 import com.ownd_project.tw2023_wallet_android.oid.InputDescriptor
@@ -54,6 +55,7 @@ class CredentialDetailViewModel(
 //)
 
     data class CredentialDetails(
+        val credential: CredentialData,
         val disclosures: List<DisclosureItem>, // DisclosureItemは適切なデータ構造に置き換えてください
         val showQRCode: Boolean,
     )
@@ -63,9 +65,8 @@ class CredentialDetailViewModel(
         val value: String,
     )
 
-    private val _credentialData =
-        MutableLiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialData>()
-    val credentialData: LiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialData> get() = _credentialData
+    private val _credentialData = MutableLiveData<CredentialData>()
+    val credentialData: LiveData<CredentialData> get() = _credentialData
 
     var presentationDefinition: PresentationDefinition? = null
     private var sharingData: List<SDJwtUtil.Disclosure> = emptyList()
@@ -115,8 +116,7 @@ class CredentialDetailViewModel(
     }
 
     fun setCredentialData(byteArray: ByteArray) {
-        val credentialDataSchema =
-            com.ownd_project.tw2023_wallet_android.datastore.CredentialData.parseFrom(byteArray)
+        val credentialDataSchema = CredentialData.parseFrom(byteArray)
         metadata = mapper.readValue(
             credentialDataSchema.credentialIssuerMetadata,
             CredentialIssuerMetadata::class.java
@@ -167,7 +167,7 @@ class CredentialDetailViewModel(
                     DisclosureItem(it.key ?: "Unknown", it.value ?: "N/A")
                 }
                 disclosures.forEach { println(it) }
-                CredentialDetails(disclosures, showQRCode = false)
+                CredentialDetails(credential, disclosures, showQRCode = false)
             }
 
             "jwt_vc_json" -> {
@@ -181,13 +181,10 @@ class CredentialDetailViewModel(
                     DisclosureItem(key, value.toString())
                 } ?: listOf() // credentialSubjectがnullの場合は空のリストを使用
 
-                CredentialDetails(disclosures, showQRCode = true)
+                CredentialDetails(credential, disclosures, showQRCode = true)
             }
 
-            else -> CredentialDetails(
-                emptyList(),
-                showQRCode = false,
-            )
+            else -> CredentialDetails(credential, emptyList(), showQRCode = false)
         }
     }
 
