@@ -15,8 +15,8 @@ android {
         applicationId = "com.ownd_project.tw2023_wallet_android"
         minSdk = 33
         targetSdk = 33
-        versionCode = 21
-        versionName = "0.1.8"
+        versionCode = 24
+        versionName = "0.1.10"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
