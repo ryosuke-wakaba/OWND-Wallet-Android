@@ -1,8 +1,6 @@
 package com.ownd_project.tw2023_wallet_android.signature
 
-import com.fasterxml.jackson.core.json.JsonWriteFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
+import com.ownd_project.tw2023_wallet_android.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.bouncycastle.asn1.DEROctetString
@@ -24,7 +22,6 @@ import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyStore
-import java.security.MessageDigest
 import java.security.Security
 import java.security.cert.CertPathValidator
 import java.security.cert.CertificateFactory
@@ -39,6 +36,7 @@ import java.security.spec.EllipticCurve
 import java.util.Base64
 import java.util.Date
 import javax.security.auth.x500.X500Principal
+
 
 interface ECPrivateJwk {
     val kty: String
@@ -299,11 +297,18 @@ object SignatureUtil {
             // 証明書リストを証明書パスに変換
             val certPath = certificateFactory.generateCertPath(certificates.toList())
 
-            // デフォルトのKeyStoreを使用して信頼されたルート証明書をロード
-            val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
-            keyStore.load(null, null)
-            // todo テストコードの場合だけ実行する様に制御を入れる
-            keyStore.setCertificateEntry("root", rootCertificate)
+            val keyStore = if (BuildConfig.DEBUG) {
+                val keyStoreType = KeyStore.getDefaultType()
+                val keyStore = KeyStore.getInstance(keyStoreType)
+                keyStore.load(null, null)
+                keyStore.setCertificateEntry("root", rootCertificate)
+                keyStore
+            } else {
+                val keyStoreType = "AndroidCAStore"
+                val keyStore = KeyStore.getInstance(keyStoreType)
+                keyStore.load(null)
+                keyStore
+            }
 
             // PKIXパラメータの設定（ルートCAの検証なし）
             val pkixParams = PKIXParameters(keyStore)
