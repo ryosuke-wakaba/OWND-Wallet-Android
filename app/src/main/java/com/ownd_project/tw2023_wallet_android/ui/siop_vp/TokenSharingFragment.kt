@@ -216,13 +216,22 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
             // SIOPモードの領域を非表示
             binding.sharringInfoLayout.visibility = View.GONE
             // VPモードの常時表示領域を表示
+            binding.title.visibility = View.GONE
+            data.name?.let {
+                binding.title.visibility = View.VISIBLE
+                binding.title.text = it
+            }
             // todo RecycleViewで複数件に対応する
-            binding.sharingClaimTitle.text = data.inputDescriptors[0].purpose
-            binding.sharingClaimSubTitle.text = getString(
-                R.string.sharing_claim_sut_title,
-                viewModel.clientInfo.value?.name ?: "",
-                "OWNED Project"
-            )
+            binding.sharingClaimTitle.visibility = View.GONE
+            data.inputDescriptors[0].name?.let {
+                 binding.sharingClaimTitle.visibility = View.VISIBLE
+                binding.sharingClaimTitle.text = it
+            }
+            binding.sharingClaimSubTitle.visibility = View.GONE
+            data.inputDescriptors[0].purpose?.let {
+                binding.sharingClaimSubTitle.visibility = View.VISIBLE
+                binding.sharingClaimSubTitle.text = it
+            }
             if (sharedViewModel.selectedCredential.value == null) {
                 // クレデンシャルが未選択の場合にVPモードの初期表示状態にセット
                 sharedViewModel.setPresentationDefinition(data)
