@@ -94,6 +94,8 @@ open class OpenIdProviderTestBase {
 
     @Before
     fun setup() {
+        System.setProperty("isTestEnvironment", "true")
+
         wireMockServer = WireMockServer(8080)
         wireMockServer.start()
         WireMock.configureFor("localhost", 8080)
@@ -115,6 +117,8 @@ open class OpenIdProviderTestBase {
 
     @After
     fun teardown() {
+        System.clearProperty("isTestEnvironment")
+
         wireMockServer.stop()
     }
 

@@ -288,7 +288,7 @@ object SignatureUtil {
 
     fun validateCertificateChain(
         certificates: Array<X509Certificate>,
-        rootCertificate: X509Certificate
+        rootCertificate: X509Certificate? = null
     ): Boolean {
         try {
             // 証明書ファクトリのインスタンスを作成
@@ -297,7 +297,7 @@ object SignatureUtil {
             // 証明書リストを証明書パスに変換
             val certPath = certificateFactory.generateCertPath(certificates.toList())
 
-            val keyStore = if (BuildConfig.DEBUG) {
+            val keyStore = if (rootCertificate != null) {
                 val keyStoreType = KeyStore.getDefaultType()
                 val keyStore = KeyStore.getInstance(keyStoreType)
                 keyStore.load(null, null)
