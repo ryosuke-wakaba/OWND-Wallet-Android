@@ -50,10 +50,16 @@ class IssuerDetailViewModel(
                             println("No certificates found in JWT")
                             _certificatesLiveData.postValue(emptyList())
                         } else {
-                            val b = SignatureUtil.validateCertificateChain(
-                                certificates.toTypedArray(),
-                                certificates.last()
-                            )
+                            val isTestEnvironment =
+                                System.getProperty("isTestEnvironment")?.toBoolean() ?: false
+                            val b = if (isTestEnvironment) {
+                                SignatureUtil.validateCertificateChain(
+                                    certificates.toTypedArray(),
+                                    certificates.last()
+                                )
+                            } else {
+                                SignatureUtil.validateCertificateChain(certificates.toTypedArray())
+                            }
                             if (b) {
                                 println("validateCertificateChain success")
                                 // 検証できたデータをUI側に渡す
@@ -76,10 +82,16 @@ class IssuerDetailViewModel(
                         viewModelScope.launch(Dispatchers.IO) {
                             val certificates = SignatureUtil.getX509CertificatesFromUrl(x5uValue)
                             if (!certificates.isNullOrEmpty()) {
-                                val b = SignatureUtil.validateCertificateChain(
-                                    certificates,
-                                    certificates.last()
-                                )
+                                val isTestEnvironment =
+                                    System.getProperty("isTestEnvironment")?.toBoolean() ?: false
+                                val b = if (isTestEnvironment) {
+                                    SignatureUtil.validateCertificateChain(
+                                        certificates,
+                                        certificates.last()
+                                    )
+                                } else {
+                                    SignatureUtil.validateCertificateChain(certificates)
+                                }
                                 if (b) {
                                     println("validateCertificateChain success")
                                     // 検証できたデータをUI側に渡す

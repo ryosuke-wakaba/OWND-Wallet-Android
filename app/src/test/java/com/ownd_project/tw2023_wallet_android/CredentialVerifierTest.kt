@@ -25,6 +25,8 @@ class CredentialVerifierTest {
 
     @Before
     fun setup() {
+        System.setProperty("isTestEnvironment", "true")
+
         wireMockServer = WireMockServer().apply {
             start()
             WireMock.configureFor("localhost", port())
@@ -33,6 +35,8 @@ class CredentialVerifierTest {
 
     @After
     fun teardown() {
+        System.clearProperty("isTestEnvironment")
+
         wireMockServer.stop()
     }
 

@@ -131,7 +131,13 @@ class JWT {
                     return Result.failure(Exception("証明書リストが取得できませんでした"))
                 }
                 val result = verifyJwt(jwt, certificates[0].publicKey)
-                val b = validateCertificateChain(certificates, certificates.last())
+                val isTestEnvironment =
+                    System.getProperty("isTestEnvironment")?.toBoolean() ?: false
+                val b = if (isTestEnvironment) {
+                    validateCertificateChain(certificates, certificates.last())
+                } else {
+                    validateCertificateChain(certificates)
+                }
                 // todo row to der エンコーディングの変換ができずjava.security.Signatureを使った実装が未対応(ES256Kサポートのためには対応が必要)
                 return if (result.isRight() && b) {
                     Result.success(Pair(decodedJwt, certificates))
@@ -154,7 +160,13 @@ class JWT {
                     return Either.Left("証明書リストが取得できませんでした")
                 }
                 val result = verifyJwt(jwt, certificates[0].publicKey)
-                val b = validateCertificateChain(certificates, certificates.last())
+                val isTestEnvironment =
+                    System.getProperty("isTestEnvironment")?.toBoolean() ?: false
+                val b = if (isTestEnvironment) {
+                    validateCertificateChain(certificates, certificates.last())
+                } else {
+                    validateCertificateChain(certificates)
+                }
                 // todo row to der エンコーディングの変換ができずjava.security.Signatureを使った実装が未対応(ES256Kサポートのためには対応が必要)
 //            // JWTのペイロードと署名部分を取得
 //            val payload = decodedJwt.payload
