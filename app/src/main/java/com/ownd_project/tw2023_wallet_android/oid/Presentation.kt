@@ -155,7 +155,7 @@ object JwtVpJsonPresentation {
             "verifiableCredential" to listOf(vcJwt)
         )
 
-        val currentTimeSeconds = System.currentTimeMillis() / 1000
+        val currentTimeSeconds = (System.currentTimeMillis() / 1000) - 5 // Prevention of time synchronization deviation
         return VpJwtPayload(
             iss = payloadOptions.iss,
             jti = payloadOptions.jti,
