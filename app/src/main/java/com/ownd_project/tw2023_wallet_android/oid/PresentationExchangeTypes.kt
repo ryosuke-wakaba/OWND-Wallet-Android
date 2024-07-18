@@ -19,7 +19,9 @@ enum class Rule {
 data class PresentationDefinition(
     val id: String,
     val inputDescriptors: List<InputDescriptor>,
-    val submissionRequirements: List<SubmissionRequirement>?
+    val submissionRequirements: List<SubmissionRequirement>?,
+    val name: String?,
+    val purpose: String?
 )
 
 data class InputDescriptor(

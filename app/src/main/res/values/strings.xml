@@ -60,7 +60,6 @@
     <string name="do_change"><u>変更する</u></string>
     <string name="selected_credential_info">%sで証明します</string>
     <string name="no_credential_is_selected">証明書が選択されていません</string>
-    <string name="sharing_claim_sut_title">%sの利用者として適格であると確認するために必要です。%sに登録された証明書を使って証明します</string>
     <string name="sharing_credential_done">情報を提供しました</string>
     <string name="sharing_credential_done_support_text">デスクトップアプリまたはパソコン等のブラウザを確認してください</string>
     <string name="show_qrcode">QRコードを表示する</string>
