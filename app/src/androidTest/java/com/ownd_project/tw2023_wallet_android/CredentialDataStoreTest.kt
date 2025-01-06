@@ -5,12 +5,13 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedJwtVcJson
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationJwtVcJson
 import com.ownd_project.tw2023_wallet_android.vci.CredentialsSupportedDisplay
 import com.ownd_project.tw2023_wallet_android.vci.Display
 import com.ownd_project.tw2023_wallet_android.vci.IssuerCredentialSubject
 import com.ownd_project.tw2023_wallet_android.vci.JwtVcJsonCredentialDefinition
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.ownd_project.tw2023_wallet_android.vci.ProofSigningAlgValuesSupported
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -64,12 +65,15 @@ class CredentialDataStoreInstrumentedTest {
         )
 
         val credentialsSupportedMap = mapOf(
-            "UniversityDegreeCredential" to CredentialSupportedJwtVcJson(
+            "UniversityDegreeCredential" to CredentialConfigurationJwtVcJson(
+                format = "dummy",
                 scope = "UniversityDegree",
                 cryptographicBindingMethodsSupported = listOf("method1"),
-                cryptographicSuitesSupported = listOf("suite1"),
+                credentialSigningAlgValuesSupported = listOf("suite1"),
                 credentialDefinition = credentialDefinition,
-                proofTypesSupported = listOf("jwt"),
+                proofTypesSupported = mapOf(
+                    "jwt" to ProofSigningAlgValuesSupported(listOf("ES256"))
+                ),
                 order = listOf("order1")
             )
         )
@@ -84,7 +88,7 @@ class CredentialDataStoreInstrumentedTest {
         )
         val metadata = CredentialIssuerMetadata(
             credentialIssuer = "some_issuer",
-            credentialsSupported = credentialsSupportedMap,
+            credentialConfigurationsSupported = credentialsSupportedMap,
             display = displayList
         )
 

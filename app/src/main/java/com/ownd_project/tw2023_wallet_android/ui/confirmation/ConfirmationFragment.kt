@@ -124,9 +124,9 @@ class ConfirmationFragment : Fragment() {
         val currentLocale = Locale.getDefault().toString()
         val issuerDisplay = metadata.display?.firstOrNull { it.locale == currentLocale }
         binding.tvIssuerName.text = issuerDisplay?.name
-        if (issuerDisplay?.logo?.url != null) {
+        if (issuerDisplay?.logo?.uri != null) {
             // 画像のロード (Glideなどのライブラリを使用)
-            Glide.with(this).load(issuerDisplay.logo.url).into(binding.ivIssuerLogo)
+            Glide.with(this).load(issuerDisplay.logo.uri).into(binding.ivIssuerLogo)
             binding.ivIssuerLogo.visibility = View.VISIBLE
         }
         binding.issuerDomain.text = metadata.credentialIssuer

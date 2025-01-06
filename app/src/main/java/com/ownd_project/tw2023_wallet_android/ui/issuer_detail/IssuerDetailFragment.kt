@@ -50,7 +50,7 @@ class IssuerDetailFragment : Fragment(R.layout.fragment_issuer_detail) {
         viewModel.getCredentialIssuerMetadataById(credentialId)
             .observe(viewLifecycleOwner) { metadata ->
                 // ロゴがあればImageViewにセット、なければ非表示にする
-                val logoUrl = metadata?.display?.firstOrNull()?.logo?.url
+                val logoUrl = metadata?.display?.firstOrNull()?.logo?.uri
                 if (!logoUrl.isNullOrEmpty()) {
                     Glide.with(this).load(logoUrl).into(binding.ivIssuerLogo)
                 } else {

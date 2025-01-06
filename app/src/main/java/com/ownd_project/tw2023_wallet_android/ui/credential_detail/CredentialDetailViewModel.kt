@@ -140,7 +140,7 @@ class CredentialDetailViewModel(
         val format = credentialData.format
         val types =
             MetadataUtil.extractTypes(format, credentialData.credential)
-        val credentialSupported = types.mapNotNull { it -> metadata.credentialsSupported[it] }
+        val credentialSupported = types.mapNotNull { it -> metadata.credentialConfigurationsSupported[it] }
         val displayData = credentialSupported.firstOrNull()?.display
         val display = selectDisplay(displayData)
         display?.name ?: "不明なタイプ"
@@ -193,7 +193,7 @@ class CredentialDetailViewModel(
             val format = credential.format
             val types =
                 MetadataUtil.extractTypes(format, credential.credential)
-            val credentialSupported = types.mapNotNull { it -> metadata.credentialsSupported[it] }
+            val credentialSupported = types.mapNotNull { it -> metadata.credentialConfigurationsSupported[it] }
             val displayData = credentialSupported.firstOrNull()?.display
             selectDisplay(displayData)
         }!!

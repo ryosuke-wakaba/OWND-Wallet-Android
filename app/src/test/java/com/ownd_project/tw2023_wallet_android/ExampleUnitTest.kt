@@ -2,9 +2,9 @@ package com.ownd_project.tw2023_wallet_android
 
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 import com.ownd_project.tw2023_wallet_android.vci.CredentialOffer
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupported
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedJwtVcJson
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedJwtVcJsonLdAndLdpVc
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfiguration
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationJwtVcJson
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationJwtVcJsonLdAndLdpVc
 import com.ownd_project.tw2023_wallet_android.vci.CredentialsSupportedDisplay
 import com.ownd_project.tw2023_wallet_android.vci.Grant
 import com.ownd_project.tw2023_wallet_android.vci.IssuerCredentialSubjectMap
@@ -40,7 +40,7 @@ class ExampleUnitTest {
             mapper.readValue(json, CredentialsSupportedDisplay::class.java)
         assertEquals("University Credential", display.name)
         assertEquals("en-US", display.locale)
-        assertEquals("https://exampleuniversity.com/public/logo.png", display.logo!!.url)
+        assertEquals("https://exampleuniversity.com/public/logo.png", display.logo!!.uri)
         assertEquals("a square logo of a university", display.logo!!.altText)
         assertEquals("#12107c", display.backgroundColor)
         assertEquals("#FFFFFF", display.textColor)
@@ -72,12 +72,12 @@ class ExampleUnitTest {
         assertEquals("en-US", lastNameDisplay?.locale)
     }
 
-    private fun assertCredentialSupported(data: CredentialSupported) {
+    private fun assertCredentialSupported(data: CredentialConfiguration) {
         when (data) {
-            is CredentialSupportedJwtVcJson -> {
+            is CredentialConfigurationJwtVcJson -> {
                 // `id` を適切なフィールド名に置き換えるか、削除
                 assertEquals("did", data.cryptographicBindingMethodsSupported?.firstOrNull())
-                assertEquals("ES256K", data.cryptographicSuitesSupported?.firstOrNull())
+                assertEquals("ES256K", data.credentialSigningAlgValuesSupported?.firstOrNull())
                 // `types` フィールドの扱いを修正
                 val givenNameSubject =
                     data.credentialDefinition.credentialSubject?.get("given_name")
@@ -86,12 +86,12 @@ class ExampleUnitTest {
                 assertEquals("en-US", givenNameDisplay?.locale)
             }
 
-            is CredentialSupportedJwtVcJsonLdAndLdpVc -> {
+            is CredentialConfigurationJwtVcJsonLdAndLdpVc -> {
                 // `id` を適切なフィールド名に置き換えるか、削除
                 assertEquals("did", data.cryptographicBindingMethodsSupported?.firstOrNull())
                 assertEquals(
                     "Ed25519Signature2018",
-                    data.cryptographicSuitesSupported?.firstOrNull()
+                    data.credentialSigningAlgValuesSupported?.firstOrNull()
                 )
                 assertEquals("VerifiableCredential", data.types.firstOrNull())
                 // `credentialSubject` フィールドの扱いを修正
@@ -114,7 +114,7 @@ class ExampleUnitTest {
         val json = this::class.java.classLoader?.getResource("credential_supported_jwt_vc.json")
             ?.readText()
             ?: throw IllegalArgumentException("Cannot read test_data.json")
-        assertCredentialSupported(mapper.readValue(json, CredentialSupported::class.java))
+        assertCredentialSupported(mapper.readValue(json, CredentialConfiguration::class.java))
     }
 
     @Test
@@ -122,7 +122,7 @@ class ExampleUnitTest {
         val json = this::class.java.classLoader?.getResource("credential_supported_ldp_vc.json")
             ?.readText()
             ?: throw IllegalArgumentException("Cannot read test_data.json")
-        assertCredentialSupported(mapper.readValue(json, CredentialSupported::class.java))
+        assertCredentialSupported(mapper.readValue(json, CredentialConfiguration::class.java))
     }
 
     @Test
@@ -149,7 +149,7 @@ class ExampleUnitTest {
         )
 
         // `credentialSupported` マップから特定のキーを使用して値を取得
-        val credentialSupported = metaData.credentialsSupported["UniversityDegreeCredential"]
+        val credentialSupported = metaData.credentialConfigurationsSupported["UniversityDegreeCredential"]
         credentialSupported?.let {
             assertCredentialSupported(it)
         } ?: fail("CredentialSupported not found for key 'UniversityDegreeCredential'")

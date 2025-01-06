@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
+import com.ownd_project.tw2023_wallet_android.oid.AuthorizationServerMetadata
 import com.ownd_project.tw2023_wallet_android.ui.shared.Constants
 import com.ownd_project.tw2023_wallet_android.utils.CredentialRequest
 import com.ownd_project.tw2023_wallet_android.utils.CredentialRequestJwtVc
@@ -20,9 +21,9 @@ import com.ownd_project.tw2023_wallet_android.utils.TokenErrorResponseException
 import com.ownd_project.tw2023_wallet_android.utils.VCIClient
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 import com.ownd_project.tw2023_wallet_android.vci.CredentialOffer
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupported
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedJwtVcJson
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedVcSdJwt
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfiguration
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationJwtVcJson
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationVcSdJwt
 import com.ownd_project.tw2023_wallet_android.vci.IssuerCredentialSubject
 import com.ownd_project.tw2023_wallet_android.vci.MetadataClient
 import kotlinx.coroutines.Dispatchers
@@ -50,7 +51,7 @@ class ConfirmationViewModel() :
 
     private fun updateText(
         credentialIssuerMetadata: CredentialIssuerMetadata,
-        credentialSupported: CredentialSupported,
+        credentialConfiguration: CredentialConfiguration,
     ) {
         val currentLocale = Locale.getDefault().toString() // 例: "en-US"、"ja_JP"
         val issuerDisplay = credentialIssuerMetadata.display
@@ -58,9 +59,9 @@ class ConfirmationViewModel() :
             ?: credentialIssuerMetadata.display?.firstOrNull()
 
         val issuerName = issuerDisplay?.name ?: "Unknown Issuer"
-        val credentialType = when (credentialSupported) {
-            is CredentialSupportedJwtVcJson -> credentialSupported.display?.get(0)?.name
-            is CredentialSupportedVcSdJwt -> credentialSupported.display?.get(0)?.name
+        val credentialType = when (credentialConfiguration) {
+            is CredentialConfigurationJwtVcJson -> credentialConfiguration.display?.get(0)?.name
+            is CredentialConfigurationVcSdJwt -> credentialConfiguration.display?.get(0)?.name
             else -> "Unknown Type"
         }
 
@@ -127,6 +128,9 @@ class ConfirmationViewModel() :
     private val _credentialIssuerMetadata = MutableLiveData<CredentialIssuerMetadata>()
     val credentialIssuerMetadata: LiveData<CredentialIssuerMetadata> = _credentialIssuerMetadata
 
+    private val _authorizationServerMetadata = MutableLiveData<AuthorizationServerMetadata>()
+    val authorizationServerMetadata: LiveData<AuthorizationServerMetadata> = _authorizationServerMetadata
+
 
     private val _navigateToCertificateFragment = MutableLiveData<Boolean>()
     val navigateToCertificateFragment: LiveData<Boolean> get() = _navigateToCertificateFragment
@@ -174,16 +178,18 @@ class ConfirmationViewModel() :
 
         val response = MetadataClient.retrieveAllMetadata(credentialIssuer)
         _credentialIssuerMetadata.postValue(response.credentialIssuerMetadata!!)
+        _authorizationServerMetadata.postValue(response.authorizationServerMetadata!!)
 
         // LiveDataから値を取得
-        val currentMetadata = _credentialIssuerMetadata.awaitFirstValue()
-        tokenEndpoint = currentMetadata?.tokenEndpoint
-        credentialEndpoint = currentMetadata?.credentialEndpoint
+        val currentIssuerMetadata = _credentialIssuerMetadata.awaitFirstValue()
+        val currentAuthorizationServerMetadata = _authorizationServerMetadata.awaitFirstValue()
+        tokenEndpoint = currentAuthorizationServerMetadata.tokenEndpoint
+        credentialEndpoint = currentIssuerMetadata?.credentialEndpoint
 
         withContext(Dispatchers.Main) {
-            currentMetadata?.credentialsSupported?.forEach { (_, credentialSupported) ->
+            currentIssuerMetadata?.credentialConfigurationsSupported?.forEach { (_, credentialSupported) ->
                 when (credentialSupported) {
-                    is CredentialSupportedJwtVcJson -> {
+                    is CredentialConfigurationJwtVcJson -> {
                         _format.value = "jwt_vc_json"
                         val firstCredential = credentialOffer.credentials.firstOrNull()
 
@@ -193,20 +199,20 @@ class ConfirmationViewModel() :
                                 credentialSupported.credentialDefinition.credentialSubject
                                     ?: emptyMap()
                             )
-                            updateText(currentMetadata, credentialSupported)
+                            updateText(currentIssuerMetadata, credentialSupported)
                         }
                     }
 
-                    is CredentialSupportedVcSdJwt -> {
+                    is CredentialConfigurationVcSdJwt -> {
                         _format.value = "vc+sd-jwt"
                         val firstCredential = credentialOffer.credentials.firstOrNull()
 
-                        if (credentialSupported.credentialDefinition.vct == firstCredential) {
+                        if (credentialSupported.vct == firstCredential) {
                             _vct.value = firstCredential ?: ""
                             setCredentialSubject(
-                                credentialSupported.credentialDefinition.claims
+                                credentialSupported.claims
                             )
-                            updateText(currentMetadata, credentialSupported)
+                            updateText(currentIssuerMetadata, credentialSupported)
                         }
                     }
                 }

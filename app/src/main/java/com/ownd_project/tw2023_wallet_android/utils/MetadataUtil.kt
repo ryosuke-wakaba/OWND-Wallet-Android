@@ -2,9 +2,9 @@ package com.ownd_project.tw2023_wallet_android.utils
 
 import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupported
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedJwtVcJson
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedVcSdJwt
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfiguration
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationJwtVcJson
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationVcSdJwt
 import com.ownd_project.tw2023_wallet_android.vci.Display
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -32,15 +32,15 @@ object MetadataUtil {
         format: String,
         types: List<String>,
         metadata: CredentialIssuerMetadata
-    ): CredentialSupported? {
-        return metadata.credentialsSupported.entries.firstOrNull { (_, credentialSupported) ->
+    ): CredentialConfiguration? {
+        return metadata.credentialConfigurationsSupported.entries.firstOrNull { (_, credentialSupported) ->
             when (credentialSupported) {
-                is CredentialSupportedVcSdJwt -> {
+                is CredentialConfigurationVcSdJwt -> {
                     // VcSdJwtの場合、vctとtypesの最初の要素を比較
-                    format == "vc+sd-jwt" && types.firstOrNull() == credentialSupported.credentialDefinition.vct
+                    format == "vc+sd-jwt" && types.firstOrNull() == credentialSupported.vct
                 }
 
-                is CredentialSupportedJwtVcJson -> {
+                is CredentialConfigurationJwtVcJson -> {
                     // JwtVcJsonの場合、typesとcredentialDefinition.typeを両方ソートして比較
                     format == "jwt_vc_json" && containsAllElements(credentialSupported.credentialDefinition.type, types)
                 }
@@ -50,17 +50,17 @@ object MetadataUtil {
         }?.value
     }
 
-    fun extractDisplayByClaim(credentialsSupported: CredentialSupported): MutableMap<String, List<Display>> {
+    fun extractDisplayByClaim(credentialsSupported: CredentialConfiguration): MutableMap<String, List<Display>> {
         val displayMap = mutableMapOf<String, List<Display>>()
         when(credentialsSupported) {
-            is CredentialSupportedJwtVcJson -> {
+            is CredentialConfigurationJwtVcJson -> {
                 val credentialSubject = credentialsSupported.credentialDefinition.credentialSubject
                 credentialSubject?.map { (k, v) ->
                     v.display?.let { displayMap.put(k, it) }
                 }
             }
-            is CredentialSupportedVcSdJwt -> {
-                val credentialSubject = credentialsSupported.credentialDefinition.claims
+            is CredentialConfigurationVcSdJwt -> {
+                val credentialSubject = credentialsSupported.claims
                 credentialSubject?.map { (k, v) ->
                     v.display?.let { displayMap.put(k, it) }
                 }

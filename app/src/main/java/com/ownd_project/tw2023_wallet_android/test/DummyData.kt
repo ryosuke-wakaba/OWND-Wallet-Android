@@ -31,7 +31,7 @@ object DummyData {
       "name": "一般社団法人Privacy by Design Lab",
       "locale": "ja_JP",
       "logo": {
-        "url": "https://datasign-demo-vci.tunnelto.dev/public/privacy-design-lab-logo.png",
+        "uri": "https://datasign-demo-vci.tunnelto.dev/public/privacy-design-lab-logo.png",
         "alt_text": "一般社団法人Privacy by Design Labのロゴ"
       },
       "background_color": "#12107c",
@@ -41,26 +41,31 @@ object DummyData {
       "name": "Privacy by Design Lab",
       "locale": "en-US",
       "logo": {
-        "url": "https://datasign-demo-vci.tunnelto.dev/public/privacy-design-lab-logo.png",
+        "uri": "https://datasign-demo-vci.tunnelto.dev/public/privacy-design-lab-logo.png",
         "alt_text": "a square logo of a Privacy by Design Lab"
       },
       "background_color": "#12107c",
       "text_color": "#FFFFFF"
     }
   ],
-  "credentials_supported": {
+  "credential_configurations_supported": {
     "ParticipationCertificate": {
       "format": "jwt_vc_json",
       "scope": "ProofOfParticipation",
       "cryptographic_binding_methods_supported": [
         "jwk"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ES256K"
       ],
-      "proof_types_supported": [
-        "jwt"
-      ],
+      "proof_types_supported": {
+        "jwt": {
+          "proof_signing_alg_values_supported": [
+            "ES256",
+            "ES256K"
+          ]
+        }
+      },
       "display": [
         {
           "name": "イベント参加証",
@@ -159,43 +164,48 @@ object DummyData {
       "name": "オウンドプロジェクト",
       "locale": "ja_JP",
       "logo": {
-        "url": "https://datasign-demo-vci.tunnelto.dev/public/ownd-project-logo.png",
+        "uri": "https://datasign-demo-vci.tunnelto.dev/public/ownd-project-logo.png",
         "alt_text": "オウンドプロジェクトのロゴ"
       },
       "background_color": "#12107c",
       "text_color": "#FFFFFF"
     },
     {
-      "name": "OWND Project",
+      "name": "OWND Project4",
       "locale": "en-US",
       "logo": {
-        "url": "https://datasign-demo-vci.tunnelto.dev/public/ownd-project-logo.png",
+        "uri": "https://datasign-demo-vci.tunnelto.dev/public/ownd-project-logo.png",
         "alt_text": "a square logo of a OWND Project"
       },
       "background_color": "#12107c",
       "text_color": "#FFFFFF"
     }
   ],
-  "credentials_supported": {
+  "credential_configurations_supported": {
     "IdentityCredential": {
       "format": "vc+sd-jwt",
       "scope": "IdentityIdentification",
       "cryptographic_binding_methods_supported": [
         "jwk"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ES256K"
       ],
-      "proof_types_supported": [
-        "jwt"
-      ],
+            "proof_types_supported": {
+              "jwt": {
+                "proof_signing_alg_values_supported": [
+                  "ES256",
+                  "ES256K"
+                ]
+              }
+            },
       "display": [
         {
           "name": "アイデンティティクレデンシャル",
           "locale": "ja",
           "logo": {},
           "background_color": "#12107c",
-          "background_image": "http://10.0.2.2:3002/images/my-number-card-image.png",
+          "background_image": {"uri": "http://10.0.2.2:3002/images/my-number-card-image.png"},
           "text_color": "#696969"
         },
         {
@@ -203,12 +213,11 @@ object DummyData {
           "locale": "en-US",
           "logo": {},
           "background_color": "#12107c",
-          "background_image": "http://10.0.2.2:3002/images/my-number-card-image.png",
+          "background_image": {"uri": "http://10.0.2.2:3002/images/my-number-card-image.png"},
           "text_color": "#696969"
         }
       ],
-      "credential_definition": {
-        "vct": "IdentityCredential",
+        vct": "IdentityCredential",
         "claims": {
           "first_name": {
             "display": [
@@ -415,7 +424,6 @@ object DummyData {
             ]
           }
         }
-      }
     }
   }
 }
