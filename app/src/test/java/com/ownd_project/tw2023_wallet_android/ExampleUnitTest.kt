@@ -93,9 +93,9 @@ class ExampleUnitTest {
                     "Ed25519Signature2018",
                     data.credentialSigningAlgValuesSupported?.firstOrNull()
                 )
-                assertEquals("VerifiableCredential", data.types.firstOrNull())
+                assertEquals("VerifiableCredential", data.credentialDefinition.type.firstOrNull())
                 // `credentialSubject` フィールドの扱いを修正
-                val givenNameSubject = data.credentialSubject?.get("given_name")
+                val givenNameSubject = data.credentialDefinition.credentialSubject?.get("given_name")
                 val givenNameDisplay = givenNameSubject?.display?.firstOrNull()
                 assertEquals("Given Name", givenNameDisplay?.name)
                 assertEquals("en-US", givenNameDisplay?.locale)
@@ -114,7 +114,8 @@ class ExampleUnitTest {
         val json = this::class.java.classLoader?.getResource("credential_supported_jwt_vc.json")
             ?.readText()
             ?: throw IllegalArgumentException("Cannot read test_data.json")
-        assertCredentialSupported(mapper.readValue(json, CredentialConfiguration::class.java))
+        val parsed = mapper.readValue(json, CredentialConfiguration::class.java)
+        assertCredentialSupported(parsed)
     }
 
     @Test
