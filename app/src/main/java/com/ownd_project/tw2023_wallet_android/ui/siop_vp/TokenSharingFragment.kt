@@ -19,6 +19,7 @@ import com.ownd_project.tw2023_wallet_android.MainActivity
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentIdTokenSharringBinding
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentIssuerDetailBinding
+import com.ownd_project.tw2023_wallet_android.model.ClientInfo
 import com.ownd_project.tw2023_wallet_android.oid.PostResult
 import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential

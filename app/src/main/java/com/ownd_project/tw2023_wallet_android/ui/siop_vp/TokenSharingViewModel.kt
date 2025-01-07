@@ -24,26 +24,16 @@ import com.ownd_project.tw2023_wallet_android.signature.ECPrivateJwk
 import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil
 import com.ownd_project.tw2023_wallet_android.ui.shared.Constants
 import com.ownd_project.tw2023_wallet_android.ui.shared.KeyBindingImpl
-import com.ownd_project.tw2023_wallet_android.utils.CertificateInfo
+import com.ownd_project.tw2023_wallet_android.model.CertificateInfo
 import com.ownd_project.tw2023_wallet_android.utils.CertificateUtil.getCertificateInformation
 import com.google.protobuf.Timestamp
+import com.ownd_project.tw2023_wallet_android.model.ClientInfo
 import com.ownd_project.tw2023_wallet_android.oid.PostResult
 import com.ownd_project.tw2023_wallet_android.ui.shared.JwtVpJsonGeneratorImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
-
-data class ClientInfo(
-    var name: String = "",
-    var url: String = "",
-    var logoUrl: String = "",
-    var policyUrl: String = "",
-    var tosUrl: String = "",
-    var jwkThumbprint: String = "",
-    var identiconHash: Int = 0,
-    var certificateInfo: CertificateInfo = CertificateInfo(null, null, null, null, null, null)
-)
 
 val TAG = IdTokenSharringViewModel::class.simpleName
 
