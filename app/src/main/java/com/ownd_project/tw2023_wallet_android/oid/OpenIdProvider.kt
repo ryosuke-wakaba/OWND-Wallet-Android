@@ -448,7 +448,7 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
     }
 
     client.newCall(request).execute().use { response ->
-        val statusCode = response.code()
+        val statusCode = response.code
         var location = response.header("Location")
         val contentType = response.header("Content-Type")
         val cookies = response.headers("Set-Cookie")
@@ -465,7 +465,7 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
                 location = "${originalUri.scheme}://${originalUri.host}$portPart$location"
             }
         } else if (contentType?.contains("application/json") == true) {
-            response.body()?.string()?.let { body ->
+            response.body?.string()?.let { body ->
                 val mapper = jacksonObjectMapper()
                 val jsonNode = mapper.readTree(body)
                 if (jsonNode.has("redirect_uri")) {

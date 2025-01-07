@@ -258,7 +258,7 @@ object SignatureUtil {
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Failed to download file: $response")
 
-            val responseBody = response.body()?.string() ?: return null
+            val responseBody = response.body?.string() ?: return null
             return convertPemWithDelimitersToX509Certificates(responseBody)
         }
     }

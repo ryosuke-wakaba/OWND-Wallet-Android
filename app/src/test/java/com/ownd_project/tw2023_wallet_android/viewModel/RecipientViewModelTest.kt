@@ -18,6 +18,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -54,7 +55,7 @@ class RecipientViewModelTest {
     }
 
     @Test
-    fun `setTargetHistory sets value in LiveData`() = runBlockingTest {
+    fun `setTargetHistory sets value in LiveData`() = runTest {
         val testData = TestDataUtil.generateHistories()
         val testHistory = testData.itemsList[0]
 
@@ -65,7 +66,7 @@ class RecipientViewModelTest {
     }
 
     @Test
-    fun `sharingHistories is set correctly`() = runBlockingTest {
+    fun `sharingHistories is set correctly`() = runTest {
         viewModel.sharingHistories.observeForever(observerHistories)
 
         val testData = TestDataUtil.generateHistories()
