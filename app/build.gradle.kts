@@ -112,6 +112,7 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.6")
     // compose setting end
 
     implementation("androidx.activity:activity-ktx:1.7.2")

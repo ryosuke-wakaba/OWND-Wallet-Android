@@ -1,27 +1,19 @@
 package com.ownd_project.tw2023_wallet_android.ui.siop_vp
 
-import android.net.Uri
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
 import coil3.compose.AsyncImage
-import com.ownd_project.tw2023_wallet_android.MainActivity
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.model.CertificateInfo
 import com.ownd_project.tw2023_wallet_android.model.ClientInfo
@@ -40,41 +32,39 @@ data class RequestInfo(
     var clientInfo: ClientInfo,
 )
 
-class TokenSharingFragment2 : Fragment() {
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+
+@Composable
+fun RequestContentView(
+    viewModel: IdTokenSharringViewModel,
+    linkOpener: (url: String) -> Unit,
+    nextHandler: () -> Unit
+) {
+    val clientInfo by viewModel.clientInfo.observeAsState()
+    val presentationDefinition by viewModel.presentationDefinition.observeAsState()
+    if (clientInfo !== null) {
         val requestInfo = RequestInfo(
             title = "真偽情報に署名を行い、その情報をBoolcheckに送信します",
             boolValue = true,
             comment = "このXアカウントはXXX本人のものです",
             url = "https://example.com",
-            clientInfo = clientInfo
+            clientInfo = clientInfo!!
         )
-        return ComposeView(requireContext()).apply {
-            setContent {
-                Text("Hello")
-                RequestContent(requestInfo = requestInfo, linkOpener = { url ->
-                    val builder = CustomTabsIntent.Builder()
-                    val customTabsIntent = builder.build()
-                    // Custom Tabs(アプリ内ブラウザ)のキャンセル時にロックさせないため(暫定)
-                    // MainActivityのisLockingをfalseにセット
-                    (activity as? MainActivity)?.setIsLocking(true)
-                    customTabsIntent.launchUrl(requireContext(), Uri.parse(url))
-                }) {
-                    // todo move to next view
-                }
-            }
+        RequestContent(requestInfo = requestInfo, linkOpener = linkOpener) {
+            // todo move to next view
         }
+    } else {
+        Title2("Loading...", modifier = Modifier.padding(8.dp))
     }
 }
 
 val url = "https://datasign.jp/wp-content/themes/ds_corporate/assets/images/datasign_logo_w.png"
 
 @Composable
-fun RequestContent(requestInfo: RequestInfo, linkOpener: (url: String) -> Unit, nextHandler: () -> Unit) {
+fun RequestContent(
+    requestInfo: RequestInfo,
+    linkOpener: (url: String) -> Unit,
+    nextHandler: () -> Unit
+) {
     Column {
         Title2(requestInfo.title, modifier = Modifier.padding(8.dp))
         Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
