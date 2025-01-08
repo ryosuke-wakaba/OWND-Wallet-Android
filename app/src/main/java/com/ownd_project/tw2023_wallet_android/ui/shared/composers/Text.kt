@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 
 
 @Composable
-fun Title2(value: String, modifier: Modifier) {
+fun Title2Text(value: String, modifier: Modifier) {
     val isDarkTheme = isSystemInDarkTheme()
     val textColor = if (isDarkTheme) Color.White else Color.Black
     Text(
@@ -30,7 +30,7 @@ fun Title2(value: String, modifier: Modifier) {
 }
 
 @Composable
-fun Title3(value: String, modifier: Modifier) {
+fun Title3Text(value: String, modifier: Modifier) {
     val isDarkTheme = isSystemInDarkTheme()
     val textColor = if (isDarkTheme) Color.White else Color.Black
     Text(
@@ -45,7 +45,22 @@ fun Title3(value: String, modifier: Modifier) {
 }
 
 @Composable
-fun BodyEmphasized(value: String, modifier: Modifier) {
+fun BodyText(value: String, modifier: Modifier) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    Text(
+        value,
+        style = TextStyle(
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Normal,
+            color = textColor,
+            lineHeight = 22.sp
+        ), modifier = modifier
+    )
+}
+
+@Composable
+fun BodyEmphasizedText(value: String, modifier: Modifier) {
     val isDarkTheme = isSystemInDarkTheme()
     val textColor = if (isDarkTheme) Color.White else Color.Black
     Text(
@@ -60,7 +75,7 @@ fun BodyEmphasized(value: String, modifier: Modifier) {
 }
 
 @Composable
-fun Callout(value: String, modifier: Modifier = Modifier) {
+fun CalloutText(value: String, modifier: Modifier = Modifier) {
     val isDarkTheme = isSystemInDarkTheme()
     val textColor = if (isDarkTheme) Color.White else Color.Black
     Text(
@@ -75,7 +90,7 @@ fun Callout(value: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SubHeadLine(value: String, modifier: Modifier) {
+fun SubHeadLineText(value: String, modifier: Modifier) {
     Text(
         value,
         style = TextStyle(
@@ -88,7 +103,7 @@ fun SubHeadLine(value: String, modifier: Modifier) {
 }
 
 @Composable
-fun Caption1(value: String, modifier: Modifier) {
+fun Caption1Text(value: String, modifier: Modifier) {
     val isDarkTheme = isSystemInDarkTheme()
     val textColor = if (isDarkTheme) Color.White else Color.DarkGray
     Text(
@@ -102,38 +117,65 @@ fun Caption1(value: String, modifier: Modifier) {
     )
 }
 
+@Composable
+fun FootnoteText(value: String, modifier: Modifier) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val textColor = if (isDarkTheme) Color.LightGray else Color.Gray
+    Text(
+        value,
+        style = TextStyle(
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Normal,
+            color = textColor,
+            lineHeight = 18.sp
+        ), modifier = modifier
+    )
+}
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewTitle2() {
-    Title2("title2", modifier = Modifier.padding(4.dp))
+    Title2Text("title2", modifier = Modifier.padding(4.dp))
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewTitle3() {
-    Title3("title3", modifier = Modifier.padding(4.dp))
+    Title3Text("title3", modifier = Modifier.padding(4.dp))
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewBody() {
+    BodyText("Body", modifier = Modifier.padding(4.dp))
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewBodyEmphasized() {
-    BodyEmphasized("Body", modifier = Modifier.padding(4.dp))
+    BodyEmphasizedText("Body", modifier = Modifier.padding(4.dp))
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewCallout() {
-    Callout("Callout", modifier = Modifier.padding(4.dp))
+    CalloutText("Callout", modifier = Modifier.padding(4.dp))
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewSubHeadLine() {
-    SubHeadLine("SubHeadline", modifier = Modifier.padding(4.dp))
+    SubHeadLineText("SubHeadline", modifier = Modifier.padding(4.dp))
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewCaption1() {
-    Caption1("Caption1", modifier = Modifier.padding(4.dp))
+    Caption1Text("Caption1", modifier = Modifier.padding(4.dp))
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewFootnote() {
+    FootnoteText("Footnote", modifier = Modifier.padding(4.dp))
 }

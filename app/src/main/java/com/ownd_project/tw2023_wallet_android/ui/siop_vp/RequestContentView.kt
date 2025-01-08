@@ -18,9 +18,9 @@ import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.model.CertificateInfo
 import com.ownd_project.tw2023_wallet_android.model.ClientInfo
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.FilledButton
-import com.ownd_project.tw2023_wallet_android.ui.shared.composers.SubHeadLine
-import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Title2
-import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Title3
+import com.ownd_project.tw2023_wallet_android.ui.shared.composers.SubHeadLineText
+import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Title2Text
+import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Title3Text
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Verifier
 
 data class RequestInfo(
@@ -53,7 +53,7 @@ fun RequestContentView(
             // todo move to next view
         }
     } else {
-        Title2("Loading...", modifier = Modifier.padding(8.dp))
+        Title2Text("Loading...", modifier = Modifier.padding(8.dp))
     }
 }
 
@@ -66,7 +66,7 @@ fun RequestContent(
     nextHandler: () -> Unit
 ) {
     Column {
-        Title2(requestInfo.title, modifier = Modifier.padding(8.dp))
+        Title2Text(requestInfo.title, modifier = Modifier.padding(8.dp))
         Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Image(
                 painter = painterResource(R.drawable.logo_owned),
@@ -90,18 +90,18 @@ fun RequestContent(
                     .padding(8.dp)
             )
         }
-        Title3("署名をする内容", modifier = Modifier.padding(8.dp))
-        SubHeadLine(
+        Title3Text("署名をする内容", modifier = Modifier.padding(8.dp))
+        SubHeadLineText(
             "URL: ${requestInfo.url}",
             modifier = Modifier.padding(start = 8.dp)
         )
-        SubHeadLine(
+        SubHeadLineText(
             "真偽ステータス: ${if (requestInfo.boolValue) "真" else "偽"}",
             modifier = Modifier.padding(start = 8.dp)
         )
-        SubHeadLine("コメント: ${requestInfo.comment}", modifier = Modifier.padding(start = 8.dp))
+        SubHeadLineText("コメント: ${requestInfo.comment}", modifier = Modifier.padding(start = 8.dp))
 
-        SubHeadLine("提供先組織情報 ", modifier = Modifier.padding(start = 8.dp, top = 16.dp))
+        SubHeadLineText("提供先組織情報 ", modifier = Modifier.padding(start = 8.dp, top = 16.dp))
         Verifier(requestInfo.clientInfo, linkOpener = linkOpener)
         FilledButton("次へ", onClick = nextHandler)
     }

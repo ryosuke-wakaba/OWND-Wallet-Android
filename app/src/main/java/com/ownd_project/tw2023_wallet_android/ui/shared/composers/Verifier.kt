@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
@@ -41,7 +42,7 @@ import com.ownd_project.tw2023_wallet_android.model.ClientInfo
 
 @Composable
 fun ListItem(label: String, value: String?, onClick: ((url: String) -> Unit)? = null) {
-    SubHeadLine(
+    SubHeadLineText(
         value = label,
         modifier = Modifier
             .padding(start = 8.dp, top = 8.dp)
@@ -54,7 +55,7 @@ fun ListItem(label: String, value: String?, onClick: ((url: String) -> Unit)? = 
             modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 8.dp)
         )
     } else {
-        Callout(
+        CalloutText(
             value = value ?: "",
             modifier = Modifier
                 .padding(start = 8.dp, top = 4.dp, bottom = 8.dp)
@@ -93,7 +94,7 @@ fun Verifier(
                     .padding(8.dp)
                     .weight(1f)
             ) { // 残りスペースを埋める
-                BodyEmphasized(
+                BodyEmphasizedText(
                     value = clientInfo.name,
                     modifier = Modifier.padding(8.dp, bottom = 0.dp)
                 )
@@ -105,7 +106,7 @@ fun Verifier(
                             .size(20.dp)
                             .padding(start = 8.dp)
                     )
-                    Caption1(
+                    Caption1Text(
                         value = certInfo.issuer?.organization ?: "invalid organization",
                         modifier = Modifier.padding(4.dp)
                     )
@@ -137,12 +138,14 @@ fun Verifier(
         )
         val displayedItems = if (isExpanded.value) items else items.take(1)
         LazyColumn {
-            items(displayedItems) { item ->
+            itemsIndexed(displayedItems) { index, item ->
                 ListItem(item.first, item.second, onClick = item.third)
-                Divider(
-                    color = Color.LightGray,
-                    thickness = 1.dp,
-                )
+                if (index + 1 < displayedItems.size) {
+                    Divider(
+                        color = Color.LightGray,
+                        thickness = 1.dp,
+                    )
+                }
             }
         }
     }
