@@ -74,8 +74,8 @@ fun CertificateSelection(
             itemContent = { item ->
                 Column {
                     if (item.useCredential) {
-                        CalloutText(item.name)
-                        CalloutText("発行者: ${item.issuer}")
+                        CalloutText(item.name, modifier = Modifier.padding(top = 8.dp))
+                        CalloutText("発行者: ${item.issuer}", modifier = Modifier.padding(bottom = 8.dp))
                     } else {
                         CalloutText("証明書を選択せず投稿する")
                     }
