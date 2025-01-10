@@ -28,24 +28,29 @@ open class CertificateSelectionViewModel() : ViewModel() {
                 val objectMapper = jacksonObjectMapper()
                 val items = schema?.itemsList
                 if (items !== null) {
-                    val infos = items.map {
-                        val metadata: CredentialIssuerMetadata = objectMapper.readValue(
-                            it.credentialIssuerMetadata,
-                            CredentialIssuerMetadata::class.java
-                        )
+                    val infos = items.mapNotNull {
                         val credential = it.credential
                         val format = it.format
                         val types =
                             MetadataUtil.extractTypes(format, credential)
-                        val credentialSupported = metadata.credentialsSupported[types.firstOrNull()]
-                        // val displayData = credentialSupported?.display?.firstOrNull()
-                        val displayData = credentialSupported?.display?.let { display ->
-                            getLocalizedDisplayName(display)
+                        if (types.contains("CommentCredential")) {
+                            // filter comment vc
+                            null
+                        } else {
+                            val metadata: CredentialIssuerMetadata = objectMapper.readValue(
+                                it.credentialIssuerMetadata,
+                                CredentialIssuerMetadata::class.java
+                            )
+                            val credentialSupported = metadata.credentialsSupported[types.firstOrNull()]
+                            // val displayData = credentialSupported?.display?.firstOrNull()
+                            val displayData = credentialSupported?.display?.let { display ->
+                                getLocalizedDisplayName(display)
+                            }
+                            CredentialInfo(
+                                name = displayData ?: "Metadata not found",
+                                issuer = it.iss
+                            )
                         }
-                        CredentialInfo(
-                            name = displayData ?: "Metadata not found",
-                            issuer = it.iss
-                        )
                     }.toMutableList()
                     infos.add(CredentialInfo(useCredential = false))
                     setCredentialData(infos)

@@ -25,10 +25,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import com.ownd_project.tw2023_wallet_android.TestActivity
 import com.ownd_project.tw2023_wallet_android.utils.generateEcKeyPair
+import com.ownd_project.tw2023_wallet_android.utils.generateRsaKeyPair
 import com.ownd_project.tw2023_wallet_android.utils.publicKeyToJwk
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 import java.security.interfaces.ECPrivateKey
 import java.security.interfaces.ECPublicKey
+import java.security.interfaces.RSAPrivateKey
 import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
@@ -42,6 +44,7 @@ class CertificateSelectionFragmentTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val credentialDataStore = CredentialDataStore.getInstance(context)
 
+        // -------------- sd-jwt ------------------
         // スネークケースのオリジナルを一度シリアライズしてからデシリアライズしてキャメルケースで保存させる
         val mapper = jacksonObjectMapper().apply {
             propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
@@ -49,20 +52,36 @@ class CertificateSelectionFragmentTest {
         val sdJwtMetadataStr =
             jacksonObjectMapper().writeValueAsString(mapper.readValue(json, CredentialIssuerMetadata::class.java))
         val sdJwtCredential = generateSdJwtCredential()
-        val testCredential = CredentialData.newBuilder()
+        val testCredential1 = CredentialData.newBuilder()
             .setId("test-id")
             .setFormat("vc+sd-jwt")
             .setCredential(sdJwtCredential)
             .setIss("https://event.company/issuers/565049")
             .setIat(123456789L)
             .setExp(987654321L)
-            .setType("EmployeeCredential")
+            .setType("OrganizationalAffiliationCertificate")
             .setCredentialIssuerMetadata(sdJwtMetadataStr)
             .build()
+
+        // -------------- jwt-vc-json ------------------
+        val vcJwtCredential = generateVCJwtCredential()
+        val testCredential2 = CredentialData.newBuilder()
+            .setId("test-id2")
+            .setFormat("jwt_vc_json")
+            .setCredential(vcJwtCredential)
+            .setIss("me")
+            .setIat(123456789L)
+            .setExp(987654321L)
+            .setType("CommentCredential")
+            .setCredentialIssuerMetadata("dummy-metadata")
+            .build()
+
         runBlocking {
             credentialDataStore.deleteAllCredentials()
-            credentialDataStore.saveCredentialData(testCredential)
+            credentialDataStore.saveCredentialData(testCredential1)
+            credentialDataStore.saveCredentialData(testCredential2)
         }
+
         val scenario = launchFragmentInContainer<CertificateSelectionFragment>()
         scenario.onFragment { fragment ->
             fragment.viewModel.setCredentialDataStore(credentialDataStore)
@@ -71,9 +90,9 @@ class CertificateSelectionFragmentTest {
         composeTestRule.onNodeWithTag("title").assertIsDisplayed()
         val currentLocale = Locale.getDefault().toLanguageTag()
         if (currentLocale == "en-US") {
-            composeTestRule.onNodeWithText("Employee Credential").assertIsDisplayed()
+            composeTestRule.onNodeWithText("Organizational Affiliation Credential").assertIsDisplayed()
         } else {
-            composeTestRule.onNodeWithText("社員証明書").assertIsDisplayed()
+            composeTestRule.onNodeWithText("組織所属証明書").assertIsDisplayed()
         }
     }
 
@@ -94,11 +113,45 @@ class CertificateSelectionFragmentTest {
         val issuerSignedJwt = JWT.create().withIssuer("https://client.example.org/cb")
             .withAudience("https://server.example.com")
             .withClaim("cnf", cnf)
-            .withClaim("vct", "EmployeeCredential")
+            .withClaim("vct", "OrganizationalAffiliationCertificate")
             .withClaim("_sd", (claims["_sd"] as List<*>))
             .sign(algorithm)
         return "$issuerSignedJwt~${disclosures.joinToString("~") { it.disclosure }}"
     }
+}
+
+private fun generateVCJwtCredential(): String {
+    val keyPair = generateRsaKeyPair()
+    val algorithm = when (keyPair.private) {
+        is RSAPrivateKey -> Algorithm.RSA256(null, keyPair.private as RSAPrivateKey)
+        is ECPrivateKey -> Algorithm.ECDSA256(null, keyPair.private as ECPrivateKey)
+        else -> throw IllegalArgumentException("未サポートの秘密鍵のタイプです。")
+    }
+
+    val type = listOf<String>("VerifiableCredential", "CommentCredential")
+    val context = listOf<String>(
+        "https://www.w3.org/ns/credentials/v2",
+        "https://www.w3.org/ns/credentials/examples/v2"
+    )
+    return JWT.create()
+        .withIssuer("me") // iss
+        .withJWTId("http://event.company/credentials/3732") // jti
+        .withSubject("did:example:ebfeb1f712ebc6f1c276e12ec21") // sub
+        .withClaim(
+            "vc", mapOf(
+                "@context" to context,
+                "id" to "http://event.company/credentials/3732",
+                "type" to type,
+                "issuer" to "https://event.company/issuers/565049",
+                "validFrom" to "2010-01-01T00:00:00Z",
+                "credentialSubject" to mapOf(
+                    "url" to "https://example.com",
+                    "bool_value" to 1,
+                    "comment" to "test comment"
+                )
+            )
+        )
+        .sign(algorithm)
 }
 
 val json = """
@@ -133,9 +186,9 @@ val json = """
     }
   ],
   "credentials_supported": {
-    "EmployeeCredential": {
+    "OrganizationalAffiliationCertificate": {
       "format": "vc+sd-jwt",
-      "scope": "EmployeeIdentification",
+      "scope": "OrganizationalAffiliationCertificate",
       "cryptographic_binding_methods_supported": [
         "did"
       ],
@@ -143,14 +196,8 @@ val json = """
         "ES256K"
       ],
       "credential_definition": {
-        "vct": "EmployeeCredential",
+        "vct": "OrganizationalAffiliationCertificate",
         "claims": {
-          "employee_no": {
-            "display": [
-              { "name": "Employee No", "locale": "en-US" },
-              { "name": "社員番号", "locale": "ja-JP" }
-            ]
-          },
           "given_name": {
             "display": [
               { "name": "Given Name", "locale": "en-US" },
@@ -179,7 +226,7 @@ val json = """
       },
       "display": [
         {
-          "name": "Employee Credential",
+          "name": "Organizational Affiliation Credential",
           "locale": "en-US",
           "logo": {
             "url": "https://datasign.jp/id/logo.png",
@@ -189,7 +236,7 @@ val json = """
           "text_color": "#FFFFFF"
         },
         {
-          "name": "社員証明書",
+          "name": "組織所属証明書",
           "locale": "ja",
           "logo": {
             "url": "https://datasign.jp/id/logo.png",
