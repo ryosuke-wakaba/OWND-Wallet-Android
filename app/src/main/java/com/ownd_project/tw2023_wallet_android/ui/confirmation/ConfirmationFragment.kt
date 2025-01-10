@@ -17,7 +17,7 @@ import com.bumptech.glide.Glide
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentConfirmationBinding
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
-import com.ownd_project.tw2023_wallet_android.ui.pin_input.PinInputBottomSheetFragment
+import com.ownd_project.tw2023_wallet_android.ui.tx_code_input.TxCodeInputBottomSheetFragment
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 import com.ownd_project.tw2023_wallet_android.vci.IssuerCredentialSubjectMap
 import java.util.Locale
@@ -69,21 +69,21 @@ class ConfirmationFragment : Fragment() {
         val parameterValue = arguments?.getString("parameterValue")
         parameterValue?.let {
             viewModel.fetchMetadata(it)
-            viewModel.checkIfPinIsRequired(it)
+            viewModel.checkIfTxCodeIsRequired(it)
         }
 
         binding.buttonIssue.setOnClickListener {
-            viewModel.isPinRequired.observe(viewLifecycleOwner) { isPinRequired ->
-                if (isPinRequired) {
+            viewModel.isTxCodeRequired.observe(viewLifecycleOwner) { isTxCodeRequired ->
+                if (isTxCodeRequired) {
                     // PinInputBottomSheetFragmentを表示する
-                    val pinInputFragment = PinInputBottomSheetFragment.newInstance(parameterValue!!)
-                    pinInputFragment.listener =
-                        object : PinInputBottomSheetFragment.PinInputListener {
-                            override fun onPinEntered(pin: String) {
-                                viewModel.sendRequest(requireContext(), pin)
+                    val txCodeInputFragment = TxCodeInputBottomSheetFragment.newInstance(parameterValue!!)
+                    txCodeInputFragment.listener =
+                        object : TxCodeInputBottomSheetFragment.TxCodeInputListener {
+                            override fun onTxCodeEntered(txCode: String) {
+                                viewModel.sendRequest(requireContext(), txCode)
                             }
                         }
-                    pinInputFragment.show(parentFragmentManager, "PinInputBottomSheet")
+                    txCodeInputFragment.show(parentFragmentManager, "TxCodeInputBottomSheet")
                 } else {
                     // PINコードが不要な場合、通常の処理を行う
                     viewModel.sendRequest(requireContext())

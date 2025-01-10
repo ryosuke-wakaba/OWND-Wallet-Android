@@ -11,6 +11,7 @@ import com.ownd_project.tw2023_wallet_android.vci.IssuerCredentialSubjectMap
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.ownd_project.tw2023_wallet_android.vci.TxCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -158,10 +159,11 @@ class ExampleUnitTest {
 
 
     @Test
-    fun deserialize_json_credential_offer() {
-        val json = this::class.java.classLoader?.getResource("credential_offer.json")
+    fun deserialize_json_credential_offer1() {
+        val fileName = "credential_offer1.json"
+        val json = this::class.java.classLoader?.getResource(fileName)
             ?.readText()
-            ?: throw IllegalArgumentException("Cannot read credential_offer.json")
+            ?: throw IllegalArgumentException("Cannot read $fileName")
         val credentialOffer = mapper.readValue(json, CredentialOffer::class.java)
         assertEquals("https://datasign-demo-vci.tunnelto.dev", credentialOffer.credentialIssuer)
 
@@ -173,25 +175,42 @@ class ExampleUnitTest {
         val grants = credentialOffer.grants
         assertEquals("eyJhbGciOiJSU0Et...FYUaBy", grants?.authorizationCode?.issuerState)
         assertEquals("adhjhdjajkdkhjhdj", grants?.urnIetfParams?.preAuthorizedCode)
-        assertEquals(true, grants?.urnIetfParams?.userPinRequired)
+        assertEquals(TxCode(null, null, null), grants?.urnIetfParams?.txCode)
+    }
 
+    @Test
+    fun deserialize_json_credential_offer2() {
+        val fileName = "credential_offer2.json"
+        val json = this::class.java.classLoader?.getResource(fileName)
+            ?.readText()
+            ?: throw IllegalArgumentException("Cannot read $fileName")
+        val credentialOffer = mapper.readValue(json, CredentialOffer::class.java)
+        assertEquals("https://datasign-demo-vci.tunnelto.dev", credentialOffer.credentialIssuer)
+
+        val credentials = credentialOffer.credentials
+        assertTrue("Credentials list should have at least one element", credentials.isNotEmpty())
+
+        assertEquals("UniversityDegreeCredential", credentials[0])
+
+        val grants = credentialOffer.grants
+        assertEquals("eyJhbGciOiJSU0Et...FYUaBy", grants?.authorizationCode?.issuerState)
+        assertEquals("adhjhdjajkdkhjhdj", grants?.urnIetfParams?.preAuthorizedCode)
+        assertEquals(null, grants?.urnIetfParams?.txCode)
     }
 
     @Test
     fun deserialize_json() {
-        val json = """
-    {
-      "authorization_code": { "issuer_state": "foo" },
-      "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
-        "pre-authorized_code": "12345",
-        "user_pin_required": true
-      }
-    }
-    """
+        val fileName = "grant.json"
+        val json = this::class.java.classLoader?.getResource(fileName)
+            ?.readText()
+            ?: throw IllegalArgumentException("Cannot read $fileName")
 
         val grant: Grant = mapper.readValue(json, Grant::class.java)
         assertEquals("foo", grant.authorizationCode?.issuerState)
         assertEquals("12345", grant.urnIetfParams?.preAuthorizedCode)
-        assertEquals(true, grant.urnIetfParams?.userPinRequired)
+        val txCodeDecoded = grant.urnIetfParams?.txCode
+        assertEquals(4, txCodeDecoded?.length)
+        assertEquals("numeric", txCodeDecoded?.inputMode)
+        assertEquals("Please provide the one-time code that was sent via e-mail", txCodeDecoded?.description)
     }
 }

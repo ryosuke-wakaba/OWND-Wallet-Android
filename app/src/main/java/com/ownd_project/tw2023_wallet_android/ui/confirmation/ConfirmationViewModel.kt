@@ -103,21 +103,21 @@ class ConfirmationViewModel() :
     private val _vct = MutableLiveData<String>()
     val vct: LiveData<String> = _vct
 
-    private val _isPinRequired = MutableLiveData<Boolean>()
-    val isPinRequired: LiveData<Boolean> = _isPinRequired
+    private val _isTxCodeRequired = MutableLiveData<Boolean>()
+    val isTxCodeRequired: LiveData<Boolean> = _isTxCodeRequired
 
-    fun checkIfPinIsRequired(credentialOffer: String) {
+    fun checkIfTxCodeIsRequired(credentialOffer: String) {
         val jsonObject = JSONObject(credentialOffer)
         val grants = jsonObject.getJSONObject("grants")
         val preAuthCodeInfo =
             grants.getJSONObject("urn:ietf:params:oauth:grant-type:pre-authorized_code")
-        val userPinRequired = preAuthCodeInfo.getBoolean("user_pin_required")
+        val txCodeRequired = !(preAuthCodeInfo.isNull("tx_code"))
 
-        _isPinRequired.value = userPinRequired
+        _isTxCodeRequired.value = txCodeRequired
     }
 
-    private val _pinError = MutableLiveData<String?>()
-    val pinError: LiveData<String?> = _pinError
+    private val _txCodeError = MutableLiveData<String?>()
+    val txCodeError: LiveData<String?> = _txCodeError
 
     private var credentialIssuer: String = ""
     private var tokenEndpoint: String? = null
@@ -248,13 +248,13 @@ class ConfirmationViewModel() :
     }
 
 
-    fun sendRequest(context: Context, userPin: String? = null) {
+    fun sendRequest(context: Context, txCode: String? = null) {
         viewModelScope.launch(Dispatchers.IO) {
             val vciClient = VCIClient()
 
             try {
                 val tokenResponse =
-                    vciClient.postTokenRequest(tokenEndpoint!!, preAuthCode!!, userPin)
+                    vciClient.postTokenRequest(tokenEndpoint!!, preAuthCode!!, txCode)
                 val isProofRequired = tokenResponse?.cNonce != null
 
                 val isKeyPairExist =
@@ -327,14 +327,14 @@ class ConfirmationViewModel() :
             } catch (e: IOException) {
                 // エラー時の処理
                 println(e)
-                _pinError.postValue("PINコードが間違っています。")
+                _txCodeError.postValue("PINコードが間違っています。")
                 _errorMessage.postValue("エラーが発生しました: ${e.message}")
             }
         }
     }
 
-    fun resetPinError() {
-        _pinError.value = null
+    fun resetTxCodeError() {
+        _txCodeError.value = null
     }
 
     fun resetErrorMessage() {

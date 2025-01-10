@@ -65,7 +65,7 @@ class VCIClient() {
     fun postTokenRequest(
         url: String,
         preAuthCode: String,
-        userPin: String? = null,
+        txCode: String? = null,
     ): TokenResponse? {
         val objectMapper = jacksonObjectMapper()
         objectMapper.propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
@@ -75,8 +75,8 @@ class VCIClient() {
             .add("pre-authorized_code", preAuthCode)
 
         // userPinが提供されている場合は、リクエストボディに追加(Pre-Authorized Code Flow)
-        if (userPin != null) {
-            formBodyBuilder.add("user_pin", userPin)
+        if (txCode != null) {
+            formBodyBuilder.add("tx_code", txCode)
         }
 
         val formBody = formBodyBuilder.build()

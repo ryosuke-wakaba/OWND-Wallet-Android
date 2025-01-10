@@ -224,10 +224,16 @@ data class GrantAuthorizationCode(
     val issuerState: String?,
 )
 
+data class TxCode(
+    val inputMode: String?,
+    val length: Int?,
+    val description: String?
+)
+
 data class GrantUrnIetf(
     @JsonProperty("pre-authorized_code")
     val preAuthorizedCode: String,
-    val userPinRequired: Boolean,
+    val txCode: TxCode?,
 )
 
 data class Grant(
