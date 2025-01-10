@@ -40,6 +40,7 @@ fun CustomRadioButton(
         selected = selected,
         onClick = onClick,
         colors = RadioButtonDefaults.colors(
+            selectedColor = if (isDarkTheme) Color(94, 92, 230) else Color(88, 86, 214),
             unselectedColor = if (isDarkTheme) Color.Gray else Color.DarkGray,
             disabledColor = if (isDarkTheme) Color.Gray else Color.LightGray
         )
