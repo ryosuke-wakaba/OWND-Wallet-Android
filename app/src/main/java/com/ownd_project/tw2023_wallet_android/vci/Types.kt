@@ -244,6 +244,6 @@ data class Grant(
 
 data class CredentialOffer(
     val credentialIssuer: String,
-    val credentials: List<String>,
+    val credentialConfigurationIds: List<String>,
     val grants: Grant?,
 )

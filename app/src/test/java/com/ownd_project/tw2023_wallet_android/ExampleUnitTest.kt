@@ -167,7 +167,7 @@ class ExampleUnitTest {
         val credentialOffer = mapper.readValue(json, CredentialOffer::class.java)
         assertEquals("https://datasign-demo-vci.tunnelto.dev", credentialOffer.credentialIssuer)
 
-        val credentials = credentialOffer.credentials
+        val credentials = credentialOffer.credentialConfigurationIds
         assertTrue("Credentials list should have at least one element", credentials.isNotEmpty())
 
         assertEquals("UniversityDegreeCredential", credentials[0])
@@ -187,7 +187,7 @@ class ExampleUnitTest {
         val credentialOffer = mapper.readValue(json, CredentialOffer::class.java)
         assertEquals("https://datasign-demo-vci.tunnelto.dev", credentialOffer.credentialIssuer)
 
-        val credentials = credentialOffer.credentials
+        val credentials = credentialOffer.credentialConfigurationIds
         assertTrue("Credentials list should have at least one element", credentials.isNotEmpty())
 
         assertEquals("UniversityDegreeCredential", credentials[0])

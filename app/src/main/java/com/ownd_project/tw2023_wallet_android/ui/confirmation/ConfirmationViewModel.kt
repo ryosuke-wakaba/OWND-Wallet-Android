@@ -191,7 +191,7 @@ class ConfirmationViewModel() :
                 when (credentialSupported) {
                     is CredentialConfigurationJwtVcJson -> {
                         _format.value = "jwt_vc_json"
-                        val firstCredential = credentialOffer.credentials.firstOrNull()
+                        val firstCredential = credentialOffer.credentialConfigurationIds.firstOrNull()
 
                         if (credentialSupported.credentialDefinition.type.contains(firstCredential)) {
                             _vct.value = firstCredential ?: ""
@@ -205,7 +205,7 @@ class ConfirmationViewModel() :
 
                     is CredentialConfigurationVcSdJwt -> {
                         _format.value = "vc+sd-jwt"
-                        val firstCredential = credentialOffer.credentials.firstOrNull()
+                        val firstCredential = credentialOffer.credentialConfigurationIds.firstOrNull()
 
                         if (credentialSupported.vct == firstCredential) {
                             _vct.value = firstCredential ?: ""
