@@ -15,9 +15,11 @@ import com.ownd_project.tw2023_wallet_android.ui.shared.Constants
 import com.ownd_project.tw2023_wallet_android.utils.CredentialRequest
 import com.ownd_project.tw2023_wallet_android.utils.CredentialRequestJwtVc
 import com.ownd_project.tw2023_wallet_android.utils.CredentialRequestSdJwtVc
+import com.ownd_project.tw2023_wallet_android.utils.InvalidCredentialResponseException
 import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
 import com.ownd_project.tw2023_wallet_android.utils.Proof
 import com.ownd_project.tw2023_wallet_android.utils.TokenErrorResponseException
+import com.ownd_project.tw2023_wallet_android.utils.UnsupportedIssuanceFlow
 import com.ownd_project.tw2023_wallet_android.utils.VCIClient
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 import com.ownd_project.tw2023_wallet_android.vci.CredentialOffer
@@ -277,16 +279,15 @@ class ConfirmationViewModel() :
                 if (_format.value == "vc+sd-jwt") {
                     credentialRequest = CredentialRequestSdJwtVc(
                         format = format.value!!,
-                        credentialDefinition = mapOf("vct" to "${vct.value}"),
-                        proof = proofJwt
+                        vct = vct.value,
+                        proof = proofJwt,
                     )
                 } else {
                     credentialRequest = CredentialRequestJwtVc(
                         format = format.value!!,
                         proof = proofJwt ,
                         credentialDefinition = mapOf(
-                            "type" to listOf(vct.value),
-                            "credentialSubject" to mapOf<String, Any>()
+                            "type" to listOf(vct.value)
                             ),
                     )
                 }
@@ -295,12 +296,15 @@ class ConfirmationViewModel() :
                     credentialEndpoint!!, credentialRequest, tokenResponse?.accessToken!!
                 )
 
-                val basicInfo = credentialResponse?.let {
-                    if (_format.value == "vc+sd-jwt")
-                        extractSDJwtInfo(it.credential, format.value!!)
-                    else
-                        extractJwtVcJsonInfo(it.credential, format.value!!)
+                if (credentialResponse.isDeferredIssuance() || credentialResponse.credential == null) {
+                    throw UnsupportedIssuanceFlow("Deferred Issuance is not supported currently")
                 }
+
+                val basicInfo =
+                    if (_format.value == "vc+sd-jwt")
+                        extractSDJwtInfo(credentialResponse.credential, format.value!!)
+                    else
+                        extractJwtVcJsonInfo(credentialResponse.credential, format.value!!)
 
                 val credentialIssuerMetadataStr =
                     jacksonObjectMapper().writeValueAsString(credentialIssuerMetadata.value)
@@ -308,8 +312,9 @@ class ConfirmationViewModel() :
 
                 // Protobufのスキーマを使用してCredentialDataを直接作成
                 val vcData = credentialDataStore?.responseToSchema(
-                    credentialResponse = credentialResponse!!,
-                    credentialBasicInfo = basicInfo!!,
+                    format = format.value!!,
+                    credentialResponse = credentialResponse,
+                    credentialBasicInfo = basicInfo,
                     credentialIssuerMetadata = credentialIssuerMetadataStr
                 )
 
@@ -324,6 +329,11 @@ class ConfirmationViewModel() :
                 val res = e.errorResponse
                 _errorMessage.postValue("${res.error}, ${res.errorDescription} ")
                 // todo 内部的なエラー情報としてerror responseを渡して、フラグメント側でstring valuesに事前に用意したエラーメッセージと対応させて表示する
+            } catch(e: InvalidCredentialResponseException) {
+                println(e)
+                _errorMessage.postValue("サーバーの応答を解釈できません: ${e.message}")
+            }catch (e: UnsupportedIssuanceFlow){
+                _errorMessage.postValue("サポートしていない発行フローです")
             } catch (e: IOException) {
                 // エラー時の処理
                 println(e)

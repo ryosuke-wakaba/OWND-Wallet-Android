@@ -22,34 +22,67 @@ data class TokenResponse(
 )
 
 data class CredentialResponse(
-    val format: String,
-    val credential: String,
+    val credential: String? = null,
+    val transactionId: String? = null,
     val cNonce: String? = null,
     val cNonceExpiresIn: Int? = null,
-)
+    val notificationId: String?
+){
+    init{
+        if (credential == null && transactionId == null) {
+            throw InvalidCredentialResponseException("Either credential or transactionId must be provided")
+        }
+    }
 
+    fun isDeferredIssuance(): Boolean{
+       return transactionId != null
+    }
+}
 
-abstract class CredentialRequest(
-    open val format: String,
-    open val proof: Proof? = null
-)
+class UnsupportedIssuanceFlow(
+    message: String
+) : Exception(message)
+
+class InvalidCredentialResponseException(
+    message: String
+) : Exception(message)
+
 
 class TokenErrorResponseException(val errorResponse: TokenErrorResponse) :
     Exception("Error: ${errorResponse.error}, Description: ${errorResponse.errorDescription}")
+
+data class CredentialRequestCredentialResponseEncryption(
+    val alg: String,
+    val enc: String
+    // TODO: Add the JWK property with the appropriate data type
+    // val jwk: ...
+)
+
+abstract class CredentialRequest(
+    open val format: String,
+    open val proof: Proof? = null,
+    open val credentialIdentifier: String? = null,
+    open val credentialResponseEncryption: CredentialRequestCredentialResponseEncryption? = null
+)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class CredentialRequestSdJwtVc(
     override @JsonProperty("format")val format: String,
     override @JsonProperty("proof") val proof: Proof?,
-    @JsonProperty("credential_definition")
-    // todo: Improve the precision of type definitions.
-    val credentialDefinition: Map<String, String>,
+    override @JsonProperty("credential_identifier")val credentialIdentifier: String? = null,
+    override @JsonProperty("credential_response_encryption")val credentialResponseEncryption: CredentialRequestCredentialResponseEncryption? = null,
+
+    val vct: String?,
+    val claims: Map<String, Any>? = null
 ): CredentialRequest(format, proof)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class CredentialRequestJwtVc(
     override val format: String,
     override val proof: Proof? = null,
+    override @JsonProperty("credential_identifier")val credentialIdentifier: String? = null,
+    override @JsonProperty("credential_response_encryption")val credentialResponseEncryption: CredentialRequestCredentialResponseEncryption? = null,
+
     @JsonProperty("credential_definition")
     // todo: Improve the precision of type definitions.
     val credentialDefinition: Map<String, Any>,
@@ -105,7 +138,7 @@ class VCIClient() {
 
     fun postCredentialRequest(
         url: String, credentialRequest: CredentialRequest, accessToken: String,
-    ): CredentialResponse? {
+    ): CredentialResponse {
 
         val objectMapper = jacksonObjectMapper()
         objectMapper.propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
@@ -133,7 +166,7 @@ class VCIClient() {
                 return@use credentialResponse
             } catch (e: JSONException) {
                 println("Failed to parse JSON: $e")
-                return@use null
+                throw InvalidCredentialResponseException("Failed to parse JSON as CredentialResponse: ${e.message}")
             }
         }
     }
