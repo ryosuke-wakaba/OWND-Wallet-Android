@@ -74,11 +74,15 @@ open class Display(
     open val locale: String? = null,
 )
 
+data class BackgroundImage(
+    val uri: String?
+)
+
 data class CredentialsSupportedDisplay(
     val logo: ImageInfo? = null,
     val description: String? = null,
     val backgroundColor: String? = null,
-    val backgroundImage: String? = null,
+    val backgroundImage: BackgroundImage? = null,
     val textColor: String? = null,
     override val name: String? = null,
     override val locale: String? = null,
