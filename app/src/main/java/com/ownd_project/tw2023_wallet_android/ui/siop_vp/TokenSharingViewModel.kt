@@ -265,7 +265,7 @@ class IdTokenSharringViewModel : ViewModel() {
                         IdTokenSharingHistoryStore.getInstance(fragment.requireContext())
                     val currentInstant = Instant.now()
                     val history = com.ownd_project.tw2023_wallet_android.datastore.IdTokenSharingHistory.newBuilder()
-                        .setRp(openIdProvider.getSiopRequest().authorizationRequestPayload.clientId)
+                        .setRp(openIdProvider.getProcessedRequestData().authorizationRequestPayload.clientId)
                         .setAccountIndex(index)
                         .setCreatedAt(
                             Timestamp.newBuilder()
@@ -311,7 +311,7 @@ class IdTokenSharringViewModel : ViewModel() {
                     val postResult = value.first
                     val sharedContent = value.second
                     sharedContent.forEach { it ->
-                        val openIdProviderSiopRequest = openIdProvider.getSiopRequest()
+                        val openIdProviderSiopRequest = openIdProvider.getProcessedRequestData()
                         val registrationPayload = openIdProviderSiopRequest.registrationMetadata
                         val builder = com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory.newBuilder()
                             .setRp(openIdProviderSiopRequest.authorizationRequestPayload.clientId)

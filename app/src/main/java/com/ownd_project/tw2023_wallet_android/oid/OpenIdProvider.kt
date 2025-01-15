@@ -1,8 +1,6 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
-import arrow.core.Either
 import com.auth0.jwt.exceptions.JWTVerificationException
-import com.ownd_project.tw2023_wallet_android.signature.ECPublicJwk
 import com.ownd_project.tw2023_wallet_android.signature.ES256K.createJws
 import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.ownd_project.tw2023_wallet_android.utils.EnumDeserializer
@@ -31,7 +29,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
     private lateinit var keyPair: KeyPair
     private lateinit var keyBinding: KeyBinding
     private lateinit var jwtVpJsonGenerator: JwtVpJsonGenerator
-    private lateinit var siopRequest: ProcessSIOPRequestResult
+    private lateinit var authRequestProcessedData: ProcessedRequestData
 
     companion object {
         fun selectDisclosure(
@@ -102,11 +100,11 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         this.jwtVpJsonGenerator = jwtVpJsonGenerator
     }
 
-    fun getSiopRequest(): ProcessSIOPRequestResult {
-        return this.siopRequest
+    fun getProcessedRequestData(): ProcessedRequestData {
+        return this.authRequestProcessedData
     }
 
-    suspend fun processAuthorizationRequest(): Result<ProcessSIOPRequestResult> {
+    suspend fun processAuthorizationRequest(): Result<ProcessedRequestData> {
         if (uri.isBlank()) {
             throw IllegalArgumentException(SIOPErrors.BAD_PARAMS.message)
         }
@@ -166,7 +164,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 }
 
                 Result.success(
-                    ProcessSIOPRequestResult(
+                    ProcessedRequestData(
                         scheme,
                         payload,
                         authorizationRequestPayload,
@@ -179,7 +177,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 Result.failure(e)
             }
             if (result.isSuccess) {
-                this.siopRequest = result.getOrThrow()
+                this.authRequestProcessedData = result.getOrThrow()
             }
             return result
         } else {
@@ -191,7 +189,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                     return Result.failure(Exception("Invalid client_id or response_uri"))
                 }
             }
-            val siopRequest = ProcessSIOPRequestResult(
+            val siopRequest = ProcessedRequestData(
                 scheme,
                 null,
                 authorizationRequestPayload,
@@ -199,7 +197,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                 registrationMetadata,
                 presentationDefinition
             )
-            this.siopRequest = siopRequest
+            this.authRequestProcessedData = siopRequest
             Result.success(siopRequest)
         }
     }
@@ -207,8 +205,8 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
     fun respondIdTokenResponse(): Result<PostResult> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
-                this.siopRequest.authorizationRequestPayload,
-                this.siopRequest.requestObject
+                this.authRequestProcessedData.authorizationRequestPayload,
+                this.authRequestProcessedData.requestObject
             )
             val nonce = authRequest.nonce
             val SEC_IN_MS = 1000
@@ -266,10 +264,10 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
     ): Result<Pair<PostResult, List<SharedContent>>> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
-                this.siopRequest.authorizationRequestPayload,
-                this.siopRequest.requestObject
+                this.authRequestProcessedData.authorizationRequestPayload,
+                this.authRequestProcessedData.requestObject
             )
-            val presentationDefinition = this.siopRequest.presentationDefinition
+            val presentationDefinition = this.authRequestProcessedData.presentationDefinition
                 ?: throw IllegalArgumentException(SIOPErrors.BAD_PARAMS.message)
 
             // https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#ResponseModes
@@ -525,7 +523,7 @@ fun satisfyConstrains(credential: Map<String, Any>, presentationDefinition: Pres
     return 0 < matchedInputDescriptorsCount
 }
 
-data class ProcessSIOPRequestResult(
+data class ProcessedRequestData(
     val scheme: String,
     val requestObject: RequestObjectPayload?,
     val authorizationRequestPayload: AuthorizationRequestPayload,
