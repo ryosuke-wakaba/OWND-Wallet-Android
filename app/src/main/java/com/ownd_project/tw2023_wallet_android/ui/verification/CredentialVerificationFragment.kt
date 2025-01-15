@@ -83,6 +83,7 @@ class CredentialVerificationFragment : Fragment(R.layout.fragment_credential_ver
             }
         }
     }
+
     private fun onUpdateResult(result: Boolean) {
         if (result) {
             binding.invalidBox.visibility = View.GONE
@@ -92,6 +93,7 @@ class CredentialVerificationFragment : Fragment(R.layout.fragment_credential_ver
             binding.detailsContainer.visibility = View.GONE
         }
     }
+
     private fun onInitDone(done: Boolean) {
         if (done) {
             binding.progressOverlay.visibility = View.GONE

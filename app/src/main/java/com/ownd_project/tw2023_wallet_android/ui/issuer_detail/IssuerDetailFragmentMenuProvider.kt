@@ -22,6 +22,7 @@ class IssuerDetailFragmentMenuProvider(
                 fragment.findNavController().navigateUp()
                 true
             }
+
             else -> false
         }
     }

@@ -24,6 +24,7 @@ class CertificateDetailFragmentMenuProvider(
                 fragment.findNavController().navigateUp()
                 true
             }
+
             else -> false
         }
     }

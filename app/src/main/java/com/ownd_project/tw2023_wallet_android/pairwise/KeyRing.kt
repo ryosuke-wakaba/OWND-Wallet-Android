@@ -44,7 +44,10 @@ class HDKeyRing(mnemonicWords: String?, entropyLength: Int = 128) {
             // seedが生成できたら、そのままrootKeyを生成
             rootKey = HDKeyDerivation.createMasterPrivateKey(seed.seedBytes)
         } catch (e: MnemonicException) {
-            throw IllegalStateException("HDKeyRing instance is unusable due to MnemonicException.", e)
+            throw IllegalStateException(
+                "HDKeyRing instance is unusable due to MnemonicException.",
+                e
+            )
         }
     }
 
@@ -72,12 +75,14 @@ class HDKeyRing(mnemonicWords: String?, entropyLength: Int = 128) {
     private fun encodeCoordinate(coordinate: ByteArray): String {
         return Base64.getUrlEncoder().encodeToString(coordinate).trimEnd('=')
     }
+
     private fun extractECKeyComponents(deterministicKey: DeterministicKey): Pair<String, String> {
         val publicKey = deterministicKey.pubKeyPoint
         val xBytes = encodeCoordinate(publicKey.affineXCoord.encoded)
         val yBytes = encodeCoordinate(publicKey.affineYCoord.encoded)
         return Pair(xBytes, yBytes)
     }
+
     fun getPublicJwk(index: Int): PublicJwk {
         val deterministicKey = generateSecondLevelKey(index)
         val (x, y) = extractECKeyComponents(deterministicKey)

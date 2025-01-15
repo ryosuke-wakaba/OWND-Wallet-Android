@@ -25,7 +25,10 @@ import java.util.Base64
 import java.util.UUID
 
 
-class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(signingAlgo = "ES256K")) {
+class OpenIdProvider(
+    val uri: String,
+    val option: SigningOption = SigningOption(signingAlgo = "ES256K")
+) {
     private lateinit var keyPair: KeyPair
     private lateinit var keyBinding: KeyBinding
     private lateinit var jwtVpJsonGenerator: JwtVpJsonGenerator
@@ -74,7 +77,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
                     // todo `filter`も合致条件に加える
                     field.path.mapNotNull { jsonPath ->
                         val key = jsonPath.removePrefix("$.")
-                         sourcePayload[key]
+                        sourcePayload[key]
                         if (sourcePayload.containsKey(key)) key else null
                     }
                 }?.let { fieldKeys ->
@@ -96,6 +99,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
     fun setKeyBinding(keyBinding: KeyBinding) {
         this.keyBinding = keyBinding
     }
+
     fun setJwtVpJsonGenerator(jwtVpJsonGenerator: JwtVpJsonGenerator) {
         this.jwtVpJsonGenerator = jwtVpJsonGenerator
     }
@@ -117,7 +121,10 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
                 propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
                 configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
-                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) // ランダムなプロパティは無視する
+                configure(
+                    DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+                    false
+                ) // ランダムなプロパティは無視する
                 val module = SimpleModule().apply {
                     addDeserializer(Audience::class.java, AudienceDeserializer())
                     addDeserializer(ResponseMode::class.java, EnumDeserializer(ResponseMode::class))
@@ -421,7 +428,11 @@ fun mergeOAuth2AndOpenIdInRequestPayload(
     return createRequestObjectPayloadFromMap(mergedMap)
 }
 
-fun sendRequest(destinationUri: String, formData: Map<String, String>, responseMode: ResponseMode): PostResult {
+fun sendRequest(
+    destinationUri: String,
+    formData: Map<String, String>,
+    responseMode: ResponseMode
+): PostResult {
     val client = OkHttpClient.Builder()
         .followRedirects(false)
         .build()
@@ -440,6 +451,7 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
                 .post(formBody)
                 .build()
         }
+
         else -> {
             throw IllegalArgumentException("Unsupported response mode: $responseMode")
         }
@@ -482,7 +494,10 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
     }
 }
 
-fun satisfyConstrains(credential: Map<String, Any>, presentationDefinition: PresentationDefinition): Boolean {
+fun satisfyConstrains(
+    credential: Map<String, Any>,
+    presentationDefinition: PresentationDefinition
+): Boolean {
     // TODO: 暫定で固定パス(vc.credentialSubject)のクレデンシャルをサポートする
     val vc = credential["vc"] as? Map<String, Any> ?: run {
         println("unsupported format")

@@ -68,12 +68,13 @@ class BackupFragment : Fragment() {
         viewModel.accessPairwiseAccountManager(this)
     }
 
-    private val createDocument = registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri: Uri? ->
-        // ドキュメント作成の結果をここで処理
-        if (uri != null) {
-            viewModel.saveCompressedTextAsZipFile(uri, requireContext())
+    private val createDocument =
+        registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri: Uri? ->
+            // ドキュメント作成の結果をここで処理
+            if (uri != null) {
+                viewModel.saveCompressedTextAsZipFile(uri, requireContext())
+            }
         }
-    }
 
     private fun onUpdateLastBackupDate(value: String?) {
         if (value != null) {
@@ -90,6 +91,7 @@ class BackupFragment : Fragment() {
         }
     }
 }
+
 class SimpleBackMenuProvider(
     private val fragment: Fragment,
     private val menuInflater: MenuInflater
@@ -107,6 +109,7 @@ class SimpleBackMenuProvider(
                 fragment.findNavController().navigateUp()
                 true
             }
+
             else -> false
         }
     }

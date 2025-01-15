@@ -225,7 +225,8 @@ interface JWTPayload {
     val sub: String?
     val aud: Audience?
     val iat: Long?
-//    val nbf: Long?
+
+    //    val nbf: Long?
 //    val type: String?
     val exp: Long?
 //    val jti: String?
@@ -233,7 +234,8 @@ interface JWTPayload {
 
 interface IDTokenPayload : JWTPayload {
     val nonce: String?
-//    val authTime: Long?
+
+    //    val authTime: Long?
 //    val acr: String?
 //    val azp: String?
     val subJwk: Map<String, String>?

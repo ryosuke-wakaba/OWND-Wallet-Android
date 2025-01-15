@@ -46,18 +46,21 @@ fun getLatestHistoriesByRp(histories: CredentialSharingHistories): CredentialSha
         .build()
 }
 
-class RecipientViewModel(private val credentialSharingHistoryStore: CredentialSharingHistoryStore) : ViewModel() {
+class RecipientViewModel(private val credentialSharingHistoryStore: CredentialSharingHistoryStore) :
+    ViewModel() {
 
     private val _text = MutableLiveData<String>().apply {
         value = "提供履歴はありません"
     }
-    private val _sharingHistories = MutableLiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories?>()
+    private val _sharingHistories =
+        MutableLiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories?>()
     private val _targetHistory = MutableLiveData<CredentialSharingHistory?>().apply {
         value = null
     }
 
     val text: LiveData<String> = _text
-    val sharingHistories: LiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories?> = _sharingHistories
+    val sharingHistories: LiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories?> =
+        _sharingHistories
     val targetHistory: LiveData<CredentialSharingHistory?> = _targetHistory
 
     private fun setHistoryData(schema: com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories) {

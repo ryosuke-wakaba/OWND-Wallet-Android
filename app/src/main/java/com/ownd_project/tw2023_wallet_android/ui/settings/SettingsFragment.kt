@@ -36,7 +36,7 @@ class SettingsFragment : Fragment() {
         )
 
         binding.linkTextBackup.setOnClickListener {
-             findNavController().navigate(R.id.backupFragment)
+            findNavController().navigate(R.id.backupFragment)
         }
 //        binding.linkTextOwnedMessenger.setOnClickListener {
 //            val url = getString(R.string.MESSENGER_URL)

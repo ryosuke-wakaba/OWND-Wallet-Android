@@ -33,6 +33,7 @@ class PairwiseAccount(
             }
         }
     }
+
     init {
     }
 
@@ -50,6 +51,7 @@ class PairwiseAccount(
             return@withContext Account(nextIndex, publicJwk, privateJwk, thumbprint, hash)
         }
     }
+
     suspend fun newAccount(rp: String): Either<String, Account> {
         return withContext(Dispatchers.IO) {
             val accounts = store.getAll()

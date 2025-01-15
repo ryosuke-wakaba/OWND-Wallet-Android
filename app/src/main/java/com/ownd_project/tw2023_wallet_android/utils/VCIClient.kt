@@ -27,15 +27,15 @@ data class CredentialResponse(
     val cNonce: String? = null,
     val cNonceExpiresIn: Int? = null,
     val notificationId: String?
-){
-    init{
+) {
+    init {
         if (credential == null && transactionId == null) {
             throw InvalidCredentialResponseException("Either credential or transactionId must be provided")
         }
     }
 
-    fun isDeferredIssuance(): Boolean{
-       return transactionId != null
+    fun isDeferredIssuance(): Boolean {
+        return transactionId != null
     }
 }
 
@@ -67,26 +67,26 @@ abstract class CredentialRequest(
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class CredentialRequestSdJwtVc(
-    override @JsonProperty("format")val format: String,
+    override @JsonProperty("format") val format: String,
     override @JsonProperty("proof") val proof: Proof?,
-    override @JsonProperty("credential_identifier")val credentialIdentifier: String? = null,
-    override @JsonProperty("credential_response_encryption")val credentialResponseEncryption: CredentialRequestCredentialResponseEncryption? = null,
+    override @JsonProperty("credential_identifier") val credentialIdentifier: String? = null,
+    override @JsonProperty("credential_response_encryption") val credentialResponseEncryption: CredentialRequestCredentialResponseEncryption? = null,
 
     val vct: String?,
     val claims: Map<String, Any>? = null
-): CredentialRequest(format, proof)
+) : CredentialRequest(format, proof)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class CredentialRequestJwtVc(
     override val format: String,
     override val proof: Proof? = null,
-    override @JsonProperty("credential_identifier")val credentialIdentifier: String? = null,
-    override @JsonProperty("credential_response_encryption")val credentialResponseEncryption: CredentialRequestCredentialResponseEncryption? = null,
+    override @JsonProperty("credential_identifier") val credentialIdentifier: String? = null,
+    override @JsonProperty("credential_response_encryption") val credentialResponseEncryption: CredentialRequestCredentialResponseEncryption? = null,
 
     @JsonProperty("credential_definition")
     // todo: Improve the precision of type definitions.
     val credentialDefinition: Map<String, Any>,
-): CredentialRequest(format, proof)
+) : CredentialRequest(format, proof)
 
 data class Proof(
     val proofType: String, val jwt: String,
@@ -119,7 +119,8 @@ class VCIClient() {
         return client.newCall(request).execute().use { response ->
             val responseBody = response.body()?.string()
             if (response.code() == 400) {
-                val errorResponse = objectMapper.readValue(responseBody, TokenErrorResponse::class.java)
+                val errorResponse =
+                    objectMapper.readValue(responseBody, TokenErrorResponse::class.java)
                 throw TokenErrorResponseException(errorResponse)
             }
             if (!response.isSuccessful) throw IOException("Unexpected code $response")

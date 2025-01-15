@@ -43,7 +43,8 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
     private val viewModel: IdTokenSharringViewModel by viewModels()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        issuerDetailBinding = FragmentIssuerDetailBinding.bind(view.findViewById(R.id.issuer_details))
+        issuerDetailBinding =
+            FragmentIssuerDetailBinding.bind(view.findViewById(R.id.issuer_details))
 
 
         val activity = requireActivity()
@@ -224,7 +225,7 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
             // todo RecycleViewで複数件に対応する
             binding.sharingClaimTitle.visibility = View.GONE
             data.inputDescriptors[0].name?.let {
-                 binding.sharingClaimTitle.visibility = View.VISIBLE
+                binding.sharingClaimTitle.visibility = View.VISIBLE
                 binding.sharingClaimTitle.text = it
             }
             binding.sharingClaimSubTitle.visibility = View.GONE
@@ -295,6 +296,7 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
             viewModel.shareIdToken(this)
         }
     }
+
     private fun onUpdateProcessCompletion(done: Boolean) {
         if (done) {
             val builder = AlertDialog.Builder(context)
@@ -328,7 +330,8 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
         if (postResult.location != null) {
             val url = postResult.location
             val cookies = postResult.cookies
-            val action = TokenSharingFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
+            val action =
+                TokenSharingFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
             findNavController().navigate(action)
         }
     }

@@ -14,8 +14,10 @@ class CertificateViewModel(private val credentialDataStore: CredentialDataStore)
     val text: LiveData<String> = _text
 
     // リストデータを保持するLiveData
-    private val _credentialDataList = MutableLiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialDataList?>()
-    val credentialDataList: LiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialDataList?> = _credentialDataList
+    private val _credentialDataList =
+        MutableLiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialDataList?>()
+    val credentialDataList: LiveData<com.ownd_project.tw2023_wallet_android.datastore.CredentialDataList?> =
+        _credentialDataList
 
     private fun setCredentialData(schema: com.ownd_project.tw2023_wallet_android.datastore.CredentialDataList) {
         _credentialDataList.value = schema

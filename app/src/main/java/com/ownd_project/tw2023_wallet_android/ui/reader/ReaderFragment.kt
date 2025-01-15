@@ -28,6 +28,7 @@ class ReaderFragment : Fragment() {
     private lateinit var scanLauncher: ActivityResultLauncher<ScanOptions>
     private lateinit var qrCodeUtil: QRCodeScannerUtil
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
+
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
@@ -78,7 +79,11 @@ class ReaderFragment : Fragment() {
                         }
                         resultLauncher.launch(intent)
                     } else {
-                        Toast.makeText(context, "QR code is not Verifiable Credential", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            context,
+                            "QR code is not Verifiable Credential",
+                            Toast.LENGTH_LONG
+                        ).show()
                         findNavController().navigate(R.id.navigation_certificate)
                     }
                 }
@@ -88,11 +93,13 @@ class ReaderFragment : Fragment() {
         qrCodeUtil =
             QRCodeScannerUtil(requireContext(), scanLauncher, requestPermissionLauncher)
 
-        resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            // アクティビティからの結果を処理
-            findNavController().navigate(R.id.navigation_certificate)
-        }
+        resultLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                // アクティビティからの結果を処理
+                findNavController().navigate(R.id.navigation_certificate)
+            }
     }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

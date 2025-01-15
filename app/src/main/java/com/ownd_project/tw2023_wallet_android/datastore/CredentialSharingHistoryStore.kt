@@ -36,11 +36,12 @@ open class CredentialSharingHistoryStore(
     }
 
     private val scope = CoroutineScope(Dispatchers.IO)
-    private val historyDataStore: DataStore<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories> = DataStoreFactory.create(
-        serializer = CredentialSharingHistoriesSerializer,
-        produceFile = { context.dataDir.resolve(storeFile) },
-        scope = scope
-    )
+    private val historyDataStore: DataStore<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories> =
+        DataStoreFactory.create(
+            serializer = CredentialSharingHistoriesSerializer,
+            produceFile = { context.dataDir.resolve(storeFile) },
+            scope = scope
+        )
 
     val credentialSharingHistoriesFlow: Flow<CredentialSharingHistories> =
         historyDataStore.data
@@ -66,14 +67,17 @@ open class CredentialSharingHistoryStore(
         }
     }
 
-    object CredentialSharingHistoriesSerializer : Serializer<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories> {
+    object CredentialSharingHistoriesSerializer :
+        Serializer<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories> {
 
         override val defaultValue: com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories =
             com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories.getDefaultInstance()
 
         override suspend fun readFrom(input: InputStream): com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories {
             try {
-                return com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories.parseFrom(input)
+                return com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistories.parseFrom(
+                    input
+                )
             } catch (exception: InvalidProtocolBufferException) {
                 throw CorruptionException("Cannot read proto.", exception)
             }

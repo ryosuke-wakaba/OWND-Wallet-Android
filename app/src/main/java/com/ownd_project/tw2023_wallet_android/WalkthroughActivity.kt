@@ -49,7 +49,8 @@ class WalkthroughActivity : AppCompatActivity() {
                 WalkthroughAdapter.Action.GOTO_MAIN -> {
                     // WalkThroughが終わったら、isFirstLaunchをfalseに設定
                     // Mainに遷移したときだけフラグをセットする
-                    val sharedPreferences = getSharedPreferences("com.owned_project", Context.MODE_PRIVATE)
+                    val sharedPreferences =
+                        getSharedPreferences("com.owned_project", Context.MODE_PRIVATE)
                     val editor = sharedPreferences.edit()
                     editor.putBoolean("isFirstLaunch", false)
                     editor.apply()
@@ -71,20 +72,22 @@ class WalkthroughActivity : AppCompatActivity() {
             }
         }
 
-        resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            // アクティビティからの結果を処理
-            if (result.resultCode == Activity.RESULT_OK) {
-                val sharedPreferences = getSharedPreferences("com.owned_project", Context.MODE_PRIVATE)
-                val editor = sharedPreferences.edit()
-                editor.putBoolean("isFirstLaunch", false)
-                editor.apply()
+        resultLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                // アクティビティからの結果を処理
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val sharedPreferences =
+                        getSharedPreferences("com.owned_project", Context.MODE_PRIVATE)
+                    val editor = sharedPreferences.edit()
+                    editor.putBoolean("isFirstLaunch", false)
+                    editor.apply()
 
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()  // オプション: WalkthroughActivity を終了してスタックから削除
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()  // オプション: WalkthroughActivity を終了してスタックから削除
+                }
+                // findNavController().navigate(R.id.navigation_certificate)
             }
-            // findNavController().navigate(R.id.navigation_certificate)
-        }
 
         viewPager.adapter = adapter
     }

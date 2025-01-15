@@ -41,20 +41,22 @@ class RecipientDetailFragment : Fragment() {
 
         _binding = FragmentRecipientDetailBinding.inflate(inflater, container, false)
 
-        val recipientViewModel = ViewModelProvider(requireActivity())[RecipientViewModel::class.java]
+        val recipientViewModel =
+            ViewModelProvider(requireActivity())[RecipientViewModel::class.java]
         recipientViewModel.sharingHistories.observe(viewLifecycleOwner) { histories ->
             if (histories != null) {
                 val historiesByRp = histories.itemsList.filter { it.rp == args.rp }
                 if (historiesByRp.isNullOrEmpty()) {
                     Log.d(tag, "sharing histories that match the rp is empty")
-                }else{
+                } else {
                     binding.histories.visibility = View.VISIBLE
 
-                    val adapter = RecipientDetailAdapter(requireContext(), recipientViewModel, historiesByRp)
+                    val adapter =
+                        RecipientDetailAdapter(requireContext(), recipientViewModel, historiesByRp)
                     binding.histories.layoutManager = LinearLayoutManager(context)
                     binding.histories.adapter = adapter
                 }
-            }else{
+            } else {
                 Log.d(tag, "empty sharing histories")
             }
         }
@@ -74,28 +76,28 @@ class RecipientDetailFragment : Fragment() {
         val rpTextView = view.findViewById<TextView>(R.id.rp_text_view)
         rpTextView.text = args.rpName
 
-        if (args.rpLocation != ""){
+        if (args.rpLocation != "") {
             val rpLocationHeader = view.findViewById<TextView>(R.id.rp_location_header)
             val rpLocation = view.findViewById<TextView>(R.id.rp_location)
             rpLocation.visibility = View.VISIBLE
             rpLocationHeader.visibility = View.VISIBLE
             rpLocation.text = args.rpLocation
         }
-        if (args.rpContactUrl != ""){
+        if (args.rpContactUrl != "") {
             val rpContactHeader = view.findViewById<TextView>(R.id.rp_contact_header)
             val rpContact = view.findViewById<TextView>(R.id.rp_contact)
             rpContact.visibility = View.VISIBLE
             rpContactHeader.visibility = View.VISIBLE
             rpContact.text = args.rpContactUrl
         }
-        if (args.rpPrivacyPolicyUrl != ""){
+        if (args.rpPrivacyPolicyUrl != "") {
             val rpPrivacyPolicyHeader = view.findViewById<TextView>(R.id.rp_privacy_policy_header)
             val rpPrivacyPolicy = view.findViewById<TextView>(R.id.rp_privacy_policy)
             rpPrivacyPolicy.visibility = View.VISIBLE
             rpPrivacyPolicyHeader.visibility = View.VISIBLE
             rpPrivacyPolicy.text = args.rpPrivacyPolicyUrl
         }
-        if (args.rpLogoUrl != ""){
+        if (args.rpLogoUrl != "") {
             val rpLogoImageView = view.findViewById<ImageView>(R.id.rp_logo_image)
             rpLogoImageView.visibility = View.VISIBLE
             Glide.with(this)
@@ -106,11 +108,11 @@ class RecipientDetailFragment : Fragment() {
 }
 
 
-
 class RecipientDetailAdapter(
     private val context: Context,
     private val recipientViewModel: RecipientViewModel,
-    private val histories: List<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory>) :
+    private val histories: List<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory>
+) :
     RecyclerView.Adapter<RecipientDetailAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {

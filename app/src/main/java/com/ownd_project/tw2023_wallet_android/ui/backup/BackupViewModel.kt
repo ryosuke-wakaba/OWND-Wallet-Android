@@ -66,7 +66,8 @@ class BackupViewModel : ViewModel() {
                 // GMT日時をローカルタイムゾーンの文字列に変換
                 val dt = dataStore.getLastBackupAt()
                 if (dt != null) {
-                    _lastBackupDate.value = convertGmtToLocalStringWithLocale(dt.toDateFromISO8601())
+                    _lastBackupDate.value =
+                        convertGmtToLocalStringWithLocale(dt.toDateFromISO8601())
                 }
 
             } else {
@@ -96,7 +97,7 @@ class BackupViewModel : ViewModel() {
                 val store2: CredentialSharingHistoryStore =
                     CredentialSharingHistoryStore.getInstance(context)
                 val credentialSharingHistories = store2.getAll().map { it ->
-                    val claims = it.claimsList.map{ claim ->
+                    val claims = it.claimsList.map { claim ->
                         Claim(
                             name = claim.name,
                             value = claim.value,
@@ -147,7 +148,8 @@ class BackupViewModel : ViewModel() {
                 withContext(Dispatchers.Main) {
                     val dt = dataStore.getLastBackupAt()
                     if (dt != null) {
-                        _lastBackupDate.value = convertGmtToLocalStringWithLocale(dt.toDateFromISO8601())
+                        _lastBackupDate.value =
+                            convertGmtToLocalStringWithLocale(dt.toDateFromISO8601())
                     }
                     Toast.makeText(context, R.string.saved_backup_file, Toast.LENGTH_LONG).show()
                 }

@@ -96,7 +96,8 @@ class CertificateFragment : Fragment() {
                 if (sharedViewModel.presentationDefinition.value != null) {
                     val presentationDefinition = sharedViewModel.presentationDefinition.value!!
                     // itemsListをpresentationDefinitionの内容でフィルターする
-                    val filteredItemsList = itemsList?.filter { filterCredential(it, presentationDefinition) }
+                    val filteredItemsList =
+                        itemsList?.filter { filterCredential(it, presentationDefinition) }
                     val adapter = CredentialAdapter(filteredItemsList ?: emptyList())
                     binding.recyclerView.layoutManager = LinearLayoutManager(context)
                     binding.recyclerView.adapter = adapter
@@ -137,22 +138,33 @@ class CertificateFragment : Fragment() {
     }
 }
 
-fun filterCredential(credential: CredentialData, presentationDefinition: PresentationDefinition): Boolean {
+fun filterCredential(
+    credential: CredentialData,
+    presentationDefinition: PresentationDefinition
+): Boolean {
     val format = credential.format
     println("format: $format")
     return try {
         when (format) {
             "vc+sd-jwt" -> {
-                val ret = OpenIdProvider.selectDisclosure(sdJwt = credential.credential, presentationDefinition = presentationDefinition)
+                val ret = OpenIdProvider.selectDisclosure(
+                    sdJwt = credential.credential,
+                    presentationDefinition = presentationDefinition
+                )
                 ret?.let { (_, disclosures) ->
                     disclosures.isNotEmpty()
                 } ?: false // retがnullの場合はfalseを返す
             }
+
             "jwt_vc_json" -> {
                 val (_, payload, _) = JWT.decodeJwt(jwt = credential.credential)
                 println("satisfyConstrains?")
-                satisfyConstrains(credential = payload, presentationDefinition = presentationDefinition)
+                satisfyConstrains(
+                    credential = payload,
+                    presentationDefinition = presentationDefinition
+                )
             }
+
             else -> {
                 // その他のフォーマットに対する処理が必要な場合、ここに追加
                 false

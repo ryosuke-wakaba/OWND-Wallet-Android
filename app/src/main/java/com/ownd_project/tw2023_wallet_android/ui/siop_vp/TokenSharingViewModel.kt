@@ -200,7 +200,8 @@ class IdTokenSharringViewModel : ViewModel() {
                         val keyBinding = KeyBindingImpl(Constants.KEY_PAIR_ALIAS_FOR_KEY_BINDING)
                         openIdProvider.setKeyBinding(keyBinding)
 
-                        val jwtVpJsonGenerator = JwtVpJsonGeneratorImpl(Constants.KEY_PAIR_ALIAS_FOR_KEY_JWT_VP_JSON)
+                        val jwtVpJsonGenerator =
+                            JwtVpJsonGeneratorImpl(Constants.KEY_PAIR_ALIAS_FOR_KEY_JWT_VP_JSON)
                         openIdProvider.setJwtVpJsonGenerator(jwtVpJsonGenerator)
                     }
 
@@ -210,7 +211,8 @@ class IdTokenSharringViewModel : ViewModel() {
                         if (registrationMetadata.clientName != null) {
                             setClientName(registrationMetadata.clientName)
                         }
-                        val clientId = requestObject?.clientId ?: authorizationRequestPayload.clientId
+                        val clientId =
+                            requestObject?.clientId ?: authorizationRequestPayload.clientId
                         if (clientId != null) {
                             setClientUrl(clientId)
                         }
@@ -264,16 +266,17 @@ class IdTokenSharringViewModel : ViewModel() {
                     val store: IdTokenSharingHistoryStore =
                         IdTokenSharingHistoryStore.getInstance(fragment.requireContext())
                     val currentInstant = Instant.now()
-                    val history = com.ownd_project.tw2023_wallet_android.datastore.IdTokenSharingHistory.newBuilder()
-                        .setRp(openIdProvider.getProcessedRequestData().authorizationRequestPayload.clientId)
-                        .setAccountIndex(index)
-                        .setCreatedAt(
-                            Timestamp.newBuilder()
-                                .setSeconds(currentInstant.epochSecond)
-                                .setNanos(currentInstant.nano)
-                                .build()
-                        )
-                        .build();
+                    val history =
+                        com.ownd_project.tw2023_wallet_android.datastore.IdTokenSharingHistory.newBuilder()
+                            .setRp(openIdProvider.getProcessedRequestData().authorizationRequestPayload.clientId)
+                            .setAccountIndex(index)
+                            .setCreatedAt(
+                                Timestamp.newBuilder()
+                                    .setSeconds(currentInstant.epochSecond)
+                                    .setNanos(currentInstant.nano)
+                                    .build()
+                            )
+                            .build();
                     store.save(history)
 
                     withContext(Dispatchers.Main) {
@@ -313,24 +316,26 @@ class IdTokenSharringViewModel : ViewModel() {
                     sharedContent.forEach { it ->
                         val openIdProviderSiopRequest = openIdProvider.getProcessedRequestData()
                         val registrationPayload = openIdProviderSiopRequest.registrationMetadata
-                        val builder = com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory.newBuilder()
-                            .setRp(openIdProviderSiopRequest.authorizationRequestPayload.clientId)
-                            .setAccountIndex(index)
-                            .setCreatedAt(
-                                Timestamp.newBuilder()
-                                    .setSeconds(currentInstant.epochSecond)
-                                    .setNanos(currentInstant.nano)
-                                    .build()
-                            )
-                            .setRpName(registrationPayload.clientName)
-                            .setRpPrivacyPolicyUrl(registrationPayload.policyUri)
-                            .setRpLogoUrl(registrationPayload.logoUri)
-                            .setCredentialID(it.id)
+                        val builder =
+                            com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory.newBuilder()
+                                .setRp(openIdProviderSiopRequest.authorizationRequestPayload.clientId)
+                                .setAccountIndex(index)
+                                .setCreatedAt(
+                                    Timestamp.newBuilder()
+                                        .setSeconds(currentInstant.epochSecond)
+                                        .setNanos(currentInstant.nano)
+                                        .build()
+                                )
+                                .setRpName(registrationPayload.clientName)
+                                .setRpPrivacyPolicyUrl(registrationPayload.policyUri)
+                                .setRpLogoUrl(registrationPayload.logoUri)
+                                .setCredentialID(it.id)
                         it.sharedClaims.forEach { claim ->
-                            val tmp = com.ownd_project.tw2023_wallet_android.datastore.Claim.newBuilder()
-                                .setName(claim.name)
-                                .setPurpose("") // todo: The definition of DisclosedClaim needs to be revised to set this value.
-                                .setValue("") // todo: The definition of DisclosedClaim needs to be revised to set this value.
+                            val tmp =
+                                com.ownd_project.tw2023_wallet_android.datastore.Claim.newBuilder()
+                                    .setName(claim.name)
+                                    .setPurpose("") // todo: The definition of DisclosedClaim needs to be revised to set this value.
+                                    .setValue("") // todo: The definition of DisclosedClaim needs to be revised to set this value.
                             builder.addClaims(tmp)
                         }
                         val history = builder.build()
@@ -341,7 +346,7 @@ class IdTokenSharringViewModel : ViewModel() {
                         // 処理完了フラグを更新
                         if (postResult.location.isNullOrBlank()) {
                             // if subsequent action isn't it finishes.
-                             _doneSuccessfully.value = true
+                            _doneSuccessfully.value = true
                         }
                         _postResult.value = postResult
                     }

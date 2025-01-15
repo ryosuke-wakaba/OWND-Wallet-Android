@@ -131,7 +131,8 @@ class ConfirmationViewModel() :
     val credentialIssuerMetadata: LiveData<CredentialIssuerMetadata> = _credentialIssuerMetadata
 
     private val _authorizationServerMetadata = MutableLiveData<AuthorizationServerMetadata>()
-    val authorizationServerMetadata: LiveData<AuthorizationServerMetadata> = _authorizationServerMetadata
+    val authorizationServerMetadata: LiveData<AuthorizationServerMetadata> =
+        _authorizationServerMetadata
 
 
     private val _navigateToCertificateFragment = MutableLiveData<Boolean>()
@@ -193,7 +194,8 @@ class ConfirmationViewModel() :
                 when (credentialSupported) {
                     is CredentialConfigurationJwtVcJson -> {
                         _format.value = "jwt_vc_json"
-                        val firstCredential = credentialOffer.credentialConfigurationIds.firstOrNull()
+                        val firstCredential =
+                            credentialOffer.credentialConfigurationIds.firstOrNull()
 
                         if (credentialSupported.credentialDefinition.type.contains(firstCredential)) {
                             _vct.value = firstCredential ?: ""
@@ -207,7 +209,8 @@ class ConfirmationViewModel() :
 
                     is CredentialConfigurationVcSdJwt -> {
                         _format.value = "vc+sd-jwt"
-                        val firstCredential = credentialOffer.credentialConfigurationIds.firstOrNull()
+                        val firstCredential =
+                            credentialOffer.credentialConfigurationIds.firstOrNull()
 
                         if (credentialSupported.vct == firstCredential) {
                             _vct.value = firstCredential ?: ""
@@ -227,7 +230,7 @@ class ConfirmationViewModel() :
         return extractInfoFromJwt(issuerSignedJwt, format)
     }
 
-    private fun extractJwtVcJsonInfo(credential: String, format: String): Map<String, Any>{
+    private fun extractJwtVcJsonInfo(credential: String, format: String): Map<String, Any> {
         return extractInfoFromJwt(credential, format)
     }
 
@@ -272,7 +275,9 @@ class ConfirmationViewModel() :
                         jwt = KeyPairUtil.createProofJwt(
                             Constants.KEY_PAIR_ALIAS_FOR_KEY_BINDING,
                             credentialIssuer,
-                            tokenResponse?.cNonce!!))
+                            tokenResponse?.cNonce!!
+                        )
+                    )
                 }
 
                 var credentialRequest: CredentialRequest? = null
@@ -285,10 +290,10 @@ class ConfirmationViewModel() :
                 } else {
                     credentialRequest = CredentialRequestJwtVc(
                         format = format.value!!,
-                        proof = proofJwt ,
+                        proof = proofJwt,
                         credentialDefinition = mapOf(
                             "type" to listOf(vct.value)
-                            ),
+                        ),
                     )
                 }
 
@@ -329,10 +334,10 @@ class ConfirmationViewModel() :
                 val res = e.errorResponse
                 _errorMessage.postValue("${res.error}, ${res.errorDescription} ")
                 // todo 内部的なエラー情報としてerror responseを渡して、フラグメント側でstring valuesに事前に用意したエラーメッセージと対応させて表示する
-            } catch(e: InvalidCredentialResponseException) {
+            } catch (e: InvalidCredentialResponseException) {
                 println(e)
                 _errorMessage.postValue("サーバーの応答を解釈できません: ${e.message}")
-            }catch (e: UnsupportedIssuanceFlow){
+            } catch (e: UnsupportedIssuanceFlow) {
                 _errorMessage.postValue("サポートしていない発行フローです")
             } catch (e: IOException) {
                 // エラー時の処理

@@ -20,7 +20,7 @@ class WalkthroughAdapter(
     private val itemClickListener: (action: Action) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-//    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WalkthroughViewHolder {
+    //    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WalkthroughViewHolder {
 //        val imageView = ImageView(parent.context)
 //        imageView.layoutParams = ViewGroup.LayoutParams(
 //            ViewGroup.LayoutParams.MATCH_PARENT,
@@ -31,7 +31,8 @@ class WalkthroughAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == TYPE_FINAL) {
             // 最後のページ
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.walkthrough_final_page, parent, false)
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.walkthrough_final_page, parent, false)
             FinalViewHolder(view, itemClickListener)
         } else {
             // 通常のページ
@@ -104,7 +105,8 @@ class WalkthroughAdapter(
 
     class NormalViewHolder(val imageView: ImageView) : RecyclerView.ViewHolder(imageView)
 
-    class FinalViewHolder(view: View, itemClickListener: (action: Action) -> Unit) : RecyclerView.ViewHolder(view) {
+    class FinalViewHolder(view: View, itemClickListener: (action: Action) -> Unit) :
+        RecyclerView.ViewHolder(view) {
         private val linkText1: TextView = view.findViewById(R.id.link_privacy_policy)
         private val linkText2: TextView = view.findViewById(R.id.link_term_of_use)
         private val linkText3: TextView = view.findViewById(R.id.restore_from_backup)
@@ -140,6 +142,7 @@ class WalkthroughAdapter(
                 itemClickListener(Action.RESTORE)
             }
         }
+
         private fun openUrlInCustomTab(url: String) {
             Log.d("SettingsFragment", "Opening URL in Custom Tab: $url")
             val builder = CustomTabsIntent.Builder()

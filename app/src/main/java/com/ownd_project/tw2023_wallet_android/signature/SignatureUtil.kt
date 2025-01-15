@@ -262,6 +262,7 @@ object SignatureUtil {
             return convertPemWithDelimitersToX509Certificates(responseBody)
         }
     }
+
     fun convertPemWithDelimitersToX509Certificates(pem: String): Array<X509Certificate>? {
         val pemCertificates = pem.trim().split("-----END CERTIFICATE-----")
             .filter { it.contains("-----BEGIN CERTIFICATE-----") }

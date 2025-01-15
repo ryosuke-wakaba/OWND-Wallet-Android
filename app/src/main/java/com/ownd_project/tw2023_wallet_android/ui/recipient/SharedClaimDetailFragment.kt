@@ -38,7 +38,8 @@ class SharedClaimDetailFragment : Fragment() {
         val menuProvider = SharedClaimDetailFragmentMenuProvider(this, activity.menuInflater)
         activity.addMenuProvider(menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        val recipientViewModel = ViewModelProvider(requireActivity())[RecipientViewModel::class.java]
+        val recipientViewModel =
+            ViewModelProvider(requireActivity())[RecipientViewModel::class.java]
 
         recipientViewModel.targetHistory.observe(viewLifecycleOwner) { history ->
             if (history != null) {
@@ -55,7 +56,7 @@ class SharedClaimDetailFragment : Fragment() {
                 val adapter = ClaimAdapter(history.claimsList)
                 binding.sharedClaims.layoutManager = LinearLayoutManager(context)
                 binding.sharedClaims.adapter = adapter
-            }else{
+            } else {
                 Log.d(tag, "unset target history!")
             }
         }
@@ -63,11 +64,9 @@ class SharedClaimDetailFragment : Fragment() {
 }
 
 
-
-
-
 class ClaimAdapter(
-    private val claims: List<Claim>) :
+    private val claims: List<Claim>
+) :
     RecyclerView.Adapter<ClaimAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {

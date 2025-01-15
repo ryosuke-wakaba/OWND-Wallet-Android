@@ -30,7 +30,10 @@ class CredentialVerificationViewModel : ViewModel() {
     val result: LiveData<Boolean> = _result
 
     fun verifyCredential(format: String, credential: String) {
-        Log.d(com.ownd_project.tw2023_wallet_android.ui.siop_vp.TAG, "verifyCredential seed successfully")
+        Log.d(
+            com.ownd_project.tw2023_wallet_android.ui.siop_vp.TAG,
+            "verifyCredential seed successfully"
+        )
         viewModelScope.launch(Dispatchers.IO) {
             val result = JWT.verifyJwtByX5U(credential)
             result.fold(
@@ -46,7 +49,8 @@ class CredentialVerificationViewModel : ViewModel() {
                     if (format == "jwt_vc_json") {
                         val vc = it.getClaim("vc").asMap()
                         println("vc: $vc")
-                        val credentialSubjectMap = requireNotNull(vc["credentialSubject"]) as Map<String, String>
+                        val credentialSubjectMap =
+                            requireNotNull(vc["credentialSubject"]) as Map<String, String>
                         val pairList = credentialSubjectMap.map { (key, value) -> key to value }
                         println(pairList)
 

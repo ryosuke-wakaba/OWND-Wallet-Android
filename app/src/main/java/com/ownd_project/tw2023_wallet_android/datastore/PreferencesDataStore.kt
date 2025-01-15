@@ -63,7 +63,8 @@ class PreferencesDataStore(private val context: Context) {
         if (value.isNullOrEmpty()) {
             return Either.Right(value)
         } else {
-            val biometricStatus = BiometricUtil.checkBiometricAvailability(fragment.requireContext())
+            val biometricStatus =
+                BiometricUtil.checkBiometricAvailability(fragment.requireContext())
             if (biometricStatus == BiometricManager.BIOMETRIC_SUCCESS) {
                 return if (authenticateUser(fragment)) Either.Right(
                     EncryptionHelper.decryptStringData(
