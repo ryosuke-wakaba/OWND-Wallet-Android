@@ -75,7 +75,6 @@ class VCIClientTest {
         val credentialResponse = vciClient.postCredentialRequest(
             "http://localhost:${port}/credentials", credential, "accessToken"
         )
-        assertEquals("jwt_vc_json", credentialResponse?.format)
         assertEquals("example-credential", credentialResponse?.credential)
         assertEquals("example-c-nonce", credentialResponse?.cNonce)
         assertEquals(86400, credentialResponse?.cNonceExpiresIn)

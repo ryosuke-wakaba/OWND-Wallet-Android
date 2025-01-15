@@ -48,6 +48,7 @@ open class CredentialDataStore(
         credentialDataStore.data
 
     fun responseToSchema(
+        format: String,
         credentialResponse: CredentialResponse,
         credentialBasicInfo: Map<String, Any>,
         credentialIssuerMetadata: String,
@@ -62,7 +63,7 @@ open class CredentialDataStore(
             builder.setCNonce(it)
         }
 
-        builder.setId(UUID.randomUUID().toString()).setFormat(credentialResponse.format)
+        builder.setId(UUID.randomUUID().toString()).setFormat(format)
             .setCredential(credentialResponse.credential)
             .setIss(credentialBasicInfo["iss"] as String).setIat(credentialBasicInfo["iat"] as Long)
             .setExp(credentialBasicInfo["exp"] as Long)

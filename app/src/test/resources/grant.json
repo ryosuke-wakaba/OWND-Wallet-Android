@@ -1,0 +1,11 @@
+{
+  "authorization_code": { "issuer_state": "foo" },
+  "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+    "pre-authorized_code": "12345",
+    "tx_code": {
+      "length": 4,
+      "input_mode": "numeric",
+      "description": "Please provide the one-time code that was sent via e-mail"
+    }
+  }
+}

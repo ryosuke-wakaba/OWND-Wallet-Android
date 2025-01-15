@@ -38,15 +38,24 @@ sealed class AuthorizationServerType {
     object OID4VCI : AuthorizationServerType()
 }
 
+data class CredentialResponseEncryption(
+    val algValuesSupported: List<String>,
+    val encValuesSupported: List<String>,
+    val encryptionRequired: Boolean
+)
+
 data class CredentialIssuerMetadata(
     val credentialIssuer: String,
     val authorizationServers: List<String>? = null,
     val credentialEndpoint: String? = null,
-    var tokenEndpoint: String? = null,
     val batchCredentialEndpoint: String? = null,
     val deferredCredentialEndpoint: String? = null,
-    val credentialsSupported: Map<String, CredentialSupported>,
+    val notificationEndpoint: String? = null,
+    val credentialResponseEncryption: CredentialResponseEncryption? = null,
+    val credentialIdentifiersSupported: Boolean? = null,
+    val signedMetadata: String? = null,
     val display: List<CredentialsSupportedDisplay>? = null,
+    val credentialConfigurationsSupported: Map<String, CredentialConfiguration>,
 )
 
 data class EndpointMetadataResult(
@@ -55,7 +64,7 @@ data class EndpointMetadataResult(
 )
 
 data class ImageInfo(
-    val url: String? = null,
+    val uri: String? = null,
     val altText: String? = null,
     val additionalProperties: Map<String, Any?>? = null,
 )
@@ -65,11 +74,15 @@ open class Display(
     open val locale: String? = null,
 )
 
+data class BackgroundImage(
+    val uri: String?
+)
+
 data class CredentialsSupportedDisplay(
     val logo: ImageInfo? = null,
     val description: String? = null,
     val backgroundColor: String? = null,
-    val backgroundImage: String? = null,
+    val backgroundImage: BackgroundImage? = null,
     val textColor: String? = null,
     override val name: String? = null,
     override val locale: String? = null,
@@ -105,42 +118,49 @@ class IssuerCredentialSubjectDeserializer : JsonDeserializer<IssuerCredentialSub
 
 typealias IssuerCredentialSubjectMap = Map<String, IssuerCredentialSubject>
 
+data class ProofSigningAlgValuesSupported(
+    val proofSigningAlgValuesSupported: List<String>?
+)
+
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
-    property = "format"
+    property = "format",
+    visible = true
 )
 @JsonSubTypes(
-    JsonSubTypes.Type(value = CredentialSupportedJwtVcJsonLdAndLdpVc::class, name = "ldp_vc"),
-    JsonSubTypes.Type(value = CredentialSupportedJwtVcJson::class, name = "jwt_vc_json"),
-    JsonSubTypes.Type(value = CredentialSupportedVcSdJwt::class, name = "vc+sd-jwt")
+    JsonSubTypes.Type(value = CredentialConfigurationJwtVcJsonLdAndLdpVc::class, name = "ldp_vc"),
+    // todo: `jwt_vc_json-ld`の追加
+    JsonSubTypes.Type(value = CredentialConfigurationJwtVcJson::class, name = "jwt_vc_json"),
+    JsonSubTypes.Type(value = CredentialConfigurationVcSdJwt::class, name = "vc+sd-jwt")
 )
-interface CredentialSupported {
+interface CredentialConfiguration {
+    val format: String
     val scope: String?
     val cryptographicBindingMethodsSupported: List<String>?
-    val cryptographicSuitesSupported: List<String>?
-    val proofTypesSupported: List<String>?
+    val credentialSigningAlgValuesSupported: List<String>?
+    val proofTypesSupported: Map<String, ProofSigningAlgValuesSupported>?
     val display: List<CredentialsSupportedDisplay>?
-    val order: List<String>?
 }
 
-open class CommonCredentialSupported(
+open class CommonCredentialConfiguration(
+    override val format: String,
     override val scope: String? = null,
     override val cryptographicBindingMethodsSupported: List<String>? = null,
-    override val cryptographicSuitesSupported: List<String>? = null,
-    override val proofTypesSupported: List<String>? = null,
+    override val credentialSigningAlgValuesSupported: List<String>? = null,
+    override val proofTypesSupported: Map<String, ProofSigningAlgValuesSupported>? = null,
     override val display: List<CredentialsSupportedDisplay>? = null,
-    override val order: List<String>? = null,
-) : CredentialSupported
+) : CredentialConfiguration
 
-data class CredentialSupportedJwtVcJson(
+data class CredentialConfigurationJwtVcJson(
+    override val format: String,
     override val scope: String,
     override val cryptographicBindingMethodsSupported: List<String>? = null,
-    override val cryptographicSuitesSupported: List<String>? = null,
+    override val credentialSigningAlgValuesSupported: List<String>? = null,
+    override val proofTypesSupported: Map<String, ProofSigningAlgValuesSupported>? = null,
     val credentialDefinition: JwtVcJsonCredentialDefinition,
-    override val proofTypesSupported: List<String>? = null,
-    override val order: List<String>? = null,
-) : CommonCredentialSupported()
+    val order: List<String>? = null,
+) : CommonCredentialConfiguration(format)
 
 data class JwtVcJsonCredentialDefinition(
     val type: List<String>,
@@ -149,31 +169,34 @@ data class JwtVcJsonCredentialDefinition(
     val credentialSubject: IssuerCredentialSubjectMap? = null,
 )
 
-data class CredentialSupportedVcSdJwt(
+data class CredentialConfigurationVcSdJwt(
+    override val format: String,
     override val scope: String,
     override val cryptographicBindingMethodsSupported: List<String>? = null,
-    override val cryptographicSuitesSupported: List<String>? = null,
-    val credentialDefinition: VcSdJwtCredentialDefinition,
-    override val proofTypesSupported: List<String>? = null,
-    override val order: List<String>? = null,
-) : CommonCredentialSupported()
-
-data class VcSdJwtCredentialDefinition(
+    override val credentialSigningAlgValuesSupported: List<String>? = null,
+    override val proofTypesSupported: Map<String, ProofSigningAlgValuesSupported>? = null,
     val vct: String,
     val claims: IssuerCredentialSubjectMap,
-)
+    val order: List<String>? = null,
+) : CommonCredentialConfiguration(format)
 
-data class CredentialSupportedJwtVcJsonLdAndLdpVc(
-    override val cryptographicBindingMethodsSupported: List<String>? = null,
-    override val cryptographicSuitesSupported: List<String>? = null,
-    val types: List<String>,
+
+data class LdpVcCredentialDefinition(
     @JsonProperty("@context")
-    val context: List<ICredentialContextType>, // Note: ICredentialContextType should be defined or replaced with the appropriate Kotlin representation
+    val context: List<ICredentialContextType>,
+    val type: List<String>,
     // このプロパティは仕様上キャメルケースなのでスネークケースストラテジーでデシリアライズするためにアノテーションが必要
     @JsonProperty("credentialSubject")
-    val credentialSubject: IssuerCredentialSubjectMap?,
-    override val order: List<String>?,
-) : CommonCredentialSupported()
+    val credentialSubject: IssuerCredentialSubjectMap? = null,
+)
+
+data class CredentialConfigurationJwtVcJsonLdAndLdpVc(
+    override val format: String,
+    override val cryptographicBindingMethodsSupported: List<String>? = null,
+    override val credentialSigningAlgValuesSupported: List<String>? = null,
+    val credentialDefinition: LdpVcCredentialDefinition,
+    val order: List<String>?,
+) : CommonCredentialConfiguration(format)
 
 sealed class OID4VCICredentialFormat {
     object JwtVcJson : OID4VCICredentialFormat()
@@ -205,10 +228,16 @@ data class GrantAuthorizationCode(
     val issuerState: String?,
 )
 
+data class TxCode(
+    val inputMode: String?,
+    val length: Int?,
+    val description: String?
+)
+
 data class GrantUrnIetf(
     @JsonProperty("pre-authorized_code")
     val preAuthorizedCode: String,
-    val userPinRequired: Boolean,
+    val txCode: TxCode?,
 )
 
 data class Grant(
@@ -219,6 +248,6 @@ data class Grant(
 
 data class CredentialOffer(
     val credentialIssuer: String,
-    val credentials: List<String>,
+    val credentialConfigurationIds: List<String>,
     val grants: Grant?,
 )

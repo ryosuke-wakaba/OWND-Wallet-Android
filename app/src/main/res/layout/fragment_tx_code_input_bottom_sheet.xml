@@ -68,12 +68,12 @@
 
         <!-- 入力エリア -->
         <EditText
-            android:id="@+id/editTextPinCode"
+            android:id="@+id/editTextTxCode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/label"
             android:layout_marginTop="8dp"
-            android:background="@drawable/pin_input"
+            android:background="@drawable/tx_code_input"
             android:inputType="numberPassword"
             android:paddingLeft="16dp" />
 
@@ -82,7 +82,7 @@
             android:id="@+id/buttonAuthenticate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/editTextPinCode"
+            android:layout_below="@id/editTextTxCode"
             android:layout_marginTop="16dp"
             android:contentDescription="@string/button_auth_description" />
 

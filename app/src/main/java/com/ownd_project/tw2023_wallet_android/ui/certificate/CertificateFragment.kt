@@ -206,7 +206,7 @@ class CredentialAdapter(private val credentials: List<com.ownd_project.tw2023_wa
         val format = credential.format
         val types =
             MetadataUtil.extractTypes(format, credential.credential)
-        val credentialSupported = metadata.credentialsSupported[types.firstOrNull()]
+        val credentialSupported = metadata.credentialConfigurationsSupported[types.firstOrNull()]
         val displayData = credentialSupported!!.display!!.firstOrNull()
 
         //  display.text_colorがある場合はクレデンシャル名表示にそれを適用
@@ -218,7 +218,7 @@ class CredentialAdapter(private val credentials: List<com.ownd_project.tw2023_wa
 
         val hasBackgroundImage = displayData.backgroundImage != null
         val hasBackgroundColor = displayData.backgroundColor != null
-        val hasLogo = displayData.logo?.url?.isNotEmpty() == true
+        val hasLogo = displayData.logo?.uri?.isNotEmpty() == true
         // 以下の条件で出し分けを行う
         //  | #   | backgroundImage | backgroundColor | logo | 対応                                                                       |
         //  | --- | --------------- | --------------- | ---- | -------------------------------------------------------------------------- |

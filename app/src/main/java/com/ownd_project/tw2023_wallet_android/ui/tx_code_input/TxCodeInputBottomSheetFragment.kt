@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.pin_input
+package com.ownd_project.tw2023_wallet_android.ui.tx_code_input
 
 import android.content.Context
 import android.content.res.Resources
@@ -22,18 +22,18 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.ui.confirmation.ConfirmationViewModel
 
-class PinInputBottomSheetFragment : BottomSheetDialogFragment() {
-    interface PinInputListener {
-        fun onPinEntered(pin: String)
+class TxCodeInputBottomSheetFragment : BottomSheetDialogFragment() {
+    interface TxCodeInputListener {
+        fun onTxCodeEntered(txCode: String)
     }
 
-    var listener: PinInputListener? = null
+    var listener: TxCodeInputListener? = null
 
     companion object {
         private const val ARG_CREDENTIAL_OFFER = "credential_offer"
 
-        fun newInstance(credentialOffer: String): PinInputBottomSheetFragment {
-            val fragment = PinInputBottomSheetFragment()
+        fun newInstance(credentialOffer: String): TxCodeInputBottomSheetFragment {
+            val fragment = TxCodeInputBottomSheetFragment()
             val args = Bundle()
             args.putString(ARG_CREDENTIAL_OFFER, credentialOffer)
             fragment.arguments = args
@@ -50,16 +50,16 @@ class PinInputBottomSheetFragment : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val editTextPinCode = view.findViewById<EditText>(R.id.editTextPinCode)
-        editTextPinCode.requestFocus()
-        viewModel.pinError.observe(viewLifecycleOwner) { errorMessage ->
+        val editTextTxCode = view.findViewById<EditText>(R.id.editTextTxCode)
+        editTextTxCode.requestFocus()
+        viewModel.txCodeError.observe(viewLifecycleOwner) { errorMessage ->
             if (errorMessage != null) {
                 // エラーメッセージを表示
                 showErrorMessage(errorMessage)
                 // PINコード入力をリセット
-                view.findViewById<EditText>(R.id.editTextPinCode).text.clear()
+                view.findViewById<EditText>(R.id.editTextTxCode).text.clear()
                 // エラー情報をリセット
-                viewModel.resetPinError()
+                viewModel.resetTxCodeError()
             }
         }
     }
@@ -82,17 +82,17 @@ class PinInputBottomSheetFragment : BottomSheetDialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_pin_input_bottom_sheet, container, false)
+        val view = inflater.inflate(R.layout.fragment_tx_code_input_bottom_sheet, container, false)
 
         val credentialOffer = arguments?.getString(ARG_CREDENTIAL_OFFER)
 
-        val editTextPinCode = view.findViewById<EditText>(R.id.editTextPinCode)
+        val editTextTxCode = view.findViewById<EditText>(R.id.editTextTxCode)
         val buttonAuth = view.findViewById<ImageButton>(R.id.buttonAuthenticate)
         // 初期状態としてボタンを無効化する
         buttonAuth.isEnabled = false
         buttonAuth.setImageResource(R.drawable.button_auth_inactive)
 
-        editTextPinCode.addTextChangedListener(object : TextWatcher {
+        editTextTxCode.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
                 // ここでは何もしない
             }
@@ -116,21 +116,21 @@ class PinInputBottomSheetFragment : BottomSheetDialogFragment() {
 
 
         // inputにカーソルをフォーカスさせるためにdelayを使う
-        editTextPinCode.postDelayed({
-            if (editTextPinCode.requestFocus()) {
-                val isFocused = editTextPinCode.isFocused
+        editTextTxCode.postDelayed({
+            if (editTextTxCode.requestFocus()) {
+                val isFocused = editTextTxCode.isFocused
                 if (isFocused) {
-                    showKeyboard(editTextPinCode)
+                    showKeyboard(editTextTxCode)
                 }
             } else {
-                Log.d("PinInputFragment", "Unable to focus EditText.")
+                Log.d("TxCodeInputFragment", "Unable to focus EditText.")
             }
         }, 300)
 
         // ボタンにリスナーを設定
         buttonAuth.setOnClickListener {
-            val pinCode = editTextPinCode.text.toString()
-            listener?.onPinEntered(pinCode)
+            val txCode = editTextTxCode.text.toString()
+            listener?.onTxCodeEntered(txCode)
             dismiss() // PinInputBottomSheetFragment を閉じる
         }
 

@@ -164,10 +164,10 @@ val json = """
   "deferred_credential_endpoint": "https://datasign-demo-vci.tunnelto.dev/deferred_credential",
   "display": [
     {
-      "name": "OWND Project",
+      "name": "OWND Project3",
       "locale": "en-US",
       "logo": {
-        "url": "https://exampleuniversity.com/public/logo.png",
+        "uri": "https://exampleuniversity.com/public/logo.png",
         "alt_text": "a square logo of a university"
       },
       "background_color": "#12107c",
@@ -177,21 +177,21 @@ val json = """
       "name": "オウンドプロジェクト",
       "locale": "ja_JP",
       "logo": {
-        "url": "https://exampleuniversity.com/public/logo.png",
+        "uri": "https://exampleuniversity.com/public/logo.png",
         "alt_text": "a square logo of a university"
       },
       "background_color": "#12107c",
       "text_color": "#FFFFFF"
     }
   ],
-  "credentials_supported": {
+  "credential_configurations_supported": {
     "UniversityDegreeCredential": {
       "format": "jwt_vc_json",
       "scope": "UniversityDegree",
       "cryptographic_binding_methods_supported": [
         "did"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ES256K"
       ],
       "credential_definition": {
@@ -219,28 +219,33 @@ val json = """
           }
         }
       },
-      "proof_types_supported": [
-        "jwt"
-      ],
+            "proof_types_supported": {
+              "jwt": {
+                "proof_signing_alg_values_supported": [
+                  "ES256",
+                  "ES256K"
+                ]
+              }
+            },
       "display": [
         {
           "name": "IdentityCredential",
           "locale": "en-US",
           "logo": {
-            "url": "https://exampleuniversity.com/public/logo.png",
+            "uri": "https://exampleuniversity.com/public/logo.png",
             "alt_text": "a square logo of a university"
           },
-          "background_image": "http://localhost:3002/images/my-number-card-image.png",
+          "background_image": {"uri": "http://localhost:3002/images/my-number-card-image.png"},
           "text_color": "#FFFFFF"
         },
         {
           "name": "IdentityCredential",
           "locale": "ja_JP",
           "logo": {
-            "url": "https://exampleuniversity.com/public/logo.png",
+            "uri": "https://exampleuniversity.com/public/logo.png",
             "alt_text": "a square logo of a university"
           },
-          "background_image": "http://localhost:3002/images/my-number-card-image.png",
+          "background_image": {"uri": "http://localhost:3002/images/my-number-card-image.png"},
           "text_color": "#FFFFFF"
         }
       ]
@@ -251,10 +256,9 @@ val json = """
       "cryptographic_binding_methods_supported": [
         "did"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ES256K"
       ],
-      "credential_definition": {
         "vct": "IdentityCredential",
         "claims": {
           "employee_no": {
@@ -318,13 +322,13 @@ val json = """
             ]
           }
         }
-      },
+      ,
       "display": [
         {
           "name": "Employee Credential",
           "locale": "en-US",
           "logo": {
-            "url": "https://datasign.jp/id/logo.png",
+            "uri": "https://datasign.jp/id/logo.png",
             "alt_text": "a square logo of a employee identification"
           },
           "background_color": "#12107c",
@@ -334,7 +338,7 @@ val json = """
           "name": "社員証明書",
           "locale": "ja",
           "logo": {
-            "url": "https://datasign.jp/id/logo.png",
+            "uri": "https://datasign.jp/id/logo.png",
             "alt_text": "a square logo of a employee identification"
           },
           "background_color": "#12107c",
@@ -357,10 +361,10 @@ val json2 = """
   "deferred_credential_endpoint": "https://datasign-demo-vci.tunnelto.dev/deferred_credential",
   "display": [
     {
-      "name": "OWND Project",
+      "name": "OWND Project5",
       "locale": "en-US",
       "logo": {
-        "url": "https://exampleuniversity.com/public/logo.png",
+        "uri": "https://exampleuniversity.com/public/logo.png",
         "alt_text": "a square logo of a university"
       },
       "background_color": "#2521ff",
@@ -370,21 +374,21 @@ val json2 = """
       "name": "オウンドプロジェクト",
       "locale": "ja_JP",
       "logo": {
-        "url": "https://exampleuniversity.com/public/logo.png",
+        "uri": "https://exampleuniversity.com/public/logo.png",
         "alt_text": "a square logo of a university"
       },
       "background_color": "#12107c",
       "text_color": "#FFFFFF"
     }
   ],
-  "credentials_supported": {
+  "credential_configurations_supported": {
     "ExampleDegreeCredential": {
       "format": "jwt_vc_json",
       "scope": "UniversityDegree",
       "cryptographic_binding_methods_supported": [
         "did"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ES256K"
       ],
       "credential_definition": {
@@ -419,15 +423,20 @@ val json2 = """
           }
         }
       },
-      "proof_types_supported": [
-        "jwt"
-      ],
+            "proof_types_supported": {
+              "jwt": {
+                "proof_signing_alg_values_supported": [
+                  "ES256",
+                  "ES256K"
+                ]
+              }
+            },
       "display": [
         {
           "name": "ExampleDegreeCredential",
           "locale": "en-US",
           "logo": {
-            "url": "https://exampleuniversity.com/public/logo.png",
+            "uri": "https://exampleuniversity.com/public/logo.png",
             "alt_text": "a square logo of a university"
           },
           "background_color": "#12107c",
@@ -437,7 +446,7 @@ val json2 = """
           "name": "ExampleDegreeCredential",
           "locale": "ja_JP",
           "logo": {
-            "url": "https://exampleuniversity.com/public/logo.png",
+            "uri": "https://exampleuniversity.com/public/logo.png",
             "alt_text": "a square logo of a university"
           },
           "background_color": "#12107c",

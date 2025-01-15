@@ -4,19 +4,14 @@
     "https://datasign-demo-vci.tunnelto.dev"
   ],
   "credential_endpoint": "https://datasign-demo-vci.tunnelto.dev/credentials",
-  "token_endpoint": "https://datasign-demo-vci.tunnelto.dev/token",
   "batch_credential_endpoint": "https://datasign-demo-vci.tunnelto.dev/batch-credentials",
-  "credentials_supported": [
-    {
+  "credential_configurations_supported": {
+    "UniversityDegree_JWT": {
       "format": "jwt_vc_json",
-      "id": "UniversityDegree_JWT",
-      "types": [
-        "IdentityCredential"
-      ],
       "cryptographic_binding_methods_supported": [
         "did"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ES256K"
       ],
       "display": [
@@ -24,47 +19,52 @@
           "name": "IdentityCredential",
           "locale": "en-US",
           "logo": {
-            "url": "https://exampleuniversity.com/public/logo.png",
+            "uri": "https://exampleuniversity.com/public/logo.png",
             "alt_text": "a square logo of a university"
           },
           "background_color": "#12107c",
           "text_color": "#FFFFFF"
         }
       ],
-      "credentialSubject": {
-        "given_name": {
-          "display": [
-            {
-              "name": "Given Name",
-              "locale": "en-US"
-            }
-          ]
-        },
-        "last_name": {
-          "display": [
-            {
-              "name": "Surname",
-              "locale": "en-US"
-            }
-          ]
-        },
-        "degree": {},
-        "gpa": {
-          "display": [
-            {
-              "name": "GPA"
-            }
-          ]
+      "credential_definition": {
+        "type": [
+          "IdentityCredential"
+        ],
+        "credentialSubject": {
+          "given_name": {
+            "display": [
+              {
+                "name": "Given Name",
+                "locale": "en-US"
+              }
+            ]
+          },
+          "last_name": {
+            "display": [
+              {
+                "name": "Surname",
+                "locale": "en-US"
+              }
+            ]
+          },
+          "degree": {},
+          "gpa": {
+            "display": [
+              {
+                "name": "GPA"
+              }
+            ]
+          }
         }
       }
     }
-  ],
+  },
   "display": [
     {
-      "name": "OWND Project",
+      "name": "OWND Project2",
       "locale": "en-US",
       "logo": {
-        "url": "https://exampleuniversity.com/public/logo.png",
+        "uri": "https://exampleuniversity.com/public/logo.png",
         "alt_text": "a square logo of a university"
       },
       "background_color": "#12107c",

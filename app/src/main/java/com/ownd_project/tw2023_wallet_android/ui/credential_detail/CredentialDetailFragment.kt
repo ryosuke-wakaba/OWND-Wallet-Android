@@ -165,13 +165,13 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
         viewModel.displayData.observe(viewLifecycleOwner) { displayData ->
             val hasBackgroundImage = displayData.backgroundImage != null
             val hasBackgroundColor = displayData.backgroundColor != null
-            val hasLogo = displayData.logo?.url?.isNotEmpty() == true
+            val hasLogo = displayData.logo?.uri?.isNotEmpty() == true
             val cardView = binding.credentialCardView
 
             // ロゴの処理
             if (hasLogo) {
                 Glide.with(requireContext())
-                    .load(displayData.logo?.url)
+                    .load(displayData.logo?.uri)
                     .into(binding.detailCredentialLogo)
             } else if (!hasBackgroundImage) {
                 // デフォルトロゴまたはデフォルト画像を設定

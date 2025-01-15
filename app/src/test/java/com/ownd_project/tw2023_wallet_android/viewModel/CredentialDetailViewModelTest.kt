@@ -162,7 +162,7 @@ class CredentialDetailViewModelTest {
         val displayDataObserver = Observer<CredentialsSupportedDisplay> { data ->
             assertNotNull(data)
             assertEquals("Employee Credential", data.name)
-            assertEquals("https://datasign.jp/id/logo.png", data.logo?.url)
+            assertEquals("https://datasign.jp/id/logo.png", data.logo?.uri)
             // 他のプロパティも必要に応じてテスト
         }
 

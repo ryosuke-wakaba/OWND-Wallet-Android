@@ -141,8 +141,8 @@ class ConfirmationViewModelTest {
     fun processMetadataTest() = runBlocking {
         // 必要なデータの準備
         var testParameterValue =
-            this::class.java.classLoader!!.getResource("credential_offer.json")?.readText()
-                ?: throw IllegalArgumentException("Cannot read credential_offer.json")
+            this::class.java.classLoader!!.getResource("credential_offer1.json")?.readText()
+                ?: throw IllegalArgumentException("Cannot read credential_offer1.json")
         testParameterValue =
             testParameterValue.replace(
                 "https://datasign-demo-vci.tunnelto.dev",

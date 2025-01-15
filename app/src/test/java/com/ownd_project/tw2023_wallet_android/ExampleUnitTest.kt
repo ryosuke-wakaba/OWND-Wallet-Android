@@ -2,15 +2,16 @@ package com.ownd_project.tw2023_wallet_android
 
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 import com.ownd_project.tw2023_wallet_android.vci.CredentialOffer
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupported
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedJwtVcJson
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedJwtVcJsonLdAndLdpVc
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfiguration
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationJwtVcJson
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationJwtVcJsonLdAndLdpVc
 import com.ownd_project.tw2023_wallet_android.vci.CredentialsSupportedDisplay
 import com.ownd_project.tw2023_wallet_android.vci.Grant
 import com.ownd_project.tw2023_wallet_android.vci.IssuerCredentialSubjectMap
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.ownd_project.tw2023_wallet_android.vci.TxCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -40,7 +41,7 @@ class ExampleUnitTest {
             mapper.readValue(json, CredentialsSupportedDisplay::class.java)
         assertEquals("University Credential", display.name)
         assertEquals("en-US", display.locale)
-        assertEquals("https://exampleuniversity.com/public/logo.png", display.logo!!.url)
+        assertEquals("https://exampleuniversity.com/public/logo.png", display.logo!!.uri)
         assertEquals("a square logo of a university", display.logo!!.altText)
         assertEquals("#12107c", display.backgroundColor)
         assertEquals("#FFFFFF", display.textColor)
@@ -72,12 +73,12 @@ class ExampleUnitTest {
         assertEquals("en-US", lastNameDisplay?.locale)
     }
 
-    private fun assertCredentialSupported(data: CredentialSupported) {
+    private fun assertCredentialSupported(data: CredentialConfiguration) {
         when (data) {
-            is CredentialSupportedJwtVcJson -> {
+            is CredentialConfigurationJwtVcJson -> {
                 // `id` を適切なフィールド名に置き換えるか、削除
                 assertEquals("did", data.cryptographicBindingMethodsSupported?.firstOrNull())
-                assertEquals("ES256K", data.cryptographicSuitesSupported?.firstOrNull())
+                assertEquals("ES256K", data.credentialSigningAlgValuesSupported?.firstOrNull())
                 // `types` フィールドの扱いを修正
                 val givenNameSubject =
                     data.credentialDefinition.credentialSubject?.get("given_name")
@@ -86,16 +87,16 @@ class ExampleUnitTest {
                 assertEquals("en-US", givenNameDisplay?.locale)
             }
 
-            is CredentialSupportedJwtVcJsonLdAndLdpVc -> {
+            is CredentialConfigurationJwtVcJsonLdAndLdpVc -> {
                 // `id` を適切なフィールド名に置き換えるか、削除
                 assertEquals("did", data.cryptographicBindingMethodsSupported?.firstOrNull())
                 assertEquals(
                     "Ed25519Signature2018",
-                    data.cryptographicSuitesSupported?.firstOrNull()
+                    data.credentialSigningAlgValuesSupported?.firstOrNull()
                 )
-                assertEquals("VerifiableCredential", data.types.firstOrNull())
+                assertEquals("VerifiableCredential", data.credentialDefinition.type.firstOrNull())
                 // `credentialSubject` フィールドの扱いを修正
-                val givenNameSubject = data.credentialSubject?.get("given_name")
+                val givenNameSubject = data.credentialDefinition.credentialSubject?.get("given_name")
                 val givenNameDisplay = givenNameSubject?.display?.firstOrNull()
                 assertEquals("Given Name", givenNameDisplay?.name)
                 assertEquals("en-US", givenNameDisplay?.locale)
@@ -114,7 +115,8 @@ class ExampleUnitTest {
         val json = this::class.java.classLoader?.getResource("credential_supported_jwt_vc.json")
             ?.readText()
             ?: throw IllegalArgumentException("Cannot read test_data.json")
-        assertCredentialSupported(mapper.readValue(json, CredentialSupported::class.java))
+        val parsed = mapper.readValue(json, CredentialConfiguration::class.java)
+        assertCredentialSupported(parsed)
     }
 
     @Test
@@ -122,7 +124,7 @@ class ExampleUnitTest {
         val json = this::class.java.classLoader?.getResource("credential_supported_ldp_vc.json")
             ?.readText()
             ?: throw IllegalArgumentException("Cannot read test_data.json")
-        assertCredentialSupported(mapper.readValue(json, CredentialSupported::class.java))
+        assertCredentialSupported(mapper.readValue(json, CredentialConfiguration::class.java))
     }
 
     @Test
@@ -149,7 +151,7 @@ class ExampleUnitTest {
         )
 
         // `credentialSupported` マップから特定のキーを使用して値を取得
-        val credentialSupported = metaData.credentialsSupported["UniversityDegreeCredential"]
+        val credentialSupported = metaData.credentialConfigurationsSupported["UniversityDegreeCredential"]
         credentialSupported?.let {
             assertCredentialSupported(it)
         } ?: fail("CredentialSupported not found for key 'UniversityDegreeCredential'")
@@ -157,14 +159,15 @@ class ExampleUnitTest {
 
 
     @Test
-    fun deserialize_json_credential_offer() {
-        val json = this::class.java.classLoader?.getResource("credential_offer.json")
+    fun deserialize_json_credential_offer1() {
+        val fileName = "credential_offer1.json"
+        val json = this::class.java.classLoader?.getResource(fileName)
             ?.readText()
-            ?: throw IllegalArgumentException("Cannot read credential_offer.json")
+            ?: throw IllegalArgumentException("Cannot read $fileName")
         val credentialOffer = mapper.readValue(json, CredentialOffer::class.java)
         assertEquals("https://datasign-demo-vci.tunnelto.dev", credentialOffer.credentialIssuer)
 
-        val credentials = credentialOffer.credentials
+        val credentials = credentialOffer.credentialConfigurationIds
         assertTrue("Credentials list should have at least one element", credentials.isNotEmpty())
 
         assertEquals("UniversityDegreeCredential", credentials[0])
@@ -172,25 +175,42 @@ class ExampleUnitTest {
         val grants = credentialOffer.grants
         assertEquals("eyJhbGciOiJSU0Et...FYUaBy", grants?.authorizationCode?.issuerState)
         assertEquals("adhjhdjajkdkhjhdj", grants?.urnIetfParams?.preAuthorizedCode)
-        assertEquals(true, grants?.urnIetfParams?.userPinRequired)
+        assertEquals(TxCode(null, null, null), grants?.urnIetfParams?.txCode)
+    }
 
+    @Test
+    fun deserialize_json_credential_offer2() {
+        val fileName = "credential_offer2.json"
+        val json = this::class.java.classLoader?.getResource(fileName)
+            ?.readText()
+            ?: throw IllegalArgumentException("Cannot read $fileName")
+        val credentialOffer = mapper.readValue(json, CredentialOffer::class.java)
+        assertEquals("https://datasign-demo-vci.tunnelto.dev", credentialOffer.credentialIssuer)
+
+        val credentials = credentialOffer.credentialConfigurationIds
+        assertTrue("Credentials list should have at least one element", credentials.isNotEmpty())
+
+        assertEquals("UniversityDegreeCredential", credentials[0])
+
+        val grants = credentialOffer.grants
+        assertEquals("eyJhbGciOiJSU0Et...FYUaBy", grants?.authorizationCode?.issuerState)
+        assertEquals("adhjhdjajkdkhjhdj", grants?.urnIetfParams?.preAuthorizedCode)
+        assertEquals(null, grants?.urnIetfParams?.txCode)
     }
 
     @Test
     fun deserialize_json() {
-        val json = """
-    {
-      "authorization_code": { "issuer_state": "foo" },
-      "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
-        "pre-authorized_code": "12345",
-        "user_pin_required": true
-      }
-    }
-    """
+        val fileName = "grant.json"
+        val json = this::class.java.classLoader?.getResource(fileName)
+            ?.readText()
+            ?: throw IllegalArgumentException("Cannot read $fileName")
 
         val grant: Grant = mapper.readValue(json, Grant::class.java)
         assertEquals("foo", grant.authorizationCode?.issuerState)
         assertEquals("12345", grant.urnIetfParams?.preAuthorizedCode)
-        assertEquals(true, grant.urnIetfParams?.userPinRequired)
+        val txCodeDecoded = grant.urnIetfParams?.txCode
+        assertEquals(4, txCodeDecoded?.length)
+        assertEquals("numeric", txCodeDecoded?.inputMode)
+        assertEquals("Please provide the one-time code that was sent via e-mail", txCodeDecoded?.description)
     }
 }

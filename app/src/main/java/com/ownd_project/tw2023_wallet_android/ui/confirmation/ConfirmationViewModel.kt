@@ -10,19 +10,22 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
+import com.ownd_project.tw2023_wallet_android.oid.AuthorizationServerMetadata
 import com.ownd_project.tw2023_wallet_android.ui.shared.Constants
 import com.ownd_project.tw2023_wallet_android.utils.CredentialRequest
 import com.ownd_project.tw2023_wallet_android.utils.CredentialRequestJwtVc
 import com.ownd_project.tw2023_wallet_android.utils.CredentialRequestSdJwtVc
+import com.ownd_project.tw2023_wallet_android.utils.InvalidCredentialResponseException
 import com.ownd_project.tw2023_wallet_android.utils.KeyPairUtil
 import com.ownd_project.tw2023_wallet_android.utils.Proof
 import com.ownd_project.tw2023_wallet_android.utils.TokenErrorResponseException
+import com.ownd_project.tw2023_wallet_android.utils.UnsupportedIssuanceFlow
 import com.ownd_project.tw2023_wallet_android.utils.VCIClient
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 import com.ownd_project.tw2023_wallet_android.vci.CredentialOffer
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupported
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedJwtVcJson
-import com.ownd_project.tw2023_wallet_android.vci.CredentialSupportedVcSdJwt
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfiguration
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationJwtVcJson
+import com.ownd_project.tw2023_wallet_android.vci.CredentialConfigurationVcSdJwt
 import com.ownd_project.tw2023_wallet_android.vci.IssuerCredentialSubject
 import com.ownd_project.tw2023_wallet_android.vci.MetadataClient
 import kotlinx.coroutines.Dispatchers
@@ -50,7 +53,7 @@ class ConfirmationViewModel() :
 
     private fun updateText(
         credentialIssuerMetadata: CredentialIssuerMetadata,
-        credentialSupported: CredentialSupported,
+        credentialConfiguration: CredentialConfiguration,
     ) {
         val currentLocale = Locale.getDefault().toString() // 例: "en-US"、"ja_JP"
         val issuerDisplay = credentialIssuerMetadata.display
@@ -58,9 +61,9 @@ class ConfirmationViewModel() :
             ?: credentialIssuerMetadata.display?.firstOrNull()
 
         val issuerName = issuerDisplay?.name ?: "Unknown Issuer"
-        val credentialType = when (credentialSupported) {
-            is CredentialSupportedJwtVcJson -> credentialSupported.display?.get(0)?.name
-            is CredentialSupportedVcSdJwt -> credentialSupported.display?.get(0)?.name
+        val credentialType = when (credentialConfiguration) {
+            is CredentialConfigurationJwtVcJson -> credentialConfiguration.display?.get(0)?.name
+            is CredentialConfigurationVcSdJwt -> credentialConfiguration.display?.get(0)?.name
             else -> "Unknown Type"
         }
 
@@ -102,21 +105,21 @@ class ConfirmationViewModel() :
     private val _vct = MutableLiveData<String>()
     val vct: LiveData<String> = _vct
 
-    private val _isPinRequired = MutableLiveData<Boolean>()
-    val isPinRequired: LiveData<Boolean> = _isPinRequired
+    private val _isTxCodeRequired = MutableLiveData<Boolean>()
+    val isTxCodeRequired: LiveData<Boolean> = _isTxCodeRequired
 
-    fun checkIfPinIsRequired(credentialOffer: String) {
+    fun checkIfTxCodeIsRequired(credentialOffer: String) {
         val jsonObject = JSONObject(credentialOffer)
         val grants = jsonObject.getJSONObject("grants")
         val preAuthCodeInfo =
             grants.getJSONObject("urn:ietf:params:oauth:grant-type:pre-authorized_code")
-        val userPinRequired = preAuthCodeInfo.getBoolean("user_pin_required")
+        val txCodeRequired = !(preAuthCodeInfo.isNull("tx_code"))
 
-        _isPinRequired.value = userPinRequired
+        _isTxCodeRequired.value = txCodeRequired
     }
 
-    private val _pinError = MutableLiveData<String?>()
-    val pinError: LiveData<String?> = _pinError
+    private val _txCodeError = MutableLiveData<String?>()
+    val txCodeError: LiveData<String?> = _txCodeError
 
     private var credentialIssuer: String = ""
     private var tokenEndpoint: String? = null
@@ -126,6 +129,9 @@ class ConfirmationViewModel() :
     //    private var credentialIssuerMetadata: CredentialIssuerMetadata? = null
     private val _credentialIssuerMetadata = MutableLiveData<CredentialIssuerMetadata>()
     val credentialIssuerMetadata: LiveData<CredentialIssuerMetadata> = _credentialIssuerMetadata
+
+    private val _authorizationServerMetadata = MutableLiveData<AuthorizationServerMetadata>()
+    val authorizationServerMetadata: LiveData<AuthorizationServerMetadata> = _authorizationServerMetadata
 
 
     private val _navigateToCertificateFragment = MutableLiveData<Boolean>()
@@ -174,18 +180,20 @@ class ConfirmationViewModel() :
 
         val response = MetadataClient.retrieveAllMetadata(credentialIssuer)
         _credentialIssuerMetadata.postValue(response.credentialIssuerMetadata!!)
+        _authorizationServerMetadata.postValue(response.authorizationServerMetadata!!)
 
         // LiveDataから値を取得
-        val currentMetadata = _credentialIssuerMetadata.awaitFirstValue()
-        tokenEndpoint = currentMetadata?.tokenEndpoint
-        credentialEndpoint = currentMetadata?.credentialEndpoint
+        val currentIssuerMetadata = _credentialIssuerMetadata.awaitFirstValue()
+        val currentAuthorizationServerMetadata = _authorizationServerMetadata.awaitFirstValue()
+        tokenEndpoint = currentAuthorizationServerMetadata.tokenEndpoint
+        credentialEndpoint = currentIssuerMetadata?.credentialEndpoint
 
         withContext(Dispatchers.Main) {
-            currentMetadata?.credentialsSupported?.forEach { (_, credentialSupported) ->
+            currentIssuerMetadata?.credentialConfigurationsSupported?.forEach { (_, credentialSupported) ->
                 when (credentialSupported) {
-                    is CredentialSupportedJwtVcJson -> {
+                    is CredentialConfigurationJwtVcJson -> {
                         _format.value = "jwt_vc_json"
-                        val firstCredential = credentialOffer.credentials.firstOrNull()
+                        val firstCredential = credentialOffer.credentialConfigurationIds.firstOrNull()
 
                         if (credentialSupported.credentialDefinition.type.contains(firstCredential)) {
                             _vct.value = firstCredential ?: ""
@@ -193,20 +201,20 @@ class ConfirmationViewModel() :
                                 credentialSupported.credentialDefinition.credentialSubject
                                     ?: emptyMap()
                             )
-                            updateText(currentMetadata, credentialSupported)
+                            updateText(currentIssuerMetadata, credentialSupported)
                         }
                     }
 
-                    is CredentialSupportedVcSdJwt -> {
+                    is CredentialConfigurationVcSdJwt -> {
                         _format.value = "vc+sd-jwt"
-                        val firstCredential = credentialOffer.credentials.firstOrNull()
+                        val firstCredential = credentialOffer.credentialConfigurationIds.firstOrNull()
 
-                        if (credentialSupported.credentialDefinition.vct == firstCredential) {
+                        if (credentialSupported.vct == firstCredential) {
                             _vct.value = firstCredential ?: ""
                             setCredentialSubject(
-                                credentialSupported.credentialDefinition.claims
+                                credentialSupported.claims
                             )
-                            updateText(currentMetadata, credentialSupported)
+                            updateText(currentIssuerMetadata, credentialSupported)
                         }
                     }
                 }
@@ -242,13 +250,13 @@ class ConfirmationViewModel() :
     }
 
 
-    fun sendRequest(context: Context, userPin: String? = null) {
+    fun sendRequest(context: Context, txCode: String? = null) {
         viewModelScope.launch(Dispatchers.IO) {
             val vciClient = VCIClient()
 
             try {
                 val tokenResponse =
-                    vciClient.postTokenRequest(tokenEndpoint!!, preAuthCode!!, userPin)
+                    vciClient.postTokenRequest(tokenEndpoint!!, preAuthCode!!, txCode)
                 val isProofRequired = tokenResponse?.cNonce != null
 
                 val isKeyPairExist =
@@ -271,16 +279,15 @@ class ConfirmationViewModel() :
                 if (_format.value == "vc+sd-jwt") {
                     credentialRequest = CredentialRequestSdJwtVc(
                         format = format.value!!,
-                        credentialDefinition = mapOf("vct" to "${vct.value}"),
-                        proof = proofJwt
+                        vct = vct.value,
+                        proof = proofJwt,
                     )
                 } else {
                     credentialRequest = CredentialRequestJwtVc(
                         format = format.value!!,
                         proof = proofJwt ,
                         credentialDefinition = mapOf(
-                            "type" to listOf(vct.value),
-                            "credentialSubject" to mapOf<String, Any>()
+                            "type" to listOf(vct.value)
                             ),
                     )
                 }
@@ -289,12 +296,15 @@ class ConfirmationViewModel() :
                     credentialEndpoint!!, credentialRequest, tokenResponse?.accessToken!!
                 )
 
-                val basicInfo = credentialResponse?.let {
-                    if (_format.value == "vc+sd-jwt")
-                        extractSDJwtInfo(it.credential, format.value!!)
-                    else
-                        extractJwtVcJsonInfo(it.credential, format.value!!)
+                if (credentialResponse.isDeferredIssuance() || credentialResponse.credential == null) {
+                    throw UnsupportedIssuanceFlow("Deferred Issuance is not supported currently")
                 }
+
+                val basicInfo =
+                    if (_format.value == "vc+sd-jwt")
+                        extractSDJwtInfo(credentialResponse.credential, format.value!!)
+                    else
+                        extractJwtVcJsonInfo(credentialResponse.credential, format.value!!)
 
                 val credentialIssuerMetadataStr =
                     jacksonObjectMapper().writeValueAsString(credentialIssuerMetadata.value)
@@ -302,8 +312,9 @@ class ConfirmationViewModel() :
 
                 // Protobufのスキーマを使用してCredentialDataを直接作成
                 val vcData = credentialDataStore?.responseToSchema(
-                    credentialResponse = credentialResponse!!,
-                    credentialBasicInfo = basicInfo!!,
+                    format = format.value!!,
+                    credentialResponse = credentialResponse,
+                    credentialBasicInfo = basicInfo,
                     credentialIssuerMetadata = credentialIssuerMetadataStr
                 )
 
@@ -318,17 +329,22 @@ class ConfirmationViewModel() :
                 val res = e.errorResponse
                 _errorMessage.postValue("${res.error}, ${res.errorDescription} ")
                 // todo 内部的なエラー情報としてerror responseを渡して、フラグメント側でstring valuesに事前に用意したエラーメッセージと対応させて表示する
+            } catch(e: InvalidCredentialResponseException) {
+                println(e)
+                _errorMessage.postValue("サーバーの応答を解釈できません: ${e.message}")
+            }catch (e: UnsupportedIssuanceFlow){
+                _errorMessage.postValue("サポートしていない発行フローです")
             } catch (e: IOException) {
                 // エラー時の処理
                 println(e)
-                _pinError.postValue("PINコードが間違っています。")
+                _txCodeError.postValue("PINコードが間違っています。")
                 _errorMessage.postValue("エラーが発生しました: ${e.message}")
             }
         }
     }
 
-    fun resetPinError() {
-        _pinError.value = null
+    fun resetTxCodeError() {
+        _txCodeError.value = null
     }
 
     fun resetErrorMessage() {

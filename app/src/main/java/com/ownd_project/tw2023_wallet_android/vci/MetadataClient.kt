@@ -73,18 +73,15 @@ class MetadataClient {
                     throw Error("Authorization Server $authorizationServer did not provide an authorization_endpoint")
                 }
 
-                authMetadata.tokenEndpoint?.let {
-                    // todo may be changed block structure
-                    if (credentialIssuerMetadata != null) {
-                        credentialIssuerMetadata.tokenEndpoint = it
+                if (authMetadata.tokenEndpoint == null) {
+                    run {
+                        throw Error("Authorization Server $authorizationServer did not provide a token_endpoint")
                     }
-                } ?: run {
-                    throw Error("Authorization Server $authorizationServer did not provide a token_endpoint")
                 }
             }
             return EndpointMetadataResult(
                 credentialIssuerMetadata = credentialIssuerMetadata,
-                authorizationServerMetadata = null
+                authorizationServerMetadata = authMetadata
             )
         }
 

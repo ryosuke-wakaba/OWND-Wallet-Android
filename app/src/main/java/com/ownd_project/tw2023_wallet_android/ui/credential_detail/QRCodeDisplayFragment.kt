@@ -106,7 +106,7 @@ class QRCodeDisplayFragment : BottomSheetDialogFragment() {
                         CredentialIssuerMetadata::class.java
                     )
                     val displayList =
-                        metadata.credentialsSupported.values.flatMap { it.display ?: emptyList() }
+                        metadata.credentialConfigurationsSupported.values.flatMap { it.display ?: emptyList() }
                     val display = selectDisplay(displayList)
                     display?.name?.let { name ->
                         binding.textTitle.text = name
