@@ -204,7 +204,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         }
     }
 
-    suspend fun respondIdTokenResponse(): Result<PostResult> {
+    fun respondIdTokenResponse(): Result<PostResult> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.siopRequest.authorizationRequestPayload,
@@ -261,7 +261,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
         }
     }
 
-    suspend fun respondVPResponse(
+    fun respondVPResponse(
         credentials: List<SubmissionCredential>,
     ): Result<Pair<PostResult, List<SharedContent>>> {
         try {
