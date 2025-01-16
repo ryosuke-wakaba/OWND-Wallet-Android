@@ -156,6 +156,7 @@ dependencies {
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.authlete:sd-jwt:1.4")
+    implementation("com.jayway.jsonpath:json-path:2.9.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
