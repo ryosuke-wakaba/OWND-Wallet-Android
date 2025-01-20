@@ -10,8 +10,13 @@ import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 
 class CredentialSharingViewModel: ViewModel() {
     val selectedCredential = MutableLiveData<SubmissionCredential?>()
+
     val _presentationDefinition = MutableLiveData<PresentationDefinition?>()
     val presentationDefinition: LiveData<PresentationDefinition?> = _presentationDefinition
+
+    private val _subJwk = MutableLiveData<String?>()
+    val subJwk: LiveData<String?> = _subJwk
+
     lateinit var credentialIssuerMetadata: CredentialIssuerMetadata
     lateinit var credentialType: String
 
@@ -29,6 +34,10 @@ class CredentialSharingViewModel: ViewModel() {
 
     fun setPresentationDefinition(data: PresentationDefinition?) {
         _presentationDefinition.value = data
+    }
+
+    fun setSubJwk(value: String) {
+        _subJwk.value = value
     }
 
     private val _requestInfo = MutableLiveData<RequestInfo>()

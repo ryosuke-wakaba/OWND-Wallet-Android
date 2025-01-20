@@ -145,6 +145,9 @@
             android:id="@+id/action_id_token_sharring_to_navigation_certificate"
             app:destination="@id/navigation_certificate" />
         <action
+            android:id="@+id/action_id_token_sharring_to_flow2"
+            app:destination="@id/id_token_sharring_flow2" />
+        <action
             android:id="@+id/action_id_token_sharring_to_webViewFragment"
             app:destination="@id/webview_fragment" />
     </fragment>
@@ -154,7 +157,7 @@
         >
         <action
             android:id="@+id/action_id_token_sharring_to_flow3"
-            app:destination="@id/navigation_certificate" />
+            app:destination="@id/id_token_sharring_flow3" />
     </fragment>
     <fragment
         android:id="@+id/id_token_sharring_flow3"
@@ -162,7 +165,8 @@
         >
         <argument
             android:name="credentialId"
-            app:argType="string" />
+            app:argType="string"
+            app:nullable="true"/>
     </fragment>
     <fragment
         android:id="@+id/credential_verification"

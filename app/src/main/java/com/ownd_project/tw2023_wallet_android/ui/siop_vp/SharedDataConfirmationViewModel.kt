@@ -41,6 +41,12 @@ class SharedDataConfirmationViewModel : ViewModel() {
         _requestInfo.value = requestInfo
     }
 
+    private val _subJwk = MutableLiveData<String?>()
+    val subJwk: LiveData<String?> = _subJwk
+    fun setSubJwk(value: String) {
+        _subJwk.value = value
+    }
+
     private var _credential: CredentialData? = null
     private var _inputDescriptor: InputDescriptor? = null
 
@@ -49,6 +55,10 @@ class SharedDataConfirmationViewModel : ViewModel() {
 
     fun resetErrorMessage() {
         _errorMessage.value = null
+    }
+
+    fun setEmptyClaims() {
+        _claims.value = listOf()
     }
 
     open fun getData(credentialId: String, presentationDefinition: PresentationDefinition) {
@@ -67,13 +77,6 @@ class SharedDataConfirmationViewModel : ViewModel() {
                                 _inputDescriptor = selectedClaims.matchedInputDescriptor
                                 _claims.value = selectedClaims.selectedClaims
                             }
-                            // val ret = OpenIdProvider.selectDisclosure(cred.credential, presentationDefinition)
-//                            ret?.let { (inputDescriptor, closures) ->
-//                                _inputDescriptor = inputDescriptor
-//                                val optionalFields = inputDescriptor.constraints.fields?.filter { it.optional == true }
-//                                val claims = closures.map { claim -> mapOf(claim.key to claim.value) }
-//                            }
-//                            val rt2 = ret
                         }
                     }
                 }

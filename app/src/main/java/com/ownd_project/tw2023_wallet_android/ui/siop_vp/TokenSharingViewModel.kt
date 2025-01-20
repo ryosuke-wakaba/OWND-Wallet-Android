@@ -40,8 +40,11 @@ val TAG = IdTokenSharringViewModel::class.simpleName
 class IdTokenSharringViewModel : ViewModel() {
     var isInitialized = false
     lateinit var openIdProvider: OpenIdProvider
-    private val _clientInfo = MutableLiveData<ClientInfo>()
-    val clientInfo: LiveData<ClientInfo> = _clientInfo
+    private val _clientInfo = MutableLiveData<ClientInfo?>()
+    val clientInfo: LiveData<ClientInfo?> = _clientInfo
+
+    private val _subJwk = MutableLiveData<String?>()
+    val subJwk: LiveData<String?> = _subJwk
 
     private val _presentationDefinition = MutableLiveData<PresentationDefinition>()
     val presentationDefinition: LiveData<PresentationDefinition> = _presentationDefinition
@@ -110,6 +113,7 @@ class IdTokenSharringViewModel : ViewModel() {
 
     fun setJwkThumbprint(value: String) {
         _clientInfo.value = _clientInfo.value?.copy(jwkThumbprint = value)
+        _subJwk.value = value
     }
 
     fun setIdenticon(value: Int) {

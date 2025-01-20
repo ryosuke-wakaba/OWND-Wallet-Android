@@ -3,6 +3,7 @@ package com.ownd_project.tw2023_wallet_android.features.data_sharing.flow2
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -36,8 +37,9 @@ import java.util.Locale
 @RunWith(AndroidJUnit4::class)
 class CertificateSelectionFragmentTest {
 
-    @get:Rule
-    val composeTestRule = createAndroidComposeRule<TestActivity>()
+//     @get:Rule
+//    val composeTestRule = createAndroidComposeRule<TestActivity>()
+    @get:Rule val composeTestRule = createComposeRule()
 
     @Test
     fun testFragmentLaunch() {

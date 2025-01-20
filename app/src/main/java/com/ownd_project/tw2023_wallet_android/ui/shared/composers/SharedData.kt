@@ -47,9 +47,9 @@ fun SharedClaim(claim: Claim) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(
-            modifier = Modifier
+            modifier = Modifier.padding(8.dp)
         ) {
-            SubHeadLineText(claim.data.key!!, modifier = Modifier.padding(8.dp))
+            SubHeadLineText(claim.data.key!!, modifier = Modifier)
             if (claim.data.value!!.isBase64Image()) {
                 val imageBitmap = claim.data.value!!.decodeBase64ToBitmap()
                 if (imageBitmap != null) {
@@ -69,12 +69,12 @@ fun SharedClaim(claim: Claim) {
                     )
                 }
             } else {
-                CalloutText(claim.data.value!!, modifier = Modifier.padding(8.dp))
+                CalloutText(claim.data.value!!, modifier = Modifier.padding(top = 8.dp))
             }
         }
         Switch(
             checked = checked,
-            enabled = !claim.optional,
+            enabled = claim.optional,
             onCheckedChange = {
                 checked = it
                 claim.checked = it
@@ -151,7 +151,7 @@ fun getPreviewData(color: Color): List<Claim> {
                 value = imageValue,
                 disclosure = "dummy"
             ),
-            optional = true,
+            optional = false,
             checked = true,
         ),
         Claim(
@@ -160,7 +160,7 @@ fun getPreviewData(color: Color): List<Claim> {
                 value = "value2",
                 disclosure = "dummy"
             ),
-            optional = true,
+            optional = false,
             checked = true,
         ),
         Claim(
@@ -169,7 +169,8 @@ fun getPreviewData(color: Color): List<Claim> {
                 value = "value3",
                 disclosure = "dummy",
             ),
-            checked = true,
+            optional = true,
+            checked = false,
         ),
     )
 }

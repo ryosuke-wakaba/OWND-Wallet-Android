@@ -17,11 +17,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun FilledButton(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun FilledButton(
+    label: String,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     val isDarkTheme = isSystemInDarkTheme()
     val color = if (isDarkTheme) Color(0xFF018786) else Color.Black
     val textColor = if (isDarkTheme) Color.Black else Color.White
+//    val disabledColor = if (isDarkTheme) Color(0xFF018786) else Color.DarkGray
     Button(
+        enabled = enabled,
         colors = buttonColors(backgroundColor = color),
         onClick = onClick,
         modifier = Modifier
@@ -52,6 +59,22 @@ fun PreviewFilledButton() {
 @Composable
 fun PreviewFilledButton2() {
     FilledButton("Filled Button") {
+        // nop
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewFilledButton3() {
+    FilledButton("Filled Button", enabled = false) {
+        // nop
+    }
+}
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun PreviewFilledButton4() {
+    FilledButton("Filled Button", enabled = false) {
         // nop
     }
 }

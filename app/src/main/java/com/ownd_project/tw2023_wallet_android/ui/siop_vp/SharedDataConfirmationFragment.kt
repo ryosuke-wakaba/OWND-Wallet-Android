@@ -15,10 +15,12 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.ownd_project.tw2023_wallet_android.MainActivity
 import com.ownd_project.tw2023_wallet_android.R
+import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
 import com.ownd_project.tw2023_wallet_android.oid.PostResult
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
 import com.ownd_project.tw2023_wallet_android.ui.shared.CredentialSharingViewModel
@@ -39,6 +41,10 @@ class SharedDataConfirmationFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
+        val activity = requireActivity()
+        val menuProvider = TokenSharingFragmentMenuProvider(this, activity.menuInflater)
+        activity.addMenuProvider(menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
         viewModel.postResult.observe(viewLifecycleOwner, ::onPostResult)
         viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
             errorMessage?.let {
@@ -48,17 +54,27 @@ class SharedDataConfirmationFragment : Fragment() {
         }
         viewModel.doneSuccessfully.observe(viewLifecycleOwner, ::onUpdateProcessCompletion)
 
+        val credentialDataStore = CredentialDataStore.getInstance(requireContext())
+        viewModel.setCredentialDataStore(credentialDataStore)
+
         return ComposeView(requireContext()).apply {
             val credentialId = args.credentialId
-            // todo request infoもsharedから取り出す
             Log.d(SharedDataConfirmationFragment.tag, "credentialId:$credentialId")
             sharedViewModel.requestInfo.observe(viewLifecycleOwner) {
                 viewModel.setRequestInfo(it)
             }
+            sharedViewModel.subJwk.observe(viewLifecycleOwner) {
+                if (!it.isNullOrBlank()) {
+                    viewModel.setSubJwk(it)
+                }
+            }
             sharedViewModel.presentationDefinition.observe(viewLifecycleOwner) { it ->
-                Log.d(SharedDataConfirmationFragment.tag, "Presentation Definition:$it")
                 if (it != null) {
-                    viewModel.getData(credentialId, it)
+                    if (credentialId != null) {
+                        viewModel.getData(credentialId, it)
+                    } else {
+                        viewModel.setEmptyClaims()
+                    }
                 }
             }
             setContent {

@@ -8,7 +8,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.text.HtmlCompat
 import androidx.fragment.app.Fragment
@@ -26,6 +28,7 @@ import com.ownd_project.tw2023_wallet_android.oid.PostResult
 import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
 import com.ownd_project.tw2023_wallet_android.ui.shared.CredentialSharingViewModel
+import com.ownd_project.tw2023_wallet_android.utils.DisplayUtil
 import com.ownd_project.tw2023_wallet_android.utils.MetadataUtil
 import com.ownd_project.tw2023_wallet_android.utils.viewBinding
 
@@ -49,7 +52,25 @@ class TokenSharingFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+//        val rootView = inflater.inflate(R.layout.fragment_id_token_sharring, container, false)
+
+        (activity as? AppCompatActivity)?.supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(false)
+        }
+        DisplayUtil.setFragmentTitle(
+            activity as? AppCompatActivity,
+            ""
+        )
+//        val composeView = rootView.findViewById<ComposeView>(R.id.compose_view)
         return ComposeView(requireContext()).apply {
+            viewModel.presentationDefinition.observe(viewLifecycleOwner) {
+                sharedViewModel.setPresentationDefinition(it)
+            }
+            viewModel.subJwk.observe(viewLifecycleOwner) {
+                if (!it.isNullOrBlank()) {
+                    sharedViewModel.setSubJwk(it)
+                }
+            }
             setContent {
                 RequestContentView(viewModel = viewModel, linkOpener = { url ->
                     val builder = CustomTabsIntent.Builder()
@@ -58,8 +79,13 @@ class TokenSharingFragment : Fragment() {
                     // MainActivityのisLockingをfalseにセット
                     (activity as? MainActivity)?.setIsLocking(true)
                     customTabsIntent.launchUrl(requireContext(), Uri.parse(url))
+                }, closeHandler = {
+                    onUpdateCloseFragment(true)
                 }) {
-                    // todo move to next view
+                    sharedViewModel.setRequestInfo(it)
+                    val action =
+                        TokenSharingFragmentDirections.actionIdTokenSharringToFlow2()
+                    findNavController().navigate(action)
                 }
             }
         }
