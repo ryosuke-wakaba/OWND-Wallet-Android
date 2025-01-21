@@ -1,7 +1,5 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
-import android.media.session.MediaSession.Token
-import arrow.core.raise.merge
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.ownd_project.tw2023_wallet_android.signature.ES256K.createJws
 import com.ownd_project.tw2023_wallet_android.signature.JWT
@@ -13,14 +11,12 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil.toJwkThumbprintUri
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.net.URI
 import java.security.KeyPair
 import java.security.cert.X509Certificate
 import java.util.Base64
@@ -203,7 +199,7 @@ class OpenIdProvider(
                     return Result.failure(Exception("Invalid client_id or response_uri"))
                 }
             }
-            val siopRequest = ProcessedRequestData(
+            val authRequest = ProcessedRequestData(
                 scheme,
                 null,
                 authorizationRequestPayload,
@@ -211,8 +207,8 @@ class OpenIdProvider(
                 registrationMetadata,
                 presentationDefinition
             )
-            this.authRequestProcessedData = siopRequest
-            Result.success(siopRequest)
+            this.authRequestProcessedData = authRequest
+            Result.success(authRequest)
         }
     }
 
@@ -238,10 +234,10 @@ class OpenIdProvider(
             return Result.failure(OpenIdProviderException("Both or either `id_token` and `vp_token` are required"))
         }
 
-        var idTokenFormData: Map<String, String>? = null
+        var idTokenFormData: FormData? = null
         var idTokenForHistory: String? = null
 
-        var vpTokenFormData: Map<String, String>? = null
+        var vpTokenFormData: FormData? = null
         var vpForHistory: List<SharedCredential>? = null
 
         if (requireIdToken) {
@@ -510,7 +506,7 @@ fun mergeOAuth2AndOpenIdInRequestPayload(
 
 fun sendRequest(
     destinationUri: String,
-    formData: Map<String, String>,
+    formData: FormData,
     responseMode: ResponseMode
 ): Triple<Int, String?, Array<String>> { //TokenSendResult {
     val client = OkHttpClient.Builder()
