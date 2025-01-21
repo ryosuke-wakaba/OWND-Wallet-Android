@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop_vp
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp.credential_selection
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,8 +13,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
 import com.ownd_project.tw2023_wallet_android.ui.shared.CredentialSharingViewModel
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.TokenSharingFragmentMenuProvider
 
-class CertificateSelectionFragment : Fragment() {
+class CredentialSelectionFragment : Fragment() {
     val sharedViewModel by activityViewModels<CredentialSharingViewModel>()
     val viewModel: CertificateSelectionViewModel by viewModels()
     override fun onCreateView(
@@ -41,7 +42,7 @@ class CertificateSelectionFragment : Fragment() {
             setContent {
                 CertificateSelectionView(viewModel = viewModel) { credentialId ->
                     val action =
-                        CertificateSelectionFragmentDirections.actionIdTokenSharringToFlow3(
+                        CredentialSelectionFragmentDirections.actionIdTokenSharringToFlow3(
                             credentialId = credentialId
                         )
                     findNavController().navigate(action)

@@ -2,7 +2,6 @@ package com.ownd_project.tw2023_wallet_android.features.data_sharing.flow2
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -19,12 +18,11 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialData
 import com.ownd_project.tw2023_wallet_android.datastore.CredentialDataStore
-import com.ownd_project.tw2023_wallet_android.ui.siop_vp.CertificateSelectionFragment
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.credential_selection.CredentialSelectionFragment
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import com.ownd_project.tw2023_wallet_android.TestActivity
 import com.ownd_project.tw2023_wallet_android.utils.generateEcKeyPair
 import com.ownd_project.tw2023_wallet_android.utils.generateRsaKeyPair
 import com.ownd_project.tw2023_wallet_android.utils.publicKeyToJwk
@@ -35,7 +33,7 @@ import java.security.interfaces.RSAPrivateKey
 import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
-class CertificateSelectionFragmentTest {
+class CredentialSelectionFragmentTest {
 
 //     @get:Rule
 //    val composeTestRule = createAndroidComposeRule<TestActivity>()
@@ -84,7 +82,7 @@ class CertificateSelectionFragmentTest {
             credentialDataStore.saveCredentialData(testCredential2)
         }
 
-        val scenario = launchFragmentInContainer<CertificateSelectionFragment>()
+        val scenario = launchFragmentInContainer<CredentialSelectionFragment>()
         scenario.onFragment { fragment ->
             fragment.viewModel.setCredentialDataStore(credentialDataStore)
         }

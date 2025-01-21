@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop_vp
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp.credential_selection
 
 import android.content.res.Configuration
 import android.util.Log
@@ -32,6 +32,8 @@ import com.ownd_project.tw2023_wallet_android.ui.shared.composers.FilledButton
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.FootnoteText
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.SingleItemSelection
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Title2Text
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content.RequestInfo
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content.clientInfo
 
 
 @Composable

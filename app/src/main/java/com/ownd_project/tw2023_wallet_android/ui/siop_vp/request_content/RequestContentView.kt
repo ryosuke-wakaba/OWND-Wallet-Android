@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop_vp
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content
 
 import android.content.res.Configuration
 import androidx.compose.foundation.Image

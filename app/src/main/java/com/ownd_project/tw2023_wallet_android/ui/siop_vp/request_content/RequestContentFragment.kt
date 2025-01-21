@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop_vp
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content
 
 import android.app.AlertDialog
 import android.net.Uri
@@ -10,9 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
-import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.text.HtmlCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -21,30 +19,20 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.ownd_project.tw2023_wallet_android.MainActivity
 import com.ownd_project.tw2023_wallet_android.R
-import com.ownd_project.tw2023_wallet_android.databinding.FragmentIdTokenSharringBinding
-import com.ownd_project.tw2023_wallet_android.databinding.FragmentIssuerDetailBinding
-import com.ownd_project.tw2023_wallet_android.model.ClientInfo
 import com.ownd_project.tw2023_wallet_android.oid.PostResult
-import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
-import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
 import com.ownd_project.tw2023_wallet_android.ui.shared.CredentialSharingViewModel
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.TokenSharingFragmentMenuProvider
 import com.ownd_project.tw2023_wallet_android.utils.DisplayUtil
-import com.ownd_project.tw2023_wallet_android.utils.MetadataUtil
-import com.ownd_project.tw2023_wallet_android.utils.viewBinding
 
-
-// todo レイアウト調整
-// todo SVGをURLから表示
-
-class TokenSharingFragment : Fragment() {
+class RequestContentFragment : Fragment() {
     companion object {
-        private val tag = TokenSharingFragment::class.simpleName
+        private val tag = RequestContentFragment::class.simpleName
     }
 
 //    private val binding by viewBinding(FragmentIdTokenSharringBinding::bind)
 //    private lateinit var issuerDetailBinding: FragmentIssuerDetailBinding
 
-    private val args: TokenSharingFragmentArgs by navArgs()
+    private val args: RequestContentFragmentArgs by navArgs()
     private val sharedViewModel by activityViewModels<CredentialSharingViewModel>()
     private val viewModel: IdTokenSharringViewModel by viewModels()
     override fun onCreateView(
@@ -84,7 +72,7 @@ class TokenSharingFragment : Fragment() {
                 }) {
                     sharedViewModel.setRequestInfo(it)
                     val action =
-                        TokenSharingFragmentDirections.actionIdTokenSharringToFlow2()
+                        RequestContentFragmentDirections.actionIdTokenSharringToFlow2()
                     findNavController().navigate(action)
                 }
             }
@@ -166,7 +154,10 @@ class TokenSharingFragment : Fragment() {
             val url = postResult.location
             val cookies = postResult.cookies
             val action =
-                TokenSharingFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
+                RequestContentFragmentDirections.actionIdTokenSharringToWebViewFragment(
+                    url,
+                    cookies
+                )
             findNavController().navigate(action)
         }
     }

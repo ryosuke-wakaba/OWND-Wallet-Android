@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop_vp
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content
 
 import android.content.Context
 import android.util.Log
@@ -28,6 +28,9 @@ import com.ownd_project.tw2023_wallet_android.model.CertificateInfo
 import com.ownd_project.tw2023_wallet_android.utils.CertificateUtil.getCertificateInformation
 import com.google.protobuf.Timestamp
 import com.ownd_project.tw2023_wallet_android.model.ClientInfo
+import com.ownd_project.tw2023_wallet_android.oid.Field
+import com.ownd_project.tw2023_wallet_android.oid.InputDescriptor
+import com.ownd_project.tw2023_wallet_android.oid.InputDescriptorConstraints
 import com.ownd_project.tw2023_wallet_android.oid.PostResult
 import com.ownd_project.tw2023_wallet_android.ui.shared.JwtVpJsonGeneratorImpl
 import kotlinx.coroutines.Dispatchers
@@ -87,8 +90,70 @@ class IdTokenSharringViewModel : ViewModel() {
     }
 
     init {
+        _subJwk.value = "dummy"
+        val issuerCertInfo = CertificateInfo(
+            domain = "",
+            organization = "Amazon",
+            country = "US",
+            state = "",
+            locality = "",
+            street = "",
+            email = ""
+        )
+        val certInfo = CertificateInfo(
+            domain = "boolcheck.com",
+            organization = "datasign.inc",
+            country = "JP",
+            state = "Tokyo",
+            locality = "Sinzyuku-ku",
+            street = "",
+            email = "by-dev@datasign.jp",
+            issuer = issuerCertInfo
+        )
+        val clientInfo = ClientInfo(
+            name = "Boolcheck",
+            logoUrl = "https://ci3.googleusercontent.com/meips/ADKq_NbMTM3r6-n_HQSDIdN3UJtGF2KYRhluKmn5aw7Iq8QqUaUxdNpR9MlHe5uY5tLdHEwKFZWCWUqHPEbdkBBN6t56ijHm1ef-VpGXREjLe8k26NOV1kNjJjt-vCOhqnlZN8-IUAUiZhactfjFSvx-zi0xk1aIKpjKMzSuXAMwHkxu6pQnDIE0rLv7jiOEKK00WxdgQjkeEr7NRsZZQwft5gDz4l1qAxMc_vkxPkA06T-ALeL4IrPDU5fUuOC_0vn7sKalhAn1al7u2m0=s0-d-e1-ft#https://www.notion.so/image/https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fpublic.notion-static.com%2F9cc5263b-54db-4f23-8257-5b13005619fb%2FDataSignLogo.png?width=50&userId=&cache=v2",
+            certificateInfo = certInfo,
+            tosUrl = "https://datasign.jp/tos",
+            policyUrl = "https://datasign.jp/policy"
+        )
         // 初期値を設定
-        _clientInfo.value = ClientInfo()
+        _clientInfo.value = clientInfo
+        val inputDescriptor1: InputDescriptor = InputDescriptor(
+            id = "",
+            constraints = InputDescriptorConstraints(
+                fields = listOf(
+                    Field(
+                        path = listOf("\$.vct"),
+                        optional = false,
+                        filter = null,
+                    ),
+                    Field(
+                        path = listOf("\$.claim1"),
+                        optional = false,
+                        filter = null,
+                    ),
+                    Field(
+                        path = listOf("\$.claim2"),
+                        optional = true,
+                        filter = null,
+                    ),
+                ),
+                limitDisclosure = null,
+            ),
+            name = "test name",
+            purpose = "test purpose",
+            format = mapOf("vc+sd-jwt" to mapOf("alg" to listOf("ES256"))),
+            group = listOf("A")
+        )
+        val pd = PresentationDefinition(
+            id = "dummy id",
+            inputDescriptors = listOf(inputDescriptor1),
+            submissionRequirements = null,
+            name = "test",
+            purpose = "test",
+        )
+        _presentationDefinition.value = pd
     }
 
     fun setClientName(value: String) {
@@ -141,7 +206,7 @@ class IdTokenSharringViewModel : ViewModel() {
                         dataStore.saveSeed(seed)
                     }
                     // SIOP要求処理(一度フラグメント側に制御を返す構造の方が望ましい)
-                    processSiopRequest(fragment.requireContext(), url, seed, index)
+                    // processSiopRequest(fragment.requireContext(), url, seed, index)
                 } else {
                     val biometricStatus = (seedState as Either.Left).value
                     Log.d(TAG, "BiometricStatus: $biometricStatus")

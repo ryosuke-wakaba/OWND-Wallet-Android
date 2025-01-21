@@ -132,7 +132,7 @@
     </fragment>
     <fragment
         android:id="@+id/id_token_sharring"
-        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.TokenSharingFragment"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content.RequestContentFragment"
         >
         <argument
             android:name="siopRequest"
@@ -153,7 +153,7 @@
     </fragment>
     <fragment
         android:id="@+id/id_token_sharring_flow2"
-        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.CertificateSelectionFragment"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.credential_selection.CredentialSelectionFragment"
         >
         <action
             android:id="@+id/action_id_token_sharring_to_flow3"
@@ -161,7 +161,7 @@
     </fragment>
     <fragment
         android:id="@+id/id_token_sharring_flow3"
-        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.SharedDataConfirmationFragment"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.shared_data_confirmation.SharedDataConfirmationFragment"
         >
         <argument
             android:name="credentialId"

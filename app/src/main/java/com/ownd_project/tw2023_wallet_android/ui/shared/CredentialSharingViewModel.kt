@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
-import com.ownd_project.tw2023_wallet_android.ui.siop_vp.RequestInfo
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content.RequestInfo
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 
 class CredentialSharingViewModel: ViewModel() {

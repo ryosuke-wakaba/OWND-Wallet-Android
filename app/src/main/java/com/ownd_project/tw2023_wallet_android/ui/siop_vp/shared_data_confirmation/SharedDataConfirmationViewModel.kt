@@ -1,6 +1,5 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop_vp
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp.shared_data_confirmation
 
-import android.credentials.Credential
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,6 +12,7 @@ import com.ownd_project.tw2023_wallet_android.oid.PostResult
 import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
 import com.ownd_project.tw2023_wallet_android.oid.RequestedClaim
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content.RequestInfo
 import com.ownd_project.tw2023_wallet_android.utils.MetadataUtil
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
 import kotlinx.coroutines.launch

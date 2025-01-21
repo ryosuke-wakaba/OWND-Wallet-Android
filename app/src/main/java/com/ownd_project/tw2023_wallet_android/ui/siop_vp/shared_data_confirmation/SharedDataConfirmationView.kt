@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.ui.siop_vp
+package com.ownd_project.tw2023_wallet_android.ui.siop_vp.shared_data_confirmation
 
 import android.content.res.Configuration
 import android.util.Log
@@ -20,7 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ownd_project.tw2023_wallet_android.ui.shared.composers.BodyText
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.CalloutText
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Claim
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.FilledButton
@@ -29,6 +28,8 @@ import com.ownd_project.tw2023_wallet_android.ui.shared.composers.SubHeadLineTex
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Title2Text
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.Verifier
 import com.ownd_project.tw2023_wallet_android.ui.shared.composers.getPreviewData
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content.RequestInfo
+import com.ownd_project.tw2023_wallet_android.ui.siop_vp.request_content.clientInfo
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
 
 
