@@ -105,7 +105,10 @@
         <activity
             android:name=".RestoreActivity"
             android:exported="true"
-            android:theme="@style/Theme.Tw2023walletandroid">
-        </activity>
+            android:theme="@style/Theme.Tw2023walletandroid"></activity>
+        <activity
+            android:name=".TestActivity"
+            android:exported="false"
+            />
     </application>
 </manifest>

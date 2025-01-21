@@ -1,8 +1,6 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
-import arrow.core.Either
 import com.auth0.jwt.exceptions.JWTVerificationException
-import com.ownd_project.tw2023_wallet_android.signature.ECPublicJwk
 import com.ownd_project.tw2023_wallet_android.signature.ES256K.createJws
 import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.ownd_project.tw2023_wallet_android.utils.EnumDeserializer
@@ -14,6 +12,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.JsonPath
+import com.jayway.jsonpath.Option
 import com.ownd_project.tw2023_wallet_android.utils.SigningOption
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil.toJwkThumbprintUri
@@ -26,20 +27,120 @@ import java.security.cert.X509Certificate
 import java.util.Base64
 import java.util.UUID
 
+data class RequestedClaim(
+    var data: SDJwtUtil.Disclosure,
+    var optional: Boolean
+)
 
-class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(signingAlgo = "ES256K")) {
+data class SelectedClaims(
+    var satisfied: Boolean,
+    var matchedInputDescriptor: InputDescriptor? = null,
+    var selectedClaims: List<RequestedClaim>? = null
+)
+
+class OpenIdProvider(
+    val uri: String,
+    val option: SigningOption = SigningOption(signingAlgo = "ES256K")
+) {
     private lateinit var keyPair: KeyPair
     private lateinit var keyBinding: KeyBinding
     private lateinit var jwtVpJsonGenerator: JwtVpJsonGenerator
     private lateinit var siopRequest: ProcessSIOPRequestResult
 
     companion object {
+        fun selectRequestedClaims(
+            sdJwt: String,
+            inputDescriptors: List<InputDescriptor>,
+        ): SelectedClaims {
+            val config = Configuration.builder()
+                .options(Option.DEFAULT_PATH_LEAF_TO_NULL) // パスが存在しない場合はnullを返す
+                .build()
+
+            val parts = sdJwt.split('~')
+            val issuerJwt = parts[0]
+            val decodedIssuerJwt = JWT.decodeJwt(issuerJwt)
+            val issuerJwtPayload = decodedIssuerJwt.second
+            val newList = if (parts.size > 2) parts.drop(1) else emptyList<String>()
+            val disclosures = SDJwtUtil.decodeDisclosure(newList)
+            val sourcePayload =
+                disclosures.associate { it.key to it }
+            inputDescriptors.forEach { inputDescriptor ->
+                val claims = listOf<RequestedClaim>().toMutableList()
+                val fields = inputDescriptor.constraints.fields
+                fields?.forEach { field ->
+                    var satisfied = false
+                    val filter = field.filter
+                    field.path.forEach { path ->
+                        // check issuer jwt
+                        var value: Any? = JsonPath.using(config).parse(issuerJwtPayload).read(path)
+                        if (value != null) {
+                            satisfied = checkFilterCondition(filter, value)
+                        }
+                        if (!satisfied) { // iss payload does not satisfy field's condition, check disclosures
+                            // check disclosures
+                            val entry: SDJwtUtil.Disclosure? =
+                                JsonPath.using(config).parse(sourcePayload).read(path)
+                            if (entry != null) {
+                                satisfied = checkFilterCondition(filter, entry.value)
+                                if (satisfied) {
+                                    val requested = RequestedClaim(
+                                        data = entry,
+                                        optional = field.optional ?: false
+                                    )
+                                    claims.add(requested)
+                                }
+                            } else {
+                                if (field.optional == true) {
+                                    // Although data does not exists, it is not unsatisfied because this field is optional.
+                                    satisfied = true
+                                }
+                            }
+                        }
+                    }
+                    if (!satisfied) {
+                        return SelectedClaims(satisfied = false)
+                    }
+                }
+                if (claims.isNotEmpty()) {
+                    return SelectedClaims(
+                        satisfied = true,
+                        matchedInputDescriptor = inputDescriptor,
+                        selectedClaims = claims
+                    )
+                }
+            }
+            return SelectedClaims(satisfied = false)
+        }
+
+        private fun checkFilterCondition(filter: Map<String, Any?>?, value: Any?): Boolean {
+            if (filter != null) {
+                val type = filter["type"]
+                val b1 = if (type != null) {
+                    when (type) {
+                        "string" -> value is String
+                        else -> false
+                    }
+                } else {
+                    true
+                }
+                val const = filter["const"]
+                val b2 = if (const != null) {
+                    const == value
+                } else {
+                    true
+                }
+                return b1 && b2
+            } else {
+                return true
+            }
+        }
+
         fun selectDisclosure(
             sdJwt: String,
             presentationDefinition: PresentationDefinition
         ): Pair<InputDescriptor, List<SDJwtUtil.Disclosure>>? {
             val parts = sdJwt.split('~')
-            val newList = if (parts.size > 2) parts.drop(1).dropLast(1) else emptyList<String>()
+            val newList = if (parts.size > 2) parts.drop(1) else emptyList<String>()
             val disclosures = SDJwtUtil.decodeDisclosure(newList)
             // JsonPathによるフィルタのために一度JSONにシリアライズする
             val sourcePayload =
@@ -137,7 +238,7 @@ class OpenIdProvider(val uri: String, val option: SigningOption = SigningOption(
             val clientScheme = payload.clientIdScheme ?: authorizationRequestPayload.clientIdScheme
 
             if (clientScheme == "x509_san_dns") {
-                val verifyResult = JWT.verifyJwtByX5C(requestObjectJwt)
+                val verifyResult = JWT.verifyJwtWithX509Certs(requestObjectJwt)
                 if (!verifyResult.isSuccess) {
                     return Result.failure(Exception("Invalid request"))
                 }
@@ -448,7 +549,7 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
     }
 
     client.newCall(request).execute().use { response ->
-        val statusCode = response.code()
+        val statusCode = response.code
         var location = response.header("Location")
         val contentType = response.header("Content-Type")
         val cookies = response.headers("Set-Cookie")
@@ -465,7 +566,7 @@ fun sendRequest(destinationUri: String, formData: Map<String, String>, responseM
                 location = "${originalUri.scheme}://${originalUri.host}$portPart$location"
             }
         } else if (contentType?.contains("application/json") == true) {
-            response.body()?.string()?.let { body ->
+            response.body?.string()?.let { body ->
                 val mapper = jacksonObjectMapper()
                 val jsonNode = mapper.readTree(body)
                 if (jsonNode.has("redirect_uri")) {
@@ -540,6 +641,7 @@ data class SubmissionCredential(
     val types: List<String>,
     val credential: String,
     val inputDescriptor: InputDescriptor,
+    val selectedDisclosures: List<SDJwtUtil.Disclosure>? = null
 )
 
 data class DisclosedClaim(

@@ -114,6 +114,33 @@ object TestDataUtil {
             .sign(algorithm)
         return "$issuerSignedJwt~${disclosures.joinToString("~") { it.disclosure }}"
     }
+    data class SdJwtOptions (
+        var issuer: String? = null,
+        var audience: String? = null
+    )
+
+    fun generateSdJwtCredential(vct: String, disclosures: List<Disclosure>, options: SdJwtOptions? = null): String {
+        val ecKeyPair = generateEcKeyPair()
+        val algorithm =
+            Algorithm.ECDSA256(ecKeyPair.public as ECPublicKey, ecKeyPair.private as ECPrivateKey?)
+        val builder = SDObjectBuilder()
+        disclosures.forEach { it ->
+            builder.putSDClaim(it)
+        }
+        val claims = builder.build()
+
+        val iss = options?.let { it.issuer ?: "https://client.example.org/cb" }
+        val aud = options?.let { it.audience ?: "https://server.example.com" }
+        val jwk = publicKeyToJwk(ecKeyPair.public)
+        val cnf = mapOf("jwk" to jwk)
+        val issuerSignedJwt = JWT.create().withIssuer(iss)
+            .withAudience(aud)
+            .withClaim("cnf", cnf)
+            .withClaim("vct", vct)
+            .withClaim("_sd", (claims["_sd"] as List<*>))
+            .sign(algorithm)
+        return "$issuerSignedJwt~${disclosures.joinToString("~") { it.disclosure }}"
+    }
 
     val sdJwtCredential = generateSdJwtCredential()
     val sdJwtMetadata =

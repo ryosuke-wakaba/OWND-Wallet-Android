@@ -68,13 +68,13 @@ suspend fun <T> openIdFetch(
     println("Headers:\r\n$headers")
 
     val origResponse = client.newCall(request).execute()
-    val statusCode = origResponse.code()
+    val statusCode = origResponse.code
 
     // todo 完全一致を条件にしているけど前方一致にする必要があるかもしれないので関係するプロトコルを確認する
     val isJSONResponse =
         accept == "application/json" || origResponse.header("Content-Type") == "application/json"
     val success = origResponse.isSuccessful
-    val responseText = origResponse.body()?.string() ?: ""
+    val responseText = origResponse.body?.string() ?: ""
 
     var customError: String? = null
     var responseBody: T = if (isJSONResponse) {
@@ -93,7 +93,7 @@ suspend fun <T> openIdFetch(
         responseText as T
     }
 
-    println("${if (success) "success" else "error"} status: ${origResponse.code()}, body:\r\n$responseText")
+    println("${if (success) "success" else "error"} status: ${origResponse.code}, body:\r\n$responseText")
     if (customError != null && opts?.exceptionOnHttpErrorStatus == true) {
         throw Error(customError)
     }

@@ -16,6 +16,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent
 import com.ownd_project.tw2023_wallet_android.signature.ECPublicJwk
+import com.ownd_project.tw2023_wallet_android.testData.TestDataUtil
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil.toJwkThumbprintUri
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
@@ -30,6 +31,7 @@ import junit.framework.TestCase.assertTrue
 import junit.framework.TestCase.fail
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.experimental.runners.Enclosed
@@ -825,3 +827,121 @@ val presentationDefinitionJwtVcJsonJson = """
     ]
 }
 """.trimIndent()
+
+class SelectRequestedClaimsTest {
+    val inputDescriptor1 = InputDescriptor(
+        id = "id1",
+        constraints = InputDescriptorConstraints(
+            fields = listOf(
+                Field(
+                    path = listOf("\$.vct"),
+                    optional = false,
+                    filter = mapOf("type" to "string", "const" to "TestType"),
+                ),
+                Field(
+                    path = listOf("\$.organization_name"),
+                    optional = false,
+                    filter = null,
+                ),
+                Field(
+                    path = listOf("\$.family_name"),
+                    optional = false,
+                    filter = null,
+                ),
+                Field(
+                    path = listOf("\$.given_name"),
+                    optional = true,
+                    filter = null,
+                ),
+                Field(
+                    path = listOf("\$.portrait"),
+                    optional = true,
+                    filter = null,
+                ),
+            ),
+            limitDisclosure = null,
+        ),
+        name = "test name",
+        purpose = "test purpose",
+        format = mapOf("vc+sd-jwt" to mapOf("alg" to listOf("ES256"))),
+        group = listOf("A")
+    )
+    val inputDescriptor2 = InputDescriptor(
+        id = "id2",
+        constraints = InputDescriptorConstraints(
+            fields = listOf(
+                Field(
+                    path = listOf("\$.vct"),
+                    optional = false,
+                    filter = null,
+                ),
+            ),
+            limitDisclosure = null,
+        ),
+        name = "test name",
+        purpose = "test purpose",
+        format = mapOf("vc+sd-jwt" to mapOf("alg" to listOf("ES256"))),
+        group = listOf("A")
+    )
+
+    @Test
+    fun testHavingAllRequestedData() = runBlocking {
+        val disclosures =
+            listOf(
+                Disclosure("organization_name", "test org"),
+                Disclosure("family_name", "test family name"),
+                Disclosure("given_name", "test given name"),
+                Disclosure("portrait", "test portrait"),
+                Disclosure("not_requested_claim", "test claim"),
+            )
+        val sdJwt = TestDataUtil.generateSdJwtCredential("TestType", disclosures)
+        val selectedClaims = OpenIdProvider.selectRequestedClaims(sdJwt, listOf(inputDescriptor1, inputDescriptor2))
+        Assert.assertTrue(selectedClaims.satisfied)
+        Assert.assertEquals(inputDescriptor1.id, selectedClaims.matchedInputDescriptor?.id)
+        Assert.assertEquals(4, selectedClaims.selectedClaims?.size)
+    }
+    @Test
+    fun testUnmatchedVctType() = runBlocking {
+        val disclosures =
+            listOf(
+                Disclosure("organization_name", "test org"),
+                Disclosure("family_name", "test family name"),
+                Disclosure("given_name", "test given name"),
+                Disclosure("portrait", "test portrait"),
+                Disclosure("not_requested_claim", "test claim"),
+            )
+        val sdJwt = TestDataUtil.generateSdJwtCredential("UnmatchedTestType", disclosures)
+        val selectedClaims = OpenIdProvider.selectRequestedClaims(sdJwt, listOf(inputDescriptor1, inputDescriptor2))
+        Assert.assertFalse(selectedClaims.satisfied)
+    }
+
+    @Test
+    fun testLackOfRequirdClaim() = runBlocking {
+        val disclosures =
+            listOf(
+                // Disclosure("organization_name", "test org"), <- this is a required claim
+                Disclosure("family_name", "test family name"),
+                Disclosure("given_name", "test given name"),
+                Disclosure("portrait", "test portrait"),
+                Disclosure("not_requested_claim", "test claim"),
+            )
+        val sdJwt = TestDataUtil.generateSdJwtCredential("TestType", disclosures)
+        val selectedClaims = OpenIdProvider.selectRequestedClaims(sdJwt, listOf(inputDescriptor1, inputDescriptor2))
+        Assert.assertFalse(selectedClaims.satisfied)
+    }
+    @Test
+    fun testLackOfOptionalClaim() = runBlocking {
+        // only non-optional claims
+        val disclosures =
+            listOf(
+                Disclosure("organization_name", "test org"),
+                Disclosure("family_name", "test family name"),
+                Disclosure("given_name", "test given name"),
+            )
+        val sdJwt = TestDataUtil.generateSdJwtCredential("TestType", disclosures)
+        val selectedClaims = OpenIdProvider.selectRequestedClaims(sdJwt, listOf(inputDescriptor1, inputDescriptor2))
+        Assert.assertTrue(selectedClaims.satisfied)
+        Assert.assertEquals(inputDescriptor1.id, selectedClaims.matchedInputDescriptor?.id)
+        Assert.assertEquals(3, selectedClaims.selectedClaims?.size)
+    }
+}

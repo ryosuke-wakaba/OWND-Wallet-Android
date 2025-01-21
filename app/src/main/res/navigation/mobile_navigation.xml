@@ -133,7 +133,7 @@
     <fragment
         android:id="@+id/id_token_sharring"
         android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.TokenSharingFragment"
-        tools:layout="@layout/fragment_id_token_sharring">
+        >
         <argument
             android:name="siopRequest"
             app:argType="string" />
@@ -145,8 +145,28 @@
             android:id="@+id/action_id_token_sharring_to_navigation_certificate"
             app:destination="@id/navigation_certificate" />
         <action
+            android:id="@+id/action_id_token_sharring_to_flow2"
+            app:destination="@id/id_token_sharring_flow2" />
+        <action
             android:id="@+id/action_id_token_sharring_to_webViewFragment"
             app:destination="@id/webview_fragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/id_token_sharring_flow2"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.CertificateSelectionFragment"
+        >
+        <action
+            android:id="@+id/action_id_token_sharring_to_flow3"
+            app:destination="@id/id_token_sharring_flow3" />
+    </fragment>
+    <fragment
+        android:id="@+id/id_token_sharring_flow3"
+        android:name="com.ownd_project.tw2023_wallet_android.ui.siop_vp.SharedDataConfirmationFragment"
+        >
+        <argument
+            android:name="credentialId"
+            app:argType="string"
+            app:nullable="true"/>
     </fragment>
     <fragment
         android:id="@+id/credential_verification"

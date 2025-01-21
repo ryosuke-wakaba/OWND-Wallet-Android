@@ -24,9 +24,10 @@ import com.ownd_project.tw2023_wallet_android.signature.ECPrivateJwk
 import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil
 import com.ownd_project.tw2023_wallet_android.ui.shared.Constants
 import com.ownd_project.tw2023_wallet_android.ui.shared.KeyBindingImpl
-import com.ownd_project.tw2023_wallet_android.utils.CertificateInfo
+import com.ownd_project.tw2023_wallet_android.model.CertificateInfo
 import com.ownd_project.tw2023_wallet_android.utils.CertificateUtil.getCertificateInformation
 import com.google.protobuf.Timestamp
+import com.ownd_project.tw2023_wallet_android.model.ClientInfo
 import com.ownd_project.tw2023_wallet_android.oid.PostResult
 import com.ownd_project.tw2023_wallet_android.ui.shared.JwtVpJsonGeneratorImpl
 import kotlinx.coroutines.Dispatchers
@@ -34,24 +35,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
 
-data class ClientInfo(
-    var name: String = "",
-    var url: String = "",
-    var logoUrl: String = "",
-    var policyUrl: String = "",
-    var tosUrl: String = "",
-    var jwkThumbprint: String = "",
-    var identiconHash: Int = 0,
-    var certificateInfo: CertificateInfo = CertificateInfo(null, null, null, null, null, null)
-)
-
 val TAG = IdTokenSharringViewModel::class.simpleName
 
 class IdTokenSharringViewModel : ViewModel() {
     var isInitialized = false
     lateinit var openIdProvider: OpenIdProvider
-    private val _clientInfo = MutableLiveData<ClientInfo>()
-    val clientInfo: LiveData<ClientInfo> = _clientInfo
+    private val _clientInfo = MutableLiveData<ClientInfo?>()
+    val clientInfo: LiveData<ClientInfo?> = _clientInfo
+
+    private val _subJwk = MutableLiveData<String?>()
+    val subJwk: LiveData<String?> = _subJwk
 
     private val _presentationDefinition = MutableLiveData<PresentationDefinition>()
     val presentationDefinition: LiveData<PresentationDefinition> = _presentationDefinition
@@ -120,6 +113,7 @@ class IdTokenSharringViewModel : ViewModel() {
 
     fun setJwkThumbprint(value: String) {
         _clientInfo.value = _clientInfo.value?.copy(jwkThumbprint = value)
+        _subJwk.value = value
     }
 
     fun setIdenticon(value: Int) {

@@ -40,7 +40,8 @@ data class InputDescriptorConstraints(
 
 data class Field(
     val path: List<String>,
-    val filter: Map<String, Any>?
+    val filter: Map<String, Any>?,
+    val optional: Boolean?
 )
 
 data class SubmissionRequirement(

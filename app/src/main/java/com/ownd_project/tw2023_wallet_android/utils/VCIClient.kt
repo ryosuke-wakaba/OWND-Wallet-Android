@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ownd_project.tw2023_wallet_android.oid.TokenErrorResponse
 import okhttp3.FormBody
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -84,8 +85,8 @@ class VCIClient() {
             .addHeader("Content-Type", "application/x-www-form-urlencoded").build()
 
         return client.newCall(request).execute().use { response ->
-            val responseBody = response.body()?.string()
-            if (response.code() == 400) {
+            val responseBody = response.body?.string()
+            if (response.code == 400) {
                 val errorResponse = objectMapper.readValue(responseBody, TokenErrorResponse::class.java)
                 throw TokenErrorResponseException(errorResponse)
             }
@@ -113,7 +114,7 @@ class VCIClient() {
 
         // ... 以前と同様にOkHttpリクエストを構築・実行 ...
         val client = OkHttpClient()
-        val mediaType = MediaType.parse("application/json; charset=utf-8")
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
 
         val body = RequestBody.create(mediaType, jsonPayload)
 
@@ -125,7 +126,7 @@ class VCIClient() {
             if (!response.isSuccessful) {
                 throw IOException("Unexpected code $response")
             }
-            val responseBody = response.body()?.string()
+            val responseBody = response.body?.string()
             try {
                 val credentialResponse =
                     objectMapper.readValue(responseBody, CredentialResponse::class.java)

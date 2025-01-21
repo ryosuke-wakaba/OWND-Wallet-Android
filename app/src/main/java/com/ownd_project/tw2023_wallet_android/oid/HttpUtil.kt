@@ -25,14 +25,14 @@ suspend fun <T> getWithUrl(url: String, responseType: Class<T>, textResponse: Bo
         var customError: String? = null
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IOException("${SIOPErrors.RESPONSE_STATUS_UNEXPECTED} ${response.code()}:${response.message()} URL: $url")
+                throw IOException("${SIOPErrors.RESPONSE_STATUS_UNEXPECTED} ${response.code}:${response.message} URL: $url")
             }
 
             @Suppress("UNCHECKED_CAST")
             if (textResponse) {
-                response.body()?.string() as T
+                response.body?.string() as T
             } else {
-                val responseText = response.body()?.string() ?: ""
+                val responseText = response.body?.string() ?: ""
                 // val mapper = jacksonObjectMapper()
                 val mapper: ObjectMapper = jacksonObjectMapper().apply {
                     propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE

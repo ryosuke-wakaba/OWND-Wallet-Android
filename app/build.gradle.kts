@@ -5,11 +5,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.protobuf")
     id("androidx.navigation.safeargs.kotlin")
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
 }
-
 android {
     namespace = "com.ownd_project.tw2023_wallet_android"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.ownd_project.tw2023_wallet_android"
@@ -75,10 +75,14 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.15"
+    }
     buildFeatures {
         viewBinding = true
         dataBinding = true
         buildConfig = true
+        compose = true
     }
     sourceSets {
         getByName("main") {
@@ -95,12 +99,29 @@ configurations {
 }
 
 dependencies {
+    implementation("com.google.android.material:material:1.10.0")
+    implementation("androidx.activity:activity:1.9.3")
+    androidTestImplementation(project(":app"))
+    androidTestImplementation(project(":app"))
+    // compose setting start
+    val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
+    implementation(composeBom)
+    implementation("androidx.compose.material:material")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.6")
+    // compose setting end
+
     implementation("androidx.activity:activity-ktx:1.7.2")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.browser:browser:1.5.0")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("androidx.compose.material:material:1.4.3")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.datastore:datastore:1.0.0")
@@ -135,16 +156,21 @@ dependencies {
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.authlete:sd-jwt:1.4")
-    testImplementation("org.robolectric:robolectric:4.11.1")
+    implementation("com.jayway.jsonpath:json-path:2.9.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
     testImplementation("org.mockito:mockito-android:5.6.0")
     testImplementation("org.wiremock:wiremock:3.2.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation(composeBom)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.6")
+    debugImplementation("androidx.fragment:fragment-testing:1.8.5")
 }
 
 protobuf {

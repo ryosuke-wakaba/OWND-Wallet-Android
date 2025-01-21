@@ -1,4 +1,4 @@
-package com.ownd_project.tw2023_wallet_android.models
+package com.ownd_project.tw2023_wallet_android.model
 
 
 //data class CredentialData(
