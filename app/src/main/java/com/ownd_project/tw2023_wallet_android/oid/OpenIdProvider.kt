@@ -29,6 +29,9 @@ import java.util.UUID
 
 class OpenIdProviderException(message: String) : Exception(message)
 
+typealias FormData = Map<String, String>
+
+
 class OpenIdProvider(
     val uri: String,
     val option: SigningOption = SigningOption(signingAlgo = "ES256K")
@@ -322,7 +325,7 @@ class OpenIdProvider(
         }
     }
 
-    private fun createSiopIdToken(): Result<Pair<Map<String, String>, String>> {
+    private fun createSiopIdToken(): Result<Pair<FormData, String>> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.authRequestProcessedData.authorizationRequestPayload,
@@ -370,7 +373,7 @@ class OpenIdProvider(
 
     private fun createVpToken(
         credentials: List<SubmissionCredential>,
-    ): Result<Pair<Map<String, String>, List<SharedCredential>>> {
+    ): Result<Pair<FormData, List<SharedCredential>>> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.authRequestProcessedData.authorizationRequestPayload,
