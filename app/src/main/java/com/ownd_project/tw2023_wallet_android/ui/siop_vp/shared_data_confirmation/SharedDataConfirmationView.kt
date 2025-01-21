@@ -15,6 +15,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,7 +79,9 @@ fun SharedDataConfirmation(
         ) {
             Title2Text(
                 "提供情報の確認",
-                modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 16.dp)
+                modifier = Modifier
+                    .padding(start = 8.dp, top = 16.dp, bottom = 16.dp)
+                    .testTag("title")
             )
             Row(
                 modifier = Modifier
@@ -87,7 +90,7 @@ fun SharedDataConfirmation(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column (
+                Column(
                     modifier = Modifier.padding(8.dp),
                 ) {
                     SubHeadLineText("OWND Walletで作成したID", modifier = Modifier.padding(0.dp))
@@ -106,7 +109,7 @@ fun SharedDataConfirmation(
             }
             SharedData(claims)
             SubHeadLineText(
-                "提供先組織情報 ",
+                "提供先組織情報",
                 modifier = Modifier.padding(start = 8.dp, top = 16.dp)
             )
             Verifier(requestInfo.clientInfo, linkOpener = linkOpener)
