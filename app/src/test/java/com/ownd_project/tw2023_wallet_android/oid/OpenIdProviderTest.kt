@@ -799,7 +799,7 @@ class OpenIdProviderTest {
             assertEquals("dummy-state", bodyParams["state"])
             assertNotNull(bodyParams["id_token"])
             assertNotNull(bodyParams["vp_token"])
-
+            assertTrue(bodyParams["id_token"]!!.startsWith("eyJ"))
             val ps = deserializePresentationSubmission(bodyParams)
             assertEquals(authorizationRequestPayload.presentationDefinition?.id, ps.definitionId)
         }
