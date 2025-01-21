@@ -27,7 +27,7 @@ import com.ownd_project.tw2023_wallet_android.ui.shared.KeyBindingImpl
 import com.ownd_project.tw2023_wallet_android.utils.CertificateInfo
 import com.ownd_project.tw2023_wallet_android.utils.CertificateUtil.getCertificateInformation
 import com.google.protobuf.Timestamp
-import com.ownd_project.tw2023_wallet_android.oid.PostResult
+import com.ownd_project.tw2023_wallet_android.oid.TokenSendResult
 import com.ownd_project.tw2023_wallet_android.ui.shared.JwtVpJsonGeneratorImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -65,8 +65,8 @@ class IdTokenSharringViewModel : ViewModel() {
     val doneSuccessfully: LiveData<Boolean> = _doneSuccessfully
 
     // 提供結果
-    private val _postResult = MutableLiveData<PostResult>()
-    val postResult: LiveData<PostResult> = _postResult
+    private val _tokenSendResult = MutableLiveData<TokenSendResult>()
+    val tokenSendResult: LiveData<TokenSendResult> = _tokenSendResult
 
     // クローズ要求通知
     private val _shouldClose = MutableLiveData<Boolean>()
@@ -245,7 +245,7 @@ class IdTokenSharringViewModel : ViewModel() {
     fun shareIdToken(fragment: Fragment) {
         Log.d(TAG, "shareIdToken")
         viewModelScope.launch(Dispatchers.IO) {
-            val result = openIdProvider.respondIdTokenResponse()
+            val result = openIdProvider.respondToken(null)
             result.fold(
                 onFailure = { value ->
                     Log.e(TAG, value.message, value)
@@ -260,7 +260,7 @@ class IdTokenSharringViewModel : ViewModel() {
                         requestClose()
                     }
                 },
-                onSuccess = { postResult ->
+                onSuccess = { tokenSendResult ->
                     // postに成功したらログイン履歴を記録
                     Log.d(TAG, "store login history")
                     val store: IdTokenSharingHistoryStore =
@@ -280,7 +280,7 @@ class IdTokenSharringViewModel : ViewModel() {
                     store.save(history)
 
                     withContext(Dispatchers.Main) {
-                        _postResult.value = postResult
+                        _tokenSendResult.value = tokenSendResult
                         val context = fragment.requireContext()
                         Toast.makeText(
                             context,
@@ -296,7 +296,7 @@ class IdTokenSharringViewModel : ViewModel() {
     fun shareVpToken(fragment: Fragment, credentials: List<SubmissionCredential>) {
         Log.d(TAG, "shareVPToken")
         viewModelScope.launch(Dispatchers.IO) {
-            val result = openIdProvider.respondVPResponse(credentials)
+            val result = openIdProvider.respondToken(credentials)
             result.fold(
                 onFailure = { value ->
                     Log.e(TAG, value.message, value)
@@ -306,14 +306,14 @@ class IdTokenSharringViewModel : ViewModel() {
                         requestClose()
                     }
                 },
-                onSuccess = { value ->
+                onSuccess = { tokenSendResult ->
                     // postに成功したら提供履歴を記録
                     Log.d(TAG, "store presentation history")
                     val store = CredentialSharingHistoryStore.getInstance(fragment.requireContext())
                     val currentInstant = Instant.now()
-                    val postResult = value.first
-                    val sharedContent = value.second
-                    sharedContent.forEach { it ->
+                    val sendResult = tokenSendResult
+                    val sharedContent = tokenSendResult.sharedCredentials
+                    sharedContent?.forEach { it ->
                         val openIdProviderSiopRequest = openIdProvider.getProcessedRequestData()
                         val registrationPayload = openIdProviderSiopRequest.registrationMetadata
                         val builder =
@@ -344,11 +344,11 @@ class IdTokenSharringViewModel : ViewModel() {
 
                     withContext(Dispatchers.Main) {
                         // 処理完了フラグを更新
-                        if (postResult.location.isNullOrBlank()) {
+                        if (sendResult.location.isNullOrBlank()) {
                             // if subsequent action isn't it finishes.
                             _doneSuccessfully.value = true
                         }
-                        _postResult.value = postResult
+                        _tokenSendResult.value = sendResult
                     }
                 },
             )

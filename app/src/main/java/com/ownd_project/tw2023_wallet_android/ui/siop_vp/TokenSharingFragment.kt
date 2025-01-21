@@ -19,7 +19,7 @@ import com.ownd_project.tw2023_wallet_android.MainActivity
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentIdTokenSharringBinding
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentIssuerDetailBinding
-import com.ownd_project.tw2023_wallet_android.oid.PostResult
+import com.ownd_project.tw2023_wallet_android.oid.TokenSendResult
 import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
 import com.ownd_project.tw2023_wallet_android.ui.shared.CredentialSharingViewModel
@@ -52,7 +52,7 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
         activity.addMenuProvider(menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
         viewModel.initDone.observe(viewLifecycleOwner, ::onInitDone)
-        viewModel.postResult.observe(viewLifecycleOwner, ::onPostResult)
+        viewModel.tokenSendResult.observe(viewLifecycleOwner, ::onPostResult)
 
         binding.greenBackgroundView.visibility = View.GONE
         binding.brownBackgroundView.visibility = View.GONE
@@ -326,10 +326,10 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
         }
     }
 
-    private fun onPostResult(postResult: PostResult) {
-        if (postResult.location != null) {
-            val url = postResult.location
-            val cookies = postResult.cookies
+    private fun onPostResult(tokenSendResult: TokenSendResult) {
+        if (tokenSendResult.location != null) {
+            val url = tokenSendResult.location
+            val cookies = tokenSendResult.cookies
             val action =
                 TokenSharingFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
             findNavController().navigate(action)

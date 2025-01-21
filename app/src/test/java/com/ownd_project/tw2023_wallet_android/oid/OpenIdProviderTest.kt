@@ -1,21 +1,17 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
-import android.util.Log
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.authlete.sd.Disclosure
 import com.authlete.sd.SDObjectBuilder
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.ownd_project.tw2023_wallet_android.encodePublicKeyToJwks
 import com.ownd_project.tw2023_wallet_android.pairwise.HDKeyRing
 import com.ownd_project.tw2023_wallet_android.signature.SignatureUtil
 import com.ownd_project.tw2023_wallet_android.signature.ECPrivateJwk
-import com.ownd_project.tw2023_wallet_android.utils.generateRsaKeyPair
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent
-import com.ownd_project.tw2023_wallet_android.signature.ECPublicJwk
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil
 import com.ownd_project.tw2023_wallet_android.utils.KeyUtil.toJwkThumbprintUri
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
@@ -27,7 +23,6 @@ import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
-import junit.framework.TestCase.fail
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -43,7 +38,6 @@ import java.security.PrivateKey
 import java.security.interfaces.ECPrivateKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
 import java.util.Base64
 import java.util.Date
 
@@ -173,14 +167,14 @@ class OpenIdProviderTest {
             )
 
             // テスト対象のメソッドを呼び出します。
-            val result = sendRequest(
+            val (statusCode, _, _) = sendRequest(
                 "$clientHost:${wireMockServer.port()}/",
                 mapOf("key" to "value"),
                 ResponseMode.DIRECT_POST
             )
 
             // レスポンスが期待通りであることを確認します。
-            assertEquals(200, result.statusCode)
+            assertEquals(200, statusCode)
 
             // リクエストが期待通りであることを確認します。
             val recordedRequest =
@@ -412,11 +406,12 @@ class OpenIdProviderTest {
             val uri =
                 "siopv2://?client_id=${encodedClientId}" +
                         "&response_type=id_token" +
+                        "&response_mode=direct_post" +
                         "&scope=openid" +
                         "&nonce=dummy-nonce" +
                         "&state=dummy-state" +
                         "&max_age=86400" +
-                        "&redirect_uri=${encodedClientId}" +
+                        "&response_uri=${encodedClientId}" +
                         "&client_metadata=${encodedClientMetadata}"
             val op = OpenIdProvider(uri)
             val result = op.processAuthorizationRequest()
@@ -425,7 +420,7 @@ class OpenIdProviderTest {
             assertEquals("openid", authorizationRequestPayload.scope)
             assertEquals("id_token", authorizationRequestPayload.responseType)
             assertEquals(clientId, authorizationRequestPayload.clientId)
-            assertEquals(clientId, authorizationRequestPayload.redirectUri)
+            assertEquals(clientId, authorizationRequestPayload.responseUri)
             assertNotNull(authorizationRequestPayload.nonce)
             assertNotNull(authorizationRequestPayload.state)
             assertEquals(86400, authorizationRequestPayload.maxAge)
@@ -445,7 +440,7 @@ class OpenIdProviderTest {
             }
             val keyPair = SignatureUtil.generateECKeyPair(privateJwk)
             op.setKeyPair(keyPair)
-            val responseResult = op.respondIdTokenResponse()
+            val responseResult = op.respondToken(null)
             assertTrue(responseResult.isSuccess)
 
             val postResult = responseResult.getOrNull()!!
@@ -461,7 +456,7 @@ class OpenIdProviderTest {
             val encodedPresentationDefinition =
                 URLEncoder.encode(presentationDefinitionJson, StandardCharsets.UTF_8.toString())
             val uri =
-                "oid4vp://?client_id=${encodedClientId}" +
+                "openid4vp://?client_id=${encodedClientId}" +
                         "&response_type=vp_token" +
                         "&response_mode=direct_post" +
                         "&scope=openid" +
@@ -510,14 +505,14 @@ class OpenIdProviderTest {
                 inputDescriptor = inputDescriptor
             )
             val credentials = listOf(submissionCredential)
-            val responseResult = op.respondVPResponse(credentials)
+            val responseResult = op.respondToken(credentials)
             assertTrue(responseResult.isSuccess)
 
             // 処理結果をアサート
-            val (postResult, sharedContents) = responseResult.getOrNull()!!
-            assertEquals(200, postResult.statusCode)
-            assertEquals(1, sharedContents.size)
-            val sharedClaims = sharedContents[0].sharedClaims
+            val tokenSendResult = responseResult.getOrNull()!!
+            assertEquals(200, tokenSendResult.statusCode)
+            assertEquals(1, tokenSendResult.sharedCredentials?.size)
+            val sharedClaims = tokenSendResult.sharedCredentials!![0].sharedClaims
             assertEquals(1, sharedClaims.size)
             assertEquals("is_older_than_13", sharedClaims[0].name)
 
@@ -531,7 +526,10 @@ class OpenIdProviderTest {
 
             // ヘッダーのアサート
             assertEquals("localhost:${wireMockServer.port()}", request.header("Host").firstValue())
-            assertEquals("application/x-www-form-urlencoded", request.header("Content-Type").firstValue())
+            assertEquals(
+                "application/x-www-form-urlencoded",
+                request.header("Content-Type").firstValue()
+            )
 
             // ボディのアサート
             val body = request.bodyAsString
@@ -579,9 +577,12 @@ class OpenIdProviderTest {
             val encodedClientMetadata =
                 URLEncoder.encode(clientMetadataJson, StandardCharsets.UTF_8.toString())
             val encodedPresentationDefinition =
-                URLEncoder.encode(presentationDefinitionJwtVcJsonJson, StandardCharsets.UTF_8.toString())
+                URLEncoder.encode(
+                    presentationDefinitionJwtVcJsonJson,
+                    StandardCharsets.UTF_8.toString()
+                )
             val uri =
-                "oid4vp://?client_id=${encodedClientId}" +
+                "openid4vp://?client_id=${encodedClientId}" +
                         "&response_type=vp_token" +
                         "&response_mode=direct_post" +
                         "&scope=openid" +
@@ -628,14 +629,14 @@ class OpenIdProviderTest {
                 inputDescriptor = inputDescriptor
             )
             val credentials = listOf(submissionCredential)
-            val responseResult = op.respondVPResponse(credentials)
+            val responseResult = op.respondToken(credentials)
             assertTrue(responseResult.isSuccess)
-            val (postResult, sharedContents) = responseResult.getOrNull()!!
+            val tokenSendResult = responseResult.getOrNull()!!
 
             // 処理結果をアサート
-            assertEquals(200, postResult.statusCode)
-            assertEquals(1, sharedContents.size)
-            val sharedClaims = sharedContents[0].sharedClaims
+            assertEquals(200, tokenSendResult.statusCode)
+            assertEquals(1, tokenSendResult.sharedCredentials?.size)
+            val sharedClaims = tokenSendResult.sharedCredentials!![0].sharedClaims
             assertEquals(2, sharedClaims.size)
             assertEquals("given_name", sharedClaims[0].name)
             assertEquals("family_name", sharedClaims[1].name)
@@ -650,7 +651,10 @@ class OpenIdProviderTest {
 
             // ヘッダーのアサート
             assertEquals("localhost:${wireMockServer.port()}", request.header("Host").firstValue())
-            assertEquals("application/x-www-form-urlencoded", request.header("Content-Type").firstValue())
+            assertEquals(
+                "application/x-www-form-urlencoded",
+                request.header("Content-Type").firstValue()
+            )
 
             // ボディのアサート
             val body = request.bodyAsString
@@ -679,6 +683,128 @@ class OpenIdProviderTest {
             val verifiableCredential = vpMap["verifiableCredential"] as List<Any>
             assertEquals(1, verifiableCredential.size)
         }
+
+        @Test
+        fun testRespondIdTokenAndVpTokenResponse() = runBlocking {
+            val clientId = "$clientHost:${wireMockServer.port()}/cb"
+            val encodedClientId = URLEncoder.encode(clientId, StandardCharsets.UTF_8.toString())
+            val encodedClientMetadata =
+                URLEncoder.encode(clientMetadataJson, StandardCharsets.UTF_8.toString())
+            val encodedPresentationDefinition =
+                URLEncoder.encode(presentationDefinitionJson, StandardCharsets.UTF_8.toString())
+            val uri =
+                "openid4vp://?client_id=${encodedClientId}" +
+                        "&response_type=vp_token+id_token" +
+                        "&response_mode=direct_post" +
+                        "&scope=openid" +
+                        "&nonce=dummy-nonce" +
+                        "&state=dummy-state" +
+                        "&max_age=86400" +
+                        "&response_uri=${encodedClientId}" +
+                        "&client_metadata=${encodedClientMetadata}" +
+                        "&presentation_definition=${encodedPresentationDefinition}"
+            val op = OpenIdProvider(uri)
+            val result = op.processAuthorizationRequest()
+            assertTrue(result.isSuccess)
+            val (scheme, requestObject, authorizationRequestPayload, requestObjectJwt, registrationMetadata) = result.getOrThrow()
+
+            assertEquals("openid", authorizationRequestPayload.scope)
+            assertEquals("vp_token id_token", authorizationRequestPayload.responseType)
+            assertEquals(clientId, authorizationRequestPayload.clientId)
+            assertEquals(clientId, authorizationRequestPayload.responseUri)
+            assertNotNull(authorizationRequestPayload.nonce)
+            assertNotNull(authorizationRequestPayload.state)
+            assertEquals(86400, authorizationRequestPayload.maxAge)
+
+            assertEquals("ClientName", registrationMetadata.clientName)
+            assertEquals("https://example.com/logo.png", registrationMetadata.logoUri)
+
+            // SIOP Response送信
+            val keyRing = HDKeyRing(null)
+            val jwk = keyRing.getPrivateJwk(1)
+            val privateJwk = object : ECPrivateJwk {
+                override val kty = jwk.kty
+                override val crv = jwk.crv
+                override val x = jwk.x
+                override val y = jwk.y
+                override val d = jwk.d
+            }
+            val keyPair = SignatureUtil.generateECKeyPair(privateJwk)
+            op.setKeyPair(keyPair)
+
+            val keyPairHolder = generateEcKeyPair()
+            val keyBinding = KeyBinding4Test(keyPairHolder)
+            op.setKeyBinding(keyBinding)
+
+            val disclosure1 = Disclosure("given_name", "value1")
+            val disclosure2 = Disclosure("family_name", "value2")
+            val disclosure3 = Disclosure("is_older_than_13", "true")
+            val disclosures = listOf(disclosure1, disclosure2, disclosure3)
+            val builder = SDObjectBuilder()
+            disclosures.forEach { it ->
+                builder.putSDClaim(it)
+            }
+            val claims = builder.build()
+            val holderJwk = publicKeyToJwk(keyPairHolder.public)
+            val cnf = mapOf("jwk" to holderJwk)
+            val issuerSignedJwt = JWT.create().withIssuer("https://client.example.org/cb")
+                .withAudience("https://server.example.com")
+                .withClaim("cnf", cnf)
+                .withClaim("vct", "IdentityCredential")
+                .withClaim("_sd", (claims["_sd"] as List<*>))
+                .sign(algorithm)
+            val sdJwt = "$issuerSignedJwt~${disclosures.joinToString("~") { it.disclosure }}~"
+
+            val presentationDefinition = authorizationRequestPayload.presentationDefinition
+            val inputDescriptor = presentationDefinition!!.inputDescriptors[0]
+            val submissionCredential = SubmissionCredential(
+                id = "dummy-credential",
+                format = "vc+sd-jwt",
+                types = listOf(""),
+                credential = sdJwt,
+                inputDescriptor = inputDescriptor
+            )
+            val credentials = listOf(submissionCredential)
+
+            val responseResult = op.respondToken(credentials)
+            assertTrue(responseResult.isSuccess)
+
+            val tokenSendResult = responseResult.getOrThrow()
+            assertNotNull(tokenSendResult.sharedIdToken)
+            assertNotNull(tokenSendResult.sharedCredentials)
+            assertEquals(1, tokenSendResult.sharedCredentials?.size)
+
+            // VPトークンの内容を検証
+            val sharedCredentialIds = tokenSendResult.sharedCredentials?.map { it.id }
+            println(sharedCredentialIds)
+            assertTrue(sharedCredentialIds?.contains("dummy-credential") == true)
+
+            val serveEvents: List<ServeEvent> = WireMock.getAllServeEvents()
+            val request = serveEvents[0].request
+
+            // HTTPメソッドとURLのアサート
+            assertEquals("POST", request.method.value())
+            assertEquals("/cb", request.url)
+
+            // ヘッダーのアサート
+            assertEquals("localhost:${wireMockServer.port()}", request.header("Host").firstValue())
+            assertEquals(
+                "application/x-www-form-urlencoded",
+                request.header("Content-Type").firstValue()
+            )
+
+            // ボディのアサート
+            val body = request.bodyAsString
+            val bodyParams = parseFormBody(body)
+            assertEquals("dummy-state", bodyParams["state"])
+            assertNotNull(bodyParams["id_token"])
+            assertNotNull(bodyParams["vp_token"])
+
+            val ps = deserializePresentationSubmission(bodyParams)
+            assertEquals(authorizationRequestPayload.presentationDefinition?.id, ps.definitionId)
+        }
+
+
     }
 }
 

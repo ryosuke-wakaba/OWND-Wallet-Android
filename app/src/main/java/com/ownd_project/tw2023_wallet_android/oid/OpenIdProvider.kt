@@ -1,5 +1,7 @@
 package com.ownd_project.tw2023_wallet_android.oid
 
+import android.media.session.MediaSession.Token
+import arrow.core.raise.merge
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.ownd_project.tw2023_wallet_android.signature.ES256K.createJws
 import com.ownd_project.tw2023_wallet_android.signature.JWT
@@ -24,6 +26,8 @@ import java.security.cert.X509Certificate
 import java.util.Base64
 import java.util.UUID
 
+
+class OpenIdProviderException(message: String) : Exception(message)
 
 class OpenIdProvider(
     val uri: String,
@@ -209,7 +213,116 @@ class OpenIdProvider(
         }
     }
 
-    fun respondIdTokenResponse(): Result<PostResult> {
+    fun respondToken(
+        credentials: List<SubmissionCredential>?,
+    ): Result<TokenSendResult> {
+
+        val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
+            this.authRequestProcessedData.authorizationRequestPayload,
+            this.authRequestProcessedData.requestObject
+        )
+
+        // https://openid.net/specs/openid-4-verifiable-presentations-1_0-ID3.html#section-5.2
+        // If the parameter is not present, the default value is fragment
+        val responseMode = authRequest.responseMode
+            ?: ResponseMode.FRAGMENT
+        val responseType = authRequest.responseType
+            ?: return Result.failure(OpenIdProviderException("responseType must be supplied"))
+
+        val requireIdToken = responseType.contains("id_token")
+        val requireVpToken = responseType.contains("vp_token")
+        if (!requireIdToken && !requireVpToken) {
+            return Result.failure(OpenIdProviderException("Both or either `id_token` and `vp_token` are required"))
+        }
+
+        var idTokenFormData: Map<String, String>? = null
+        var idTokenForHistory: String? = null
+
+        var vpTokenFormData: Map<String, String>? = null
+        var vpForHistory: List<SharedCredential>? = null
+
+        if (requireIdToken) {
+            val created = createSiopIdToken()
+            when {
+                created.isSuccess -> {
+                    val value = created.getOrNull()
+                    if (value != null) {
+                        val (formData, rawIdToken) = value
+                        idTokenFormData = formData
+                        idTokenForHistory = rawIdToken
+                    } else {
+                        return Result.failure(OpenIdProviderException("Unable to create id token"))
+                    }
+                }
+
+                created.isFailure -> {
+                    return Result.failure(OpenIdProviderException("Unable to create id token"))
+                }
+            }
+
+        }
+        if (requireVpToken) {
+            credentials
+                ?: return Result.failure(OpenIdProviderException("Credentials to be sent must be supplied"))
+            val created = createVpToken(credentials)
+            when {
+                created.isSuccess -> {
+                    val value = created.getOrNull()
+                    if (value != null) {
+                        val (formData, sharedCredentials) = value
+                        vpTokenFormData = formData
+                        vpForHistory = sharedCredentials
+                    }
+                }
+
+                created.isFailure -> {
+                    return Result.failure(OpenIdProviderException("Unable to create vp token"))
+                }
+            }
+        }
+
+        val mergedFormData =
+            ((idTokenFormData ?: emptyMap()) + (vpTokenFormData ?: emptyMap())).toMutableMap()
+        val state = authRequest.state
+        if (!state.isNullOrBlank()) {
+            mergedFormData["state"] = state
+        }
+
+        var uri: String? = null
+        when (responseMode) {
+            ResponseMode.DIRECT_POST, ResponseMode.DIRECT_POST_JWT, ResponseMode.POST -> {
+                uri = authRequest.responseUri
+            }
+
+            else -> {
+                uri = authRequest.redirectUri
+            }
+        }
+        val whereToRespond = uri
+            ?: return Result.failure(OpenIdProviderException("Either responseUri or redirectUri must be supplied"))
+
+
+        try {
+            val (statusCode, location, cookies) = sendRequest(
+                whereToRespond,
+                mergedFormData,
+                responseMode
+            )
+            return Result.success(
+                TokenSendResult(
+                    statusCode = statusCode,
+                    location = location,
+                    cookies = cookies,
+                    sharedIdToken = idTokenForHistory,
+                    sharedCredentials = vpForHistory,
+                )
+            )
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+    }
+
+    private fun createSiopIdToken(): Result<Pair<Map<String, String>, String>> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.authRequestProcessedData.authorizationRequestPayload,
@@ -245,30 +358,19 @@ class OpenIdProvider(
             // todo support various algorithms using provider option's `signingAlgo`
             val idToken = createJws(keyPair, payloadJson, false)
             println("id token: $idToken")
-            // todo support redirect response when response_mode is not `direct_post`
-            val redirectUrl = requireNotNull(authRequest.redirectUri)
-
-            println("send id token to $redirectUrl")
 
             // As a temporary value, give DIRECT_POST a fixed value.
             // It needs to be modified when responding to redirect responses.
             val body = mutableMapOf("id_token" to idToken)
-            val state = authRequest.state
-            if (!state.isNullOrBlank()) {
-                body["state"] = state
-            }
-            val result = sendRequest(redirectUrl, body, ResponseMode.DIRECT_POST)
-
-            println("Received result: $result")
-            return Result.success(result)
+            return Result.success(body to idToken)
         } catch (e: Exception) {
             return Result.failure(e)
         }
     }
 
-    fun respondVPResponse(
+    private fun createVpToken(
         credentials: List<SubmissionCredential>,
-    ): Result<Pair<PostResult, List<SharedContent>>> {
+    ): Result<Pair<Map<String, String>, List<SharedCredential>>> {
         try {
             val authRequest = mergeOAuth2AndOpenIdInRequestPayload(
                 this.authRequestProcessedData.authorizationRequestPayload,
@@ -319,48 +421,23 @@ class OpenIdProvider(
                 propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
             }
             val jsonString = objectMapper.writeValueAsString(presentationSubmission)
-
-            // https://openid.net/specs/openid-4-verifiable-presentations-1_0-ID2.html#name-authorization-request
-            //   response_uri parameter is present, the redirect_uri Authorization Request parameter MUST NOT be present
-            val destinationUri = if (responseMode == ResponseMode.DIRECT_POST) {
-                authRequest.responseUri
-            } else {
-                authRequest.redirectUri
-            }
-            if (destinationUri.isNullOrBlank()) {
-                return Result.failure(Exception("Unknown destination for response"))
-            }
-
             val body = mutableMapOf(
                 "vp_token" to vpTokenValue,
                 "presentation_submission" to jsonString
             )
-            val state = authRequest.state
-            if (!state.isNullOrBlank()) {
-                body["state"] = state
-            }
 
-            println("send vp token to $destinationUri")
-            val result = sendRequest(destinationUri, body, responseMode)
-            println("status code: ${result.statusCode}")
-            println("location: ${result.location}")
-            println("cookies: ${result.cookies}")
-            if (400 <= result.statusCode) {
-                // todo ここに入るケースは本来は開発中のみでリリース後はここに入ることは無い(提供したvpの検証はverifier側のクライアントからのリクエストで実行されるため)
-                // todo よって、ここではステータスコードとステータスメッセージを文字列として例外に詰めてスローしておけば問題無い
-                // todo 2024.7.10時点では同期的にvp_tokenの検証をする構成になっているので、暫定的にこの実装を残すが、response_codeに対応するタイミングで適切な方法に切り替える
-                // todo 500系のエラーも同様
-                println(result.responseBody)
-                val msg = if (result.responseBody?.containsKey("message") == true) {
-                    result.responseBody["message"] as String
-                } else {
-                    "Response Error: ${result.statusCode}"
+            val purposeForSharing: String? = null // todo: 履歴に保持するために適切な値を設定する
+
+            val sharedCredentials =
+                presentingContents.map {
+                    SharedCredential(
+                        it.credential.id,
+                        purposeForSharing,
+                        it.disclosedClaims
+                    )
                 }
-                return Result.failure(Exception(msg))
-            }
-            val sharedContents =
-                presentingContents.map { SharedContent(it.credential.id, it.disclosedClaims) }
-            return Result.success(Pair(result, sharedContents))
+
+            return Result.success(body to sharedCredentials)
         } catch (e: Exception) {
             e.printStackTrace()
             return Result.failure(e)
@@ -432,7 +509,7 @@ fun sendRequest(
     destinationUri: String,
     formData: Map<String, String>,
     responseMode: ResponseMode
-): PostResult {
+): Triple<Int, String?, Array<String>> { //TokenSendResult {
     val client = OkHttpClient.Builder()
         .followRedirects(false)
         .build()
@@ -458,39 +535,23 @@ fun sendRequest(
     }
 
     client.newCall(request).execute().use { response ->
+        var location: String? = null
         val statusCode = response.code()
-        var location = response.header("Location")
         val contentType = response.header("Content-Type")
         val cookies = response.headers("Set-Cookie")
-        print("cookies@sendRequest: $cookies")
-        var responseBody = emptyMap<String, Any>()
 
-        if (statusCode == 302 && location != null) {
-            // URI解析を使用して絶対URLかどうかを判断
-            val uri = URI.create(location)
-            if (!uri.isAbsolute) {
-                // 元のURLからホスト情報を抽出して補完
-                val originalUri = URI.create(destinationUri)
-                val portPart = if (originalUri.port != -1) ":${originalUri.port}" else ""
-                location = "${originalUri.scheme}://${originalUri.host}$portPart$location"
-            }
-        } else if (contentType?.contains("application/json") == true) {
+        if (statusCode == 200 && contentType?.contains("application/json") == true) {
             response.body()?.string()?.let { body ->
                 val mapper = jacksonObjectMapper()
                 val jsonNode = mapper.readTree(body)
                 if (jsonNode.has("redirect_uri")) {
                     location = jsonNode.get("redirect_uri").asText()
                 }
-                responseBody = mapper.readValue<Map<String, Any>>(body)
             }
         }
 
-        return PostResult(
-            statusCode = statusCode,
-            location = location,
-            cookies = if (cookies.isNotEmpty()) cookies.toTypedArray() else emptyArray(),
-            responseBody = responseBody
-        )
+        val tmp = if (cookies.isNotEmpty()) cookies.toTypedArray() else emptyArray()
+        return Triple(statusCode, location, tmp)
     }
 }
 
@@ -562,16 +623,19 @@ data class DisclosedClaim(
     // val path: String (when nested claim is supported, it may be needed like this)
 )
 
-data class SharedContent(
+data class SharedCredential(
     val id: String,
+    val purposeForSharing: String?,
     val sharedClaims: List<DisclosedClaim>
 )
 
-data class PostResult(
+data class TokenSendResult(
     val statusCode: Int,
     val location: String?,
     val cookies: Array<String>,
-    val responseBody: Map<String, Any>? = null
+
+    val sharedIdToken: String?,
+    val sharedCredentials: List<SharedCredential>?
 )
 
 fun X509Certificate.hasSubjectAlternativeName(target: String): Boolean {
