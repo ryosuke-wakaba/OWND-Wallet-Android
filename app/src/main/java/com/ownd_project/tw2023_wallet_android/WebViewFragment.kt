@@ -50,7 +50,10 @@ class WebViewFragment : Fragment() {
         webView = view.findViewById(R.id.webview)
 
         webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            override fun shouldOverrideUrlLoading(
+                view: WebView,
+                request: WebResourceRequest
+            ): Boolean {
                 val uri: Uri = request.url
                 if ("openid-credential-offer" == uri.scheme) {
                     val intent = Intent(activity, MainActivity::class.java)
@@ -82,6 +85,7 @@ class WebViewFragment : Fragment() {
         print("load url: $url")
         webView.loadUrl(url)
     }
+
     private fun setCookies(urlString: String, cookieStrings: Array<String>, webView: WebView) {
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
@@ -128,6 +132,7 @@ class WebViewFragmentMenuProvider(
                 fragment.requireActivity().finish()
                 true
             }
+
             else -> false
         }
     }

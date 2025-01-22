@@ -78,28 +78,31 @@ class RestoreViewModel : ViewModel() {
                 val store: IdTokenSharingHistoryStore =
                     IdTokenSharingHistoryStore.getInstance(context)
                 backup.idTokenSharingHistories.forEach {
-                    val history = com.ownd_project.tw2023_wallet_android.datastore.IdTokenSharingHistory.newBuilder()
-                        .setRp(it.rp)
-                        .setAccountIndex(it.accountIndex)
-                        .setCreatedAt(it.createdAt.toDateFromISO8601().toGoogleTimestamp())
-                        .build();
+                    val history =
+                        com.ownd_project.tw2023_wallet_android.datastore.IdTokenSharingHistory.newBuilder()
+                            .setRp(it.rp)
+                            .setAccountIndex(it.accountIndex)
+                            .setCreatedAt(it.createdAt.toDateFromISO8601().toGoogleTimestamp())
+                            .build();
                     store.save(history)
                 }
 
                 println("restore history of credential sharing")
                 val store2 = CredentialSharingHistoryStore.getInstance(context)
                 backup.credentialSharingHistories.forEach {
-                    val builder = com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory.newBuilder()
-                        .setRp(it.rp)
-                        .setAccountIndex(it.accountIndex)
-                        .setCreatedAt(it.createdAt.toDateFromISO8601().toGoogleTimestamp())
-                        .setCredentialID(it.credentialID)
+                    val builder =
+                        com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory.newBuilder()
+                            .setRp(it.rp)
+                            .setAccountIndex(it.accountIndex)
+                            .setCreatedAt(it.createdAt.toDateFromISO8601().toGoogleTimestamp())
+                            .setCredentialID(it.credentialID)
                     it.claims.forEach { claim ->
-                        val tmp = com.ownd_project.tw2023_wallet_android.datastore.Claim.newBuilder()
-                            .setName(claim.name)
-                            .setValue(claim.value)
-                            .setPurpose(claim.purpose)
-                            .build()
+                        val tmp =
+                            com.ownd_project.tw2023_wallet_android.datastore.Claim.newBuilder()
+                                .setName(claim.name)
+                                .setValue(claim.value)
+                                .setPurpose(claim.purpose)
+                                .build()
                         builder.addClaims(tmp)
                     }
                     val history = builder.build()
@@ -141,7 +144,7 @@ class RestoreViewModel : ViewModel() {
                     }
                 }
             }
-            Result.success( textEntries.toTypedArray())
+            Result.success(textEntries.toTypedArray())
         } catch (e: Exception) {
             Result.failure(e)
         }

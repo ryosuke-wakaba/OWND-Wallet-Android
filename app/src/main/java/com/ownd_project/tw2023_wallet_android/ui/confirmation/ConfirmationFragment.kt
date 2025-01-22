@@ -76,7 +76,8 @@ class ConfirmationFragment : Fragment() {
             viewModel.isTxCodeRequired.observe(viewLifecycleOwner) { isTxCodeRequired ->
                 if (isTxCodeRequired) {
                     // PinInputBottomSheetFragmentを表示する
-                    val txCodeInputFragment = TxCodeInputBottomSheetFragment.newInstance(parameterValue!!)
+                    val txCodeInputFragment =
+                        TxCodeInputBottomSheetFragment.newInstance(parameterValue!!)
                     txCodeInputFragment.listener =
                         object : TxCodeInputBottomSheetFragment.TxCodeInputListener {
                             override fun onTxCodeEntered(txCode: String) {

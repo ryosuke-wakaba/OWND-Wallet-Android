@@ -67,7 +67,8 @@ class IssuerDetailFragment : Fragment(R.layout.fragment_issuer_detail) {
                 // LiveDataの監視を開始して証明書のデータを取得
                 viewModel.certificatesLiveData.observe(viewLifecycleOwner) { certificates ->
                     if (certificates!!.isNotEmpty()) {
-                        val certificate = CertificateUtil.x509Certificate2CertificateInfo(certificates[0])
+                        val certificate =
+                            CertificateUtil.x509Certificate2CertificateInfo(certificates[0])
 
                         val org = certificate.issuer?.organization
                         val verifiedByText = getString(R.string.verified_by_format, org)
@@ -108,7 +109,7 @@ class IssuerDetailFragment : Fragment(R.layout.fragment_issuer_detail) {
 
 class IssuerDetailViewModelFactory(
     private val credentialDataStore: CredentialDataStore,
-    ) : ViewModelProvider.Factory {
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(IssuerDetailViewModel::class.java)) {
             return IssuerDetailViewModel(

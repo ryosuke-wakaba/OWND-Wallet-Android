@@ -42,7 +42,10 @@ object MetadataUtil {
 
                 is CredentialConfigurationJwtVcJson -> {
                     // JwtVcJsonの場合、typesとcredentialDefinition.typeを両方ソートして比較
-                    format == "jwt_vc_json" && containsAllElements(credentialSupported.credentialDefinition.type, types)
+                    format == "jwt_vc_json" && containsAllElements(
+                        credentialSupported.credentialDefinition.type,
+                        types
+                    )
                 }
 
                 else -> false
@@ -52,19 +55,21 @@ object MetadataUtil {
 
     fun extractDisplayByClaim(credentialsSupported: CredentialConfiguration): MutableMap<String, List<Display>> {
         val displayMap = mutableMapOf<String, List<Display>>()
-        when(credentialsSupported) {
+        when (credentialsSupported) {
             is CredentialConfigurationJwtVcJson -> {
                 val credentialSubject = credentialsSupported.credentialDefinition.credentialSubject
                 credentialSubject?.map { (k, v) ->
                     v.display?.let { displayMap.put(k, it) }
                 }
             }
+
             is CredentialConfigurationVcSdJwt -> {
                 val credentialSubject = credentialsSupported.claims
                 credentialSubject?.map { (k, v) ->
                     v.display?.let { displayMap.put(k, it) }
                 }
             }
+
             else -> {
                 println("not implemented yet")
             }
@@ -76,6 +81,7 @@ object MetadataUtil {
         val mapper = jacksonObjectMapper()
         return mapper.writeValueAsString(displayMap)
     }
+
     fun deserializeDisplayByClaimMap(displayMap: String): Map<String, List<Display>> {
         val mapper = jacksonObjectMapper()
         val typeRef = object : TypeReference<Map<String, List<Display>>>() {}

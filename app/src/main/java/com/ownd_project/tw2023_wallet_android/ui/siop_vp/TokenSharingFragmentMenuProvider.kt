@@ -27,6 +27,7 @@ class TokenSharingFragmentMenuProvider(
                 fragment.requireActivity().finish()
                 true
             }
+
             else -> false
         }
     }

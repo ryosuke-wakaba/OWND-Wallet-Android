@@ -19,7 +19,7 @@ import com.ownd_project.tw2023_wallet_android.MainActivity
 import com.ownd_project.tw2023_wallet_android.R
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentIdTokenSharringBinding
 import com.ownd_project.tw2023_wallet_android.databinding.FragmentIssuerDetailBinding
-import com.ownd_project.tw2023_wallet_android.oid.PostResult
+import com.ownd_project.tw2023_wallet_android.oid.TokenSendResult
 import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
 import com.ownd_project.tw2023_wallet_android.ui.shared.CredentialSharingViewModel
@@ -43,7 +43,8 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
     private val viewModel: IdTokenSharringViewModel by viewModels()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        issuerDetailBinding = FragmentIssuerDetailBinding.bind(view.findViewById(R.id.issuer_details))
+        issuerDetailBinding =
+            FragmentIssuerDetailBinding.bind(view.findViewById(R.id.issuer_details))
 
 
         val activity = requireActivity()
@@ -51,7 +52,7 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
         activity.addMenuProvider(menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
         viewModel.initDone.observe(viewLifecycleOwner, ::onInitDone)
-        viewModel.postResult.observe(viewLifecycleOwner, ::onPostResult)
+        viewModel.tokenSendResult.observe(viewLifecycleOwner, ::onPostResult)
 
         binding.greenBackgroundView.visibility = View.GONE
         binding.brownBackgroundView.visibility = View.GONE
@@ -224,7 +225,7 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
             // todo RecycleViewで複数件に対応する
             binding.sharingClaimTitle.visibility = View.GONE
             data.inputDescriptors[0].name?.let {
-                 binding.sharingClaimTitle.visibility = View.VISIBLE
+                binding.sharingClaimTitle.visibility = View.VISIBLE
                 binding.sharingClaimTitle.text = it
             }
             binding.sharingClaimSubTitle.visibility = View.GONE
@@ -295,6 +296,7 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
             viewModel.shareIdToken(this)
         }
     }
+
     private fun onUpdateProcessCompletion(done: Boolean) {
         if (done) {
             val builder = AlertDialog.Builder(context)
@@ -324,11 +326,12 @@ class TokenSharingFragment : Fragment(R.layout.fragment_id_token_sharring) {
         }
     }
 
-    private fun onPostResult(postResult: PostResult) {
-        if (postResult.location != null) {
-            val url = postResult.location
-            val cookies = postResult.cookies
-            val action = TokenSharingFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
+    private fun onPostResult(tokenSendResult: TokenSendResult) {
+        if (tokenSendResult.location != null) {
+            val url = tokenSendResult.location
+            val cookies = tokenSendResult.cookies
+            val action =
+                TokenSharingFragmentDirections.actionIdTokenSharringToWebViewFragment(url, cookies)
             findNavController().navigate(action)
         }
     }

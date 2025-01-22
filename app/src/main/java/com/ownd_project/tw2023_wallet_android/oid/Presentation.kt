@@ -18,6 +18,7 @@ data class VpJwtPayload(
     val nonce: String?,
     val vp: Map<String, Any>
 )
+
 // https://www.rfc-editor.org/rfc/rfc7515.html
 data class HeaderOptions(
     val alg: String = "ES256",
@@ -35,7 +36,7 @@ data class JwtVpJsonPayloadOptions(
     var nonce: String
 )
 
-data class PresentingContent (
+data class PresentingContent(
     val credential: SubmissionCredential,
     val vpToken: String,
     val descriptorMap: DescriptorMap,
@@ -155,7 +156,8 @@ object JwtVpJsonPresentation {
             "verifiableCredential" to listOf(vcJwt)
         )
 
-        val currentTimeSeconds = (System.currentTimeMillis() / 1000) - 5 // Prevention of time synchronization deviation
+        val currentTimeSeconds =
+            (System.currentTimeMillis() / 1000) - 5 // Prevention of time synchronization deviation
         return VpJwtPayload(
             iss = payloadOptions.iss,
             jti = payloadOptions.jti,

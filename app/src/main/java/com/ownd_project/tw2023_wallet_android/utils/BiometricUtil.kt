@@ -64,7 +64,7 @@ object BiometricUtil {
     }
 
 
-    fun gotoEnrollBiometricSetting (activity: FragmentActivity) {
+    fun gotoEnrollBiometricSetting(activity: FragmentActivity) {
         val enrollBiometricRequest =
             activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 Log.d(TAG, "ResultCode: ${result.resultCode}")
@@ -84,6 +84,7 @@ object BiometricUtil {
             }
         createAlertDialog(activity, enrollBiometricRequest)
     }
+
     fun createAlertDialog(
         activity: Activity,
         enrollBiometricRequest: ActivityResultLauncher<Intent>,

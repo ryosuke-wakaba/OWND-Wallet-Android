@@ -6,7 +6,7 @@ import com.ownd_project.tw2023_wallet_android.oid.PresentationDefinition
 import com.ownd_project.tw2023_wallet_android.oid.SubmissionCredential
 import com.ownd_project.tw2023_wallet_android.vci.CredentialIssuerMetadata
 
-class CredentialSharingViewModel: ViewModel() {
+class CredentialSharingViewModel : ViewModel() {
     val selectedCredential = MutableLiveData<SubmissionCredential?>()
     val presentationDefinition = MutableLiveData<PresentationDefinition?>()
     lateinit var credentialIssuerMetadata: CredentialIssuerMetadata
@@ -17,7 +17,11 @@ class CredentialSharingViewModel: ViewModel() {
         presentationDefinition.value = null
     }
 
-    fun setSelectedCredential(type: String, data: SubmissionCredential, metaData: CredentialIssuerMetadata) {
+    fun setSelectedCredential(
+        type: String,
+        data: SubmissionCredential,
+        metaData: CredentialIssuerMetadata
+    ) {
         credentialType = type
         selectedCredential.value = data
         credentialIssuerMetadata = metaData

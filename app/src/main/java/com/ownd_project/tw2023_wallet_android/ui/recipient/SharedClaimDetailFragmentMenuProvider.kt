@@ -25,6 +25,7 @@ class SharedClaimDetailFragmentMenuProvider(
                 fragment.findNavController().navigateUp()
                 true
             }
+
             else -> false
         }
     }

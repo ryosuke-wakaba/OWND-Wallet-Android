@@ -33,7 +33,11 @@ class MainActivity : AppCompatActivity() {
                 false
             } else {
                 // 生体認証の設定がキャンセルまたは失敗した場合の処理
-                Toast.makeText(this, "生体認証の設定がキャンセルまたは失敗しました。", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "生体認証の設定がキャンセルまたは失敗しました。",
+                    Toast.LENGTH_SHORT
+                ).show()
                 false
             }
         }
@@ -74,6 +78,7 @@ class MainActivity : AppCompatActivity() {
                     R.id.navigation_certificate -> {
                         supportActionBar?.setDisplayHomeAsUpEnabled(false)
                     }
+
                     R.id.credentialDetailFragment, R.id.issuerDetailFragment -> {
                         supportActionBar?.setDisplayHomeAsUpEnabled(true)
                     }
@@ -86,19 +91,22 @@ class MainActivity : AppCompatActivity() {
                     "openid4vp" -> {
                         handleVp(it)
                     }
+
                     "openid-credential-offer" -> {
                         handleOffer(it, navController)
                     }
+
                     "https" -> {
                         // App link
-                        if (it.getQueryParameter("credential_offer").isNullOrEmpty()){
+                        if (it.getQueryParameter("credential_offer").isNullOrEmpty()) {
                             handleVp(it)
-                        }else{
+                        } else {
                             handleOffer(it, navController)
                         }
                     }
+
                     else -> {
-                       Log.d("MainActivity", "unknown scheme: ${data.scheme}")
+                        Log.d("MainActivity", "unknown scheme: ${data.scheme}")
                     }
                 }
             }
@@ -112,7 +120,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun handleOffer(uri: Uri, navController: androidx.navigation.NavController){
+    private fun handleOffer(uri: Uri, navController: androidx.navigation.NavController) {
         // ここでパラメータを処理
         val parameterValue = uri.getQueryParameter("credential_offer") // クエリパラメータの取得
 

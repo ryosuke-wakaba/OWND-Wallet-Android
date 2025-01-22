@@ -77,7 +77,10 @@ class JWT {
             }
         }
 
-        fun verifyJwt(jwt: String, publicKey: PublicKey): Either<String, DecodedJWT> { // todo 戻り値の型がauto0のライブラリの型で良いか検討する
+        fun verifyJwt(
+            jwt: String,
+            publicKey: PublicKey
+        ): Either<String, DecodedJWT> { // todo 戻り値の型がauto0のライブラリの型で良いか検討する
             val decodedJwt = JWT.decode(jwt)
             val algorithm = when {
                 publicKey is RSAPublicKey -> when (decodedJwt.algorithm) {

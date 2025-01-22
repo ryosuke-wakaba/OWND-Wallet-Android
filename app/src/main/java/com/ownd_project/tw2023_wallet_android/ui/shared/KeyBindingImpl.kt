@@ -5,7 +5,7 @@ import com.ownd_project.tw2023_wallet_android.oid.SdJwtVcPresentation
 import com.ownd_project.tw2023_wallet_android.signature.JWT
 import com.ownd_project.tw2023_wallet_android.utils.SDJwtUtil
 
-class KeyBindingImpl(val keyAlias: String): KeyBinding {
+class KeyBindingImpl(val keyAlias: String) : KeyBinding {
     override fun generateJwt(
         sdJwt: String,
         selectedDisclosures: List<SDJwtUtil.Disclosure>,

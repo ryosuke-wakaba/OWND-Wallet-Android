@@ -97,6 +97,7 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
                 }
                 true
             }
+
             else -> {
                 false
             }
@@ -303,7 +304,10 @@ class CredentialDetailFragment : Fragment(R.layout.fragment_credential_detail) {
         findNavController().popBackStack(R.id.id_token_sharring, false)
     }
 
-    private fun bindDataToView(credentialDetail: CredentialDetailViewModel.CredentialDetails, displayMap: Map<String, List<Display>>) {
+    private fun bindDataToView(
+        credentialDetail: CredentialDetailViewModel.CredentialDetails,
+        displayMap: Map<String, List<Display>>
+    ) {
         val presentationDefinition = sharedViewModel.presentationDefinition.value
         val fromSharingData = presentationDefinition != null
 

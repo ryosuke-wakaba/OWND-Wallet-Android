@@ -61,7 +61,11 @@ class LockScreenActivity : AppCompatActivity() {
                 showBiometricPrompt()
             } else {
                 // 生体認証の設定がキャンセルまたは失敗した場合の処理
-                Toast.makeText(this, "生体認証の設定がキャンセルまたは失敗しました。", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "生体認証の設定がキャンセルまたは失敗しました。",
+                    Toast.LENGTH_SHORT
+                ).show()
                 // todo この時にロック画面を終わらせてアプリを使用可能とするか、ロック状態のままで使用不可とするかは仕様を確定させて対応する
             }
         }

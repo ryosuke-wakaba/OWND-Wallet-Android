@@ -39,9 +39,13 @@ class RecipientFragment : Fragment() {
             activity as? AppCompatActivity, getString(R.string.title_recipient)
         )
 
-        val credentialSharingHistoryStore = CredentialSharingHistoryStore.getInstance(requireContext())
+        val credentialSharingHistoryStore =
+            CredentialSharingHistoryStore.getInstance(requireContext())
         val recipientViewModel =
-            ViewModelProvider(requireActivity(), RecipientViewModelFactory(credentialSharingHistoryStore)).get(RecipientViewModel::class.java)
+            ViewModelProvider(
+                requireActivity(),
+                RecipientViewModelFactory(credentialSharingHistoryStore)
+            ).get(RecipientViewModel::class.java)
 
         _binding = FragmentRecipientBinding.inflate(inflater, container, false)
 
@@ -59,16 +63,16 @@ class RecipientFragment : Fragment() {
                 if (itemList.isNullOrEmpty()) {
                     binding.textDefault.visibility = View.VISIBLE
                     binding.recipientList.visibility = View.GONE
-                }else {
+                } else {
                     binding.textDefault.visibility = View.GONE
                     binding.recipientList.visibility = View.VISIBLE
 
-                    val hasAnyLogo = itemList.any{ it.rpLogoUrl != ""}
+                    val hasAnyLogo = itemList.any { it.rpLogoUrl != "" }
                     val adapter = CredentialHistoryAdapter(itemList, hasAnyLogo)
                     binding.recipientList.layoutManager = LinearLayoutManager(context)
                     binding.recipientList.adapter = adapter
                 }
-            }else{
+            } else {
                 Log.d(tag, "empty sharing histories")
             }
         }
@@ -82,10 +86,10 @@ class RecipientFragment : Fragment() {
 }
 
 
-
 class CredentialHistoryAdapter(
     private val histories: List<com.ownd_project.tw2023_wallet_android.datastore.CredentialSharingHistory>,
-    private val hasAnyLogo: Boolean) :
+    private val hasAnyLogo: Boolean
+) :
     RecyclerView.Adapter<CredentialHistoryAdapter.ViewHolder>() {
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val rpNameTextView: TextView = view.findViewById(R.id.rp_name)
@@ -104,7 +108,7 @@ class CredentialHistoryAdapter(
         holder.rpNameTextView.text = history.rpName
         holder.lastProvidedDateView.text = timestampToString(history.createdAt)
 
-        if (hasAnyLogo){
+        if (hasAnyLogo) {
             holder.imageView.visibility = View.INVISIBLE
         }
 
@@ -122,7 +126,8 @@ class CredentialHistoryAdapter(
                 history.rpLocation,
                 history.rpContactUrl,
                 history.rpPrivacyPolicyUrl,
-                history.rpLogoUrl)
+                history.rpLogoUrl
+            )
             it.findNavController().navigate(action)
         }
     }

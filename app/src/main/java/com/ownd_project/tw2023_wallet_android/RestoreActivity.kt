@@ -30,6 +30,7 @@ class RestoreActivity : AppCompatActivity(), OnFragmentInteractionListener {
             navController.navigate(R.id.restoreFragment)
         }
     }
+
     override fun onFragmentClosed() {
         setResult(Activity.RESULT_OK)
         finish()

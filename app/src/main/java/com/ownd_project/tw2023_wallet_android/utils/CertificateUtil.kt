@@ -25,7 +25,9 @@ object CertificateUtil {
                 for (part in subjectParts) {
                     when {
                         part.trim().startsWith("CN=") -> domain = part.trim().removePrefix("CN=")
-                        part.trim().startsWith("O=") -> organization = part.trim().removePrefix("O=")
+                        part.trim().startsWith("O=") -> organization =
+                            part.trim().removePrefix("O=")
+
                         part.trim().startsWith("L=") -> locality = part.trim().removePrefix("L=")
                         part.trim().startsWith("ST=") -> state = part.trim().removePrefix("ST=")
                         part.trim().startsWith("C=") -> country = part.trim().removePrefix("C=")
@@ -41,7 +43,10 @@ object CertificateUtil {
         return CertificateInfo(null, null, null, null, null, null)
     }
 
-    private fun x509Name2CertificateInfo(x509Name: String, issuer: CertificateInfo? = null): CertificateInfo {
+    private fun x509Name2CertificateInfo(
+        x509Name: String,
+        issuer: CertificateInfo? = null
+    ): CertificateInfo {
         val subjectParts = x509Name.split(",")
         var organization: String? = null
         var domain: String? = null
@@ -62,8 +67,18 @@ object CertificateUtil {
                 part.trim().startsWith("E=") -> email = part.trim().removePrefix("E=")
             }
         }
-        return CertificateInfo(domain, organization, locality, state, country, street, email, issuer)
+        return CertificateInfo(
+            domain,
+            organization,
+            locality,
+            state,
+            country,
+            street,
+            email,
+            issuer
+        )
     }
+
     fun x509Certificate2CertificateInfo(certificate: X509Certificate): CertificateInfo {
         val issuerX500Principal = certificate.issuerX500Principal
         val subjectX500Principal = certificate.subjectX500Principal

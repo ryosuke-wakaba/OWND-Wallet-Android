@@ -36,7 +36,7 @@ class RestoreFragment : Fragment() {
         val root: View = binding.root
 
         val activity = requireActivity()
-         val menuProvider = SimpleCancelMenuProvider(this, activity.menuInflater)
+        val menuProvider = SimpleCancelMenuProvider(this, activity.menuInflater)
         activity.addMenuProvider(menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED)
         // URL選択状態
         viewModel.uri.observe(viewLifecycleOwner, ::onUpdateUri)
@@ -66,12 +66,13 @@ class RestoreFragment : Fragment() {
     }
 
     private var mUrl: Uri? = null
-    private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) {
-            mUrl = uri
-            viewModel.setUri(uri)
+    private val getContent =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri != null) {
+                mUrl = uri
+                viewModel.setUri(uri)
+            }
         }
-    }
 
     private fun onUpdateUri(uri: Uri?) {
         if (uri != null) {
@@ -136,6 +137,7 @@ class SimpleCancelMenuProvider(
                 fragment.requireActivity().finish()
                 true
             }
+
             else -> false
         }
     }

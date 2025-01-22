@@ -25,6 +25,7 @@ class RecipientDetailFragmentMenuProvider(
                 fragment.findNavController().navigateUp()
                 true
             }
+
             else -> false
         }
     }

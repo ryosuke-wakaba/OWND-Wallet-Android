@@ -136,6 +136,7 @@ object KeyPairUtil {
 
         return keyFactory.generatePublic(keySpec)
     }
+
     // todo move to anywhere else
     fun verifyJwt(jwkJson: Map<String, String>, jwt: String): Boolean {
         val publicKey = createPublicKey(jwkJson)

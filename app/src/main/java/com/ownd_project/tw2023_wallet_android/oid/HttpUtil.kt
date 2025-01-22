@@ -39,7 +39,10 @@ suspend fun <T> getWithUrl(url: String, responseType: Class<T>, textResponse: Bo
                     configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
                     val module = SimpleModule().apply {
                         // enum型のプロパティが増えたら追加する(todo 設計を見直したい)
-                        addDeserializer(LimitDisclosure::class.java, EnumDeserializer(LimitDisclosure::class))
+                        addDeserializer(
+                            LimitDisclosure::class.java,
+                            EnumDeserializer(LimitDisclosure::class)
+                        )
                         addDeserializer(Rule::class.java, EnumDeserializer(Rule::class))
                     }
                     registerModule(module)
@@ -69,7 +72,12 @@ suspend fun <T> getWithUrl(url: String, responseType: Class<T>, textResponse: Bo
 //
 //    return response
 //}
-suspend fun <T> fetchByReferenceOrUseByValue(referenceURI: String?, valueObject: T?, responseType: Class<T>, textResponse: Boolean = false): T {
+suspend fun <T> fetchByReferenceOrUseByValue(
+    referenceURI: String?,
+    valueObject: T?,
+    responseType: Class<T>,
+    textResponse: Boolean = false
+): T {
     // referenceURIとvalueObjectの少なくとも一方が非nullであることを保証
     if (referenceURI == null && valueObject == null) {
         throw IllegalArgumentException("Both referenceURI and valueObject cannot be null")

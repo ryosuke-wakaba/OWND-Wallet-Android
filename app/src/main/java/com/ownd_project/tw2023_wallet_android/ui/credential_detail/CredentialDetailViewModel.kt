@@ -140,7 +140,8 @@ class CredentialDetailViewModel(
         val format = credentialData.format
         val types =
             MetadataUtil.extractTypes(format, credentialData.credential)
-        val credentialSupported = types.mapNotNull { it -> metadata.credentialConfigurationsSupported[it] }
+        val credentialSupported =
+            types.mapNotNull { it -> metadata.credentialConfigurationsSupported[it] }
         val displayData = credentialSupported.firstOrNull()?.display
         val display = selectDisplay(displayData)
         display?.name ?: "不明なタイプ"
@@ -157,7 +158,7 @@ class CredentialDetailViewModel(
     }
 
     suspend fun deleteCredentialById(id: String) {
-            credentialStore.deleteCredentialById(id)
+        credentialStore.deleteCredentialById(id)
     }
 
     val credentialDetails: LiveData<CredentialDetails> = _credentialData.map { credential ->
@@ -193,7 +194,8 @@ class CredentialDetailViewModel(
             val format = credential.format
             val types =
                 MetadataUtil.extractTypes(format, credential.credential)
-            val credentialSupported = types.mapNotNull { it -> metadata.credentialConfigurationsSupported[it] }
+            val credentialSupported =
+                types.mapNotNull { it -> metadata.credentialConfigurationsSupported[it] }
             val displayData = credentialSupported.firstOrNull()?.display
             selectDisplay(displayData)
         }!!
